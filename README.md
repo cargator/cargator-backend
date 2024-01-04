@@ -1,4 +1,4 @@
-# Socket Server
+# Cargator Backend
 
 This repository contains the Socket Server for the CarGator application, providing real-time communication capabilities between the CarGator components.
 
