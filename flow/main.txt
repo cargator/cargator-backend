@@ -1,0 +1,23 @@
+title This is a title
+
+participant Driver
+
+participant Server
+
+participant Rider
+
+participant Admin
+
+
+Server<-Admin:Admin Creates the Car
+Server<-Admin:Admin can create driver and can assign the Car if available by car number
+Server->Admin:Admin can see status of all rides, riders and drivers
+Server<-Rider:rider registers from the app
+Server<-Rider:ride request with source and destination to nearby driver
+Driver<-Server:ride request sent to driver
+Driver->Server:ride accept from driver
+Driver->Server:payment request
+Server->Rider:payment request to rider
+Server<-Rider:confirm payment request
+Driver<-Server:notifying ride complete.
+Server->Rider:notifying ride complete.

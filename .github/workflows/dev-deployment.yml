@@ -1,0 +1,83 @@
+# reference:
+# https://medium.com/mistergreen-engineering/uploading-a-docker-image-to-gcr-using-github-actions-92e1cdf14811
+
+name: GCP deployment dev
+
+on: workflow_dispatch
+# on:
+#   push:
+#     branches:
+#       - "main"
+
+jobs:
+  gcp-dev-deployment:
+    name: Build and push image, deploy
+    runs-on: ubuntu-latest
+
+    env:
+      PROJECT_ID: ${{ secrets.PROJECT_ID }}
+      SERVICE_NAME: cab-e-socket-service-dev
+      REGION: asia-south1
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Make envfile
+        uses: SpicyPizza/create-envfile@v1
+        with:
+          envkey_PORT: ${{ secrets.PORT }}
+          envkey_MONGO_URL: ${{ secrets.MONGO_URL }}
+          envkey_GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          envkey_REDIS_URL: ${{secrets.REDIS_URL}}
+          envkey_PUBLIC_KEY: ${{secrets.PUBLIC_KEY}}
+          envkey_DEV_RAZORPAY_KEY_ID: ${{secrets.DEV_RAZORPAY_KEY_ID}}
+          envkey_DEV_RAZORPAY_KEY_SECRET: ${{secrets.DEV_RAZORPAY_KEY_SECRET}}
+          envkey_NODE_ENV: ${{secrets.NODE_ENV}}
+          envKey_OPEN_AI_API_KEY: ${{secrets.OPEN_AI_API_KEY}}
+          envKey_OPEN_AI_API_URL: ${{secrets.OPEN_AI_API_URL}}
+          envKey_AWS_ACCESS_KEY_ID: ${{secrets.AWS_ACCESS_KEY_ID}}
+          envKey_AWS_REGION: ${{secrets.AWS_REGION}}
+          envKey_AWS_SECRET_ACCESS_KEY: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+          envKey_MAP_MY_INDIA: ${{secrets.MAP_MY_INDIA}}
+          envKey_OTP_EXPIRE: ${{secrets.OTP_EXPIRE}}
+          envKey_REFRESH_TOKEN_URL: ${{secrets.REFRESH_TOKEN_URL}}
+          envKey_REFRESH_TOKEN_CLIENT_ID: ${{secrets.REFRESH_TOKEN_CLIENT_ID}}
+          envKey_REFRESH_TOKEN_CLIENT_SECRET: ${{secrets.REFRESH_TOKEN_CLIENT_SECRET}}
+          envKey_AUTHKEY_OTP: ${{secrets.AUTHKEY_OTP}}
+          envKey_OTP_SID: ${{secrets.OTP_SID}}
+      # Autheticatw with google
+      - name: "Autheticate with Google"
+        uses: "google-github-actions/auth@v1"
+        with:
+          credentials_json: "${{ secrets.GCR_DEVOPS_SERVICE_ACCOUNT_KEY }}"
+
+      # Setup gcloud CLI
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+
+      # Configure docker to use the gcloud command-line tool as a credential helper
+      - name: Configure Docker
+        run: |
+          gcloud auth configure-docker -q
+
+      # Build docker image
+      - name: Build docker image for api
+        run: |-
+          docker build -t gcr.io/$PROJECT_ID/$SERVICE_NAME:$GITHUB_SHA .
+
+      - name: Authenticating docker with gcloud
+        run: gcloud auth print-access-token | docker login -u oauth2accesstoken --password-stdin https://gcr.io
+
+      # Push image to Google Container Registry
+      - name: Push api image to Google Container Registry
+        run: |-
+          docker push gcr.io/$PROJECT_ID/$SERVICE_NAME:$GITHUB_SHA
+
+      # Deploy to cloud run
+      - name: Deploy api to cloud run
+        uses: google-github-actions/deploy-cloudrun@main
+        with:
+          service: "${{ env.SERVICE_NAME }}"
+          image: "gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:${{ github.sha }}"
+          region: "${{ env.REGION }}"
