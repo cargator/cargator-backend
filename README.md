@@ -15,8 +15,8 @@ This repository contains the Socket Server for the CarGator application, providi
 1. Clone the Socket Server repository:
 
     ```bash
-    $ git clone https://github.com/cargator/socket-server.git
-    $ cd socket-server
+    $ git clone https://github.com/cargator/cargator-backend
+    $ cd cargator-backend
     ```
 
 2. Install dependencies:
@@ -58,10 +58,10 @@ $ npm run start
 
 ```bash
 # build command
-$ docker build -t cargator-socket-server .
+$ docker build -t cargator-backend .
 ```
 
 ```bash
 # run command
-$ docker run --network host -p 3001:3001 -d cargator-socket-server:latest
+$ docker run --network host -p 3001:3001 -d cargator-backend:latest
 ```
