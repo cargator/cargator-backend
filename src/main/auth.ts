@@ -199,7 +199,7 @@ export async function verifyOtp(req: Request, res: Response) {
       // Verify OTP
       if (otp == user.otp) {
         // Select relevant user fields and generate a JWT token
-        user = _.pick(user, ['_id', 'mobileNumber']);
+        user = _.pick(user, ['_id', 'mobileNumber', 'documentsKey']);
         const token = jwt.sign(
           { user, type: 'driver' },
           process.env.PUBLIC_KEY,

@@ -1,23 +1,33 @@
-title This is a title
-
-participant Driver
-
-participant Server
-
+title Cab-E socket communication
 participant Rider
-
-participant Admin
-
-
-Server<-Admin:Admin Creates the Car
-Server<-Admin:Admin can create driver and can assign the Car if available by car number
-Server->Admin:Admin can see status of all rides, riders and drivers
-Server<-Rider:rider registers from the app
-Server<-Rider:ride request with source and destination to nearby driver
-Driver<-Server:ride request sent to driver
-Driver->Server:ride accept from driver
-Driver->Server:payment request
-Server->Rider:payment request to rider
-Server<-Rider:confirm payment request
-Driver<-Server:notifying ride complete.
-Server->Rider:notifying ride complete.
+participant Server
+participant Driver
+ Rider->Server:eventName:connect
+ Server->Rider:eventName:ride-status, ongoing ride details
+ Driver->Server:eventName:connect
+ Driver->Server:eventName:location, to update realtime location to DB
+ Server->Driver:eventName:ride-status, ongoing ride details
+ Server->Driver:eventName:ride-request,published to all available drivers in near range
+note over Rider:Start booking flow
+ Rider->Server:eventName:request-ride
+ note over Server:create new ride with status, **pending-accept**
+ Server->Driver:eventName:ride-request,published to all available drivers in near range
+ Driver->Server:eventName:ride-accept
+note over Server:update ride with driver id, and status to **pending-arrival**
+ Server->Driver :eventName:ride-accept-response(success|error)
+ Server->Rider:eventName:request-ride-response(success|error),\n ride details like otp, etc
+    Server->Rider:eventName:ride-status, update object of ride with driver location
+  Driver->Server:eventName:reached-pickup-location
+  note over Server:If driver arrived, update ride status  **pending-otp**
+   Server->Rider:eventName:ride-status, update object of ride, \n message: driver reached start point
+  Driver->Server:eventName:ride-update(otp check)
+    note over Server:server will verify otp ride status will be **ride-started** if invalid otp only send false to driver
+ Server->Driver :eventName:ride-status(updated ride with status ride-started or otp-retry message)
+ Server->Rider :eventName:ride-status(updated ride with status ride-started)
+ Driver->Server:eventName:ride-update(update status to pending-payment)
+note over Server:update ride status to **pending-payment**
+ Server->Rider :eventName:ride-status(updated ride with status pending-payment)
+Driver->Server:eventName:ride-update(update status to payment-completion)
+note over Server:update ride status to **completed**
+ Server->Rider :eventName:ride-status(updated ride with status payment-completion)
+ Server->Driver:eventName:ride-status(update status to payment-completion)
