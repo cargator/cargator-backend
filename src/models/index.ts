@@ -182,6 +182,8 @@ const vehicleSchema = new mongoose.Schema(
       type: String,
       unique: true,
     },
+    vehicleMake: String,
+    vehicleModel: String,
     vehicleType: {
       type: String,
       enum: ['SUV', 'HatchBack', 'Sedan'],

@@ -163,6 +163,8 @@ export async function createVehicleData(req: Request, res: Response) {
       vehicleName,
       vehicleNumber,
       vehicleType,
+      vehicleMake,
+      vehicleModel,
       profileImageKey,
       documentsKey,
     } = req.body;
@@ -177,6 +179,8 @@ export async function createVehicleData(req: Request, res: Response) {
       vehicleName,
       vehicleNumber: vehicleNumber.toUpperCase(),
       vehicleType,
+      vehicleMake,
+      vehicleModel,
       profileImageKey: profileImageKey,
       documentsKey: documentsKey,
     });
@@ -256,6 +260,8 @@ export async function updateVehicle(req: Request, res: Response) {
       vehicleName,
       vehicleNumber,
       vehicleType,
+      vehicleMake,
+      vehicleModel,
       profileImageKey,
       documentsKey,
     } = req.body;
@@ -269,6 +275,8 @@ export async function updateVehicle(req: Request, res: Response) {
         vehicleName,
         vehicleNumber: vehicleNumber.toUpperCase(),
         vehicleType,
+        vehicleMake,
+        vehicleModel,
         profileImageKey: profileImageKey,
         documentsKey: documentsKey,
       },
@@ -288,6 +296,8 @@ export async function updateVehicle(req: Request, res: Response) {
           vehicleName,
           vehicleNumber: vehicleNumber.toUpperCase(),
           vehicleType,
+          vehicleMake,
+          vehicleModel,
         },
         { session: session },
       );
