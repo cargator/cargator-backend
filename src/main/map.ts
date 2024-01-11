@@ -78,13 +78,13 @@ export async function addressFromCoordinatesmapmyindia(
     const lat = location.latitude;
 
     // const utilsdata = getUtils();
-    const radiusInKm = 2;
-    const nearbylocationDistanceInRadians1 = radiusInKm / 6371;
+    const radiusInKm = process.env.NEAR_BY_LOCATION_DISTANCE_IN_RADIANS;
+    const near_by_location_Distance_In_Radians = Number(radiusInKm) / 6371;
 
     const existingAddressDoc: any = await addressLatlongmapyindia.findOne({
       latlong: {
         $near: [long, lat],
-        $maxDistance: nearbylocationDistanceInRadians1,
+        $maxDistance: near_by_location_Distance_In_Radians,
       },
     });
 
