@@ -177,7 +177,7 @@ export async function verifyOtp(req: Request, res: Response) {
 
       // Check if OTP and mobile number are provided
       if (!otp) {
-        throw new Error(`Invalid otp`);
+        throw new Error(`Invalid otp !`);
         // return res.status(400).send({ message: `Invalid otp` });
       }
       if (!mobileNumber) {
@@ -215,7 +215,7 @@ export async function verifyOtp(req: Request, res: Response) {
         });
       } else {
         // res.status(400).send({ message: 'Invalid OTP' });
-        throw new Error(`Invalid otp`);
+        throw new Error(`Invalid otp !!`);
       }
     } else {
       // Handle rider OTP verification (similar logic as driver)
@@ -224,7 +224,7 @@ export async function verifyOtp(req: Request, res: Response) {
 
       // Check if OTP and mobile number are provided
       if (!otp) {
-        throw new Error(`Invalid otp`);
+        throw new Error(`Invalid otp !!!`);
       }
       if (!mobileNumber) {
         // res.status(400).send({ message: 'Please provide your mobile number' });
@@ -263,7 +263,7 @@ export async function verifyOtp(req: Request, res: Response) {
         });
       } else {
         // res.status(400).send({ message: 'Invalid OTP' });
-        throw new Error(`Invalid otp`);
+        throw new Error(`Invalid otp  !!!!`);
       }
     }
   } catch (error: any) {
