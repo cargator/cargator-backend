@@ -22,6 +22,7 @@ export async function addressFromCoordinates(req: Request, res: Response) {
   try {
     const body = req.body;
     console.log('get-address-from-coordinates1 >> body :>> ', body);
+    console.log('get-address-from-coordinates1 >> body :>> ', body);
     // const location = body.location;
     const long = body.longitude;
     const lat = body.latitude;
@@ -66,6 +67,62 @@ export async function addressFromCoordinates(req: Request, res: Response) {
 }
 
 
+// export async function addressFromCoordinatesmapmyindia(
+//   req: Request,
+//   res: Response,
+// ) {
+//   try {
+//     const location = req.body;
+//     console.log('get-address-from-coordinates2 >> body :>> ', location);
+//     // const location = body.location;
+//     const long = location.longitude;
+//     const lat = location.latitude;
+
+//     const utilsdata = getUtils();
+//     // const nearbyDriversDistanceInKm: any = utilsdata.nearbyDriversDistanceInKm;
+//     // const nearbylocationDistanceInRadians = nearbyDriversDistanceInKm / 111.12;
+//     const radiusInKm = 2;
+//     const nearbylocationDistanceInRadians1 = radiusInKm / 6371;
+//     const addressDoc: any = await addressLatlongmapyindia.findOne({
+//       latlong: {
+//         $near: [long, lat],
+//         // $maxDistance: nearbylocationDistanceInRadians,
+//         $maxDistance: nearbylocationDistanceInRadians1,
+//       },
+//     });
+
+//     console.log('adddress', addressDoc);
+//     if (addressDoc) {
+//       console.log('returned data caches from mongo db', addressDoc);
+//       res.status(200).send({
+//         message: 'Address fetched successfully.',
+//         data: { address: addressDoc.address },
+//       });
+//     } else {
+//       console.log('Calling Google Places API.');
+//       console.log('location ---> ', location);
+
+//       const address = await getAddressFromCoordsmapmyindia(location);
+
+//       console.log(`get-address-from-coordinates >> address :>> `, address);
+//       //   if (address == 'undefined') {
+//       //     return res.status(400).send({ error: 'Coordinates are invalid' });
+//       //   }
+//       console.log('dddddddd', long, lat);
+//       const addressDoc = await addressLatlongmapyindia.create({
+//         address,
+//         latlong: [long, lat],
+//       });
+//       return res.status(200).send({
+//         message: 'Fetched address successfully.',
+//         data: { address },
+//       });
+//     }
+//   } catch (error: any) {
+//     console.log('get-address-from-coordinates error: ', error);
+//     res.status(400).send({ error: error.message });
+//   }
+// }
 export async function addressFromCoordinatesmapmyindia(
   req: Request,
   res: Response,
@@ -77,14 +134,13 @@ export async function addressFromCoordinatesmapmyindia(
     const long = location.longitude;
     const lat = location.latitude;
 
-    // const utilsdata = getUtils();
-    const radiusInKm = process.env.NEAR_BY_LOCATION_DISTANCE_IN_RADIANS;
-    const near_by_location_Distance_In_Radians = Number(radiusInKm) / 6371;
-
+    const utilsdata = getUtils();
+    const nearbyDriversDistanceInKm: any = utilsdata.nearbyDriversDistanceInKm;
+    const nearbylocationDistanceInRadians = nearbyDriversDistanceInKm / 111.12;
     const existingAddressDoc: any = await addressLatlongmapyindia.findOne({
       latlong: {
         $near: [long, lat],
-        $maxDistance: near_by_location_Distance_In_Radians,
+        $maxDistance: nearbylocationDistanceInRadians,
       },
     });
 
@@ -117,8 +173,6 @@ export async function addressFromCoordinatesmapmyindia(
     res.status(400).send({ error: error.message });
   }
 }
-
-
 
 export async function coordinatesFromAddress(req: Request, res: Response) {
   try {

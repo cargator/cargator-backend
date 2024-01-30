@@ -269,6 +269,22 @@ const paymentSchema = new mongoose.Schema(
 );
 paymentSchema.index({ 'payload.status': 1, 'payload.id': 1 }, { unique: true });
 
+const whatsappChatSchema = new mongoose.Schema(
+  {
+    riderId: { type: Types.ObjectId, index: true },
+    mobileNumber : String,
+    pickUpLocation: Array,
+    dropLocation: Array,
+    pickAddress: String,
+    dropAddress: String,
+  },
+  {
+    timestamps: true,
+    collection: 'whatsappChats',
+  },
+);
+whatsappChatSchema.index({ pickUpLocation: '2d' });
+
 export const Admin = mongoose.model('Admin', adminSchema);
 export const Driver = mongoose.model('Driver', driverSchema);
 export const Riders = mongoose.model('Riders', ridersSchema);
@@ -281,6 +297,10 @@ export const locationListmapmyindia = mongoose.model(
 );
 export const Orders = mongoose.model('orders', orderSchema);
 export const Payments = mongoose.model('payments', paymentSchema);
+export const whatsappChats = mongoose.model(
+  'whatsappChats',
+  whatsappChatSchema,
+);
 export const Vehicles = mongoose.model('vehicles', vehicleSchema);
 export const addressLatlong = mongoose.model(
   'addresslatlong',
