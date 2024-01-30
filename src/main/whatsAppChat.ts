@@ -11,9 +11,6 @@ import get from 'lodash/get.js';
 import dotenv from 'dotenv';
 import { Driver, Rides, whatsappChats } from '../models';
 import { getUtils } from '..';
-import {
-  addressFromCoordinatesmapmyindiaForWhatsapp,
-} from './map';
 dotenv.config();
 
 interface InteractiveMessageBody {
