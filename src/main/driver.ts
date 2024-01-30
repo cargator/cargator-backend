@@ -246,7 +246,9 @@ export async function deleteDriver(req: Request, res: Response) {
     const body = {
       uid: req.params.uid,
       profileImageKey: req.headers['x-profile-image-key'],
-      documentsKey: req.headers['x-documents-key'] ? req.headers['x-documents-key'][0] : undefined,
+      documentsKey: req.headers['x-documents-key']
+        ? req.headers['x-documents-key'][0]
+        : undefined,
     };
     session.startTransaction();
     const vehicle = await Vehicles.findOneAndUpdate(
@@ -256,47 +258,51 @@ export async function deleteDriver(req: Request, res: Response) {
     );
 
     // console.log(' vehicle :>> ', vehicle);
-
-    const deleteDriver = await Driver.findOneAndDelete(
-      { _id: body.uid },
-      { session: session },
-    );
-    if (!deleteDriver) {
+    const findDriver = await Driver.findOne({
+      _id: body.uid,
+      status: 'active',
+    });
+    if (!findDriver) {
       throw new Error('Driver not found');
     }
+    const deleteDriver = await Driver.findOneAndUpdate(
+      { _id: body.uid },
+      { status: 'inactive' },
+      { session: session },
+    );
 
-    if (body?.profileImageKey !== undefined) {
-      const params = {
-        Bucket: 'cargator',
-        Key: body?.profileImageKey, // Replace with the key of the object you want to delete
-      };
+    // if (body?.profileImageKey !== undefined) {
+    //   const params = {
+    //     Bucket: 'cargator',
+    //     Key: body?.profileImageKey, // Replace with the key of the object you want to delete
+    //   };
 
-      s3.deleteObject(params, (err: any, data: any) => {
-        if (err) {
-          console.error('Error deleting object:', err);
-        } else {
-          console.log('Object deleted successfully', data);
-        }
-      });
-    }
+    //   s3.deleteObject(params, (err: any, data: any) => {
+    //     if (err) {
+    //       console.error('Error deleting object:', err);
+    //     } else {
+    //       console.log('Object deleted successfully', data);
+    //     }
+    //   });
+    // }
 
-    if (Array.isArray(body?.documentsKey) && body?.documentsKey.length > 0) {
-      console.log('object docs:>> ');
-      body.documentsKey.forEach((element: string) => {
-        const params = {
-          Bucket: 'cargator',
-          Key: element, // Replace with the key of the object you want to delete
-        };
+    // if (Array.isArray(body?.documentsKey) && body?.documentsKey.length > 0) {
+    //   console.log('object docs:>> ');
+    //   body.documentsKey.forEach((element: string) => {
+    //     const params = {
+    //       Bucket: 'cargator',
+    //       Key: element, // Replace with the key of the object you want to delete
+    //     };
 
-        s3.deleteObject(params, (err: any, data: any) => {
-          if (err) {
-            console.error('Error deleting object:', err);
-          } else {
-            console.log('Object deleted successfully', data);
-          }
-        });
-      });
-    }
+    //     s3.deleteObject(params, (err: any, data: any) => {
+    //       if (err) {
+    //         console.error('Error deleting object:', err);
+    //       } else {
+    //         console.log('Object deleted successfully', data);
+    //       }
+    //     });
+    //   });
+    // }
 
     await session.commitTransaction();
     res.status(200).send({

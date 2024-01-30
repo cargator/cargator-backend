@@ -81,6 +81,7 @@ import {
 } from './main/vehiclesDetails';
 import { Driver, Orders, Payments, Rides, Utils, Vehicles } from './models';
 import axios from 'axios';
+import { handleWebhookPost, handleWebhookVerification } from './main/whatsAppChat';
 
 let utilsData: any;
 
@@ -380,6 +381,11 @@ app.get('/', (req: Request, res: Response) => {
   res.send('success');
 });
 
+//whatsAppChatBot
+
+app.get('/webhook', handleWebhookVerification)
+
+app.post('/webhook', handleWebhookPost);
 // Middleware function to authorize requests with a JWT token
 const authorize = async (req: any, res: Response, next: any) => {
   try {

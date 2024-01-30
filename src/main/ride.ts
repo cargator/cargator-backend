@@ -112,15 +112,35 @@ export async function getAllRide(req: Request, res: Response) {
               },
             },
             {
+              $lookup: {
+                from: 'whatsappChats',
+                localField: 'riderId',
+                foreignField: '_id',
+                as: 'whatsappChatData',
+              },
+            },
+            {
               $project: {
-                _id: 1, // Include the _id field
-                pickUpAddress: 1, // Include the title field from the Post collection
+                _id: 1,
+                pickUpAddress: 1,
                 dropAddress: 1,
                 status: 1,
                 fare: 1,
                 createdAt: 1,
-                'driverDetails.mobileNumber': 1, // Include the name field from the User collection
-                'riderDetails.mobileNumber': 1, // Include the email field from the User collection
+                'driverDetails.mobileNumber': 1,
+                riderDetails: {
+                  $cond: {
+                    if: { $eq: ['$riderDetails', []] }, 
+                    then: [
+                      {
+                        mobileNumber: {
+                          $first: '$whatsappChatData.mobileNumber',
+                        },
+                      },
+                    ],
+                    else: '$riderDetails',
+                  },
+                },
               },
             },
           ],
