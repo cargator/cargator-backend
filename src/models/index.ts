@@ -111,6 +111,7 @@ const ridesSchema = new mongoose.Schema(
     pickUpLocation: Array,
     dropLocation: Array,
     pickUpAddress: String,
+    platform: String,
     cancelBy: Object,
     dropAddress: String,
     distance: String,

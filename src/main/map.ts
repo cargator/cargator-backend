@@ -22,7 +22,6 @@ export async function addressFromCoordinates(req: Request, res: Response) {
   try {
     const body = req.body;
     console.log('get-address-from-coordinates1 >> body :>> ', body);
-    console.log('get-address-from-coordinates1 >> body :>> ', body);
     // const location = body.location;
     const long = body.longitude;
     const lat = body.latitude;
@@ -135,12 +134,13 @@ export async function addressFromCoordinatesmapmyindia(
     const lat = location.latitude;
 
     const utilsdata = getUtils();
-    const nearbyDriversDistanceInKm: any = utilsdata.nearbyDriversDistanceInKm;
-    const nearbylocationDistanceInRadians = nearbyDriversDistanceInKm / 111.12;
+    const radiusInKm = 0.1;
+    const nearbylocationDistanceInRadians1 = radiusInKm / 6371;
+
     const existingAddressDoc: any = await addressLatlongmapyindia.findOne({
       latlong: {
         $near: [long, lat],
-        $maxDistance: nearbylocationDistanceInRadians,
+        $maxDistance: nearbylocationDistanceInRadians1,
       },
     });
 
@@ -173,6 +173,56 @@ export async function addressFromCoordinatesmapmyindia(
     res.status(400).send({ error: error.message });
   }
 }
+
+export async function addressFromCoordinatesmapmyindiaForWhatsapp(body:any) {
+  try {
+    const location = body;
+    console.log('get-address-from-coordinates2 >> body :>> ', location);
+
+    const lat = location.longitude;
+    const long = location.latitude;
+
+    const utilsdata = getUtils();
+    const radiusInKm = 1;
+    const nearbylocationDistanceInRadians1 = radiusInKm / 111.12;
+
+    const existingAddressDoc: any = await addressLatlongmapyindia.findOne({
+      latlong: {
+        $near: [long, lat],
+        $maxDistance: nearbylocationDistanceInRadians1,
+      },
+    });
+
+    if (existingAddressDoc) {
+      console.log('Returned data from MongoDB:', existingAddressDoc);
+      return {
+        message: 'Address fetched successfully.',
+        data: { address: existingAddressDoc.address },
+      };
+    }
+
+    console.log('Calling Google Places API.');
+    console.log('location ---> ', location);
+
+    const address = await getAddressFromCoordsmapmyindia(location);
+
+    console.log(`get-address-from-coordinates >> address :>> `, address);
+
+    const newAddressDoc = await addressLatlongmapyindia.create({
+      address,
+      latlong: [long, lat],
+    });
+
+    return {
+      message: 'Fetched address successfully.',
+      data: { address: newAddressDoc.address },
+    };
+  } catch (error: any) {
+    console.log('get-address-from-coordinates error: ', error);
+  }
+}
+
+
 
 export async function coordinatesFromAddress(req: Request, res: Response) {
   try {

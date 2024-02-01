@@ -244,6 +244,7 @@ const riderSocketConnected = async (
         'dropLocation',
         'pickUpAddress',
         'dropAddress',
+        'platform',
         'distance',
         'duration',
         'pickupToDropPath',

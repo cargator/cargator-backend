@@ -70,8 +70,7 @@ export async function chatGptApi(req: Request, res: Response) {
       //  'Rides created today (descending order):',
       // ridesCreatedToday.length,
       // );
-    } else {
-      if (mode == 'lastWeek') {
+    } else if(mode == 'lastWeek') {
         const today = new Date();
 
         // Calculate the date one week ago
@@ -104,6 +103,66 @@ export async function chatGptApi(req: Request, res: Response) {
             {
               role: 'user',
               content: `ridesCreatedLastWeek information is ${ridesCreatedLastWeek}`,
+            },
+            {
+              role: 'user',
+              content: `${input}`,
+            },
+          ],
+        };
+        const response = await axios.post(apiUrl, requestData, {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${process.env.OPEN_AI_API_KEY}`,
+          },
+        });
+
+        const responseData = response.data.choices[0].message;
+        // Perform data analysis on responseData
+        //console.log(responseData['content']);
+        res.status(200).send({
+          message: 'Fetched chat-gpt data successfully',
+          data: responseData['content'],
+        });
+        // Process the rides created today
+        //console.log(
+        // 'Rides created today (descending order):',
+        // ridesCreatedLastWeek.length,
+        //);
+      } else {
+      if (mode == 'lastMonth') {
+        const today = new Date();
+
+        // Calculate the date one week ago
+        const oneMonthAgo = new Date(today);
+        oneMonthAgo.setDate(today.getDate() - 30);
+
+        const ridesCreatedLastMonth = await Rides.find({
+          createdAt: {
+            $gte: oneMonthAgo, // Greater than or equal to one Month ago
+            $lt: today, // Less than the current date
+          },
+        })
+          .sort({ createdAt: -1 })
+          .select('-_id status fare paymentMode cancelBy.reason'); // Sort in descending order by createdAt;
+        //console.log(
+        // `ridesCreatedLastWeek information is  ${ridesCreatedLastWeek}`,
+        //);
+        if (ridesCreatedLastMonth.length === 0) {
+          // Handle the case where there are no matching records
+          console.log('No matching records found.');
+          res.status(200).send({
+            success: false,
+            message: 'No Rides is created in last Month.',
+          });
+          return;
+        }
+        const requestData = {
+          model: 'gpt-3.5-turbo',
+          messages: [
+            {
+              role: 'user',
+              content: `ridesCreatedLastMonth information is ${ridesCreatedLastMonth}`,
             },
             {
               role: 'user',

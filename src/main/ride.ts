@@ -126,6 +126,7 @@ export async function getAllRide(req: Request, res: Response) {
                 dropAddress: 1,
                 status: 1,
                 fare: 1,
+                platform:1,
                 createdAt: 1,
                 'driverDetails.mobileNumber': 1,
                 riderDetails: {

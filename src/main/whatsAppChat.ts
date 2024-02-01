@@ -163,6 +163,7 @@ export async function handleWebhookPost(req: Request, res: Response) {
             riderId: respDrop?._id,
             vehicleNumber: availableDrivers[0]?.vehicleNumber,
             driverId: availableDrivers[0]?._id,
+            platform:'whatsApp',
             bookingTime:new Date(),
             status: 'pending-arrival',
             otp:"0000",
