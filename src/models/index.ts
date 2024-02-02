@@ -286,7 +286,19 @@ const whatsappChatSchema = new mongoose.Schema(
 );
 whatsappChatSchema.index({ pickUpLocation: '2d' });
 
+const vehicleTypeSchema = new mongoose.Schema(
+  {
+    vehicleType: String,
+  },
+  {
+    timestamps: true,
+    collection: 'vehicleTypes',
+  },
+);
+
+
 export const Admin = mongoose.model('Admin', adminSchema);
+export const VehicleTypes = mongoose.model('vehicleTypes', vehicleTypeSchema);
 export const Driver = mongoose.model('Driver', driverSchema);
 export const Riders = mongoose.model('Riders', ridersSchema);
 export const Utils = mongoose.model('Utils', utilsSchema);
