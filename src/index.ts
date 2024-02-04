@@ -83,6 +83,7 @@ import { Driver, Orders, Payments, Rides, Utils, Vehicles } from './models';
 import axios from 'axios';
 import { handleWebhookPost, handleWebhookVerification } from './main/whatsAppChat';
 import { createVehicleType, deleteVehicleType, getVehicleOne, getVehicleType, updateVehicleType } from './main/vehicleType';
+import { createFare, getFareValue, upDateFareValue } from './main/fare';
 
 let utilsData: any;
 
@@ -772,7 +773,16 @@ app.get('/get-vehicle-type-id/:id',getVehicleOne)
 
 app.patch('/updateVehicleType/:uid', updateVehicleType);
 
+// fare
+
+app.post('/add-fare',createFare)
+
+app.get('/get-fare',getFareValue)
+
+app.patch('/update-fare/:uid',upDateFareValue)
+
 // vehicle crud
+
 app.post('/create-vehicle', createVehicleData);
 
 app.post('/cancel-scheduled-ride', cancelScheduledRide);

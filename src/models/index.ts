@@ -296,9 +296,20 @@ const vehicleTypeSchema = new mongoose.Schema(
   },
 );
 
+const faresSchema = new mongoose.Schema(
+  {
+    fare: String,
+  },
+  {
+    timestamps: true,
+    collection: 'fares',
+  },
+);
+
 
 export const Admin = mongoose.model('Admin', adminSchema);
 export const VehicleTypes = mongoose.model('vehicleTypes', vehicleTypeSchema);
+export const fares = mongoose.model('fares', faresSchema);
 export const Driver = mongoose.model('Driver', driverSchema);
 export const Riders = mongoose.model('Riders', ridersSchema);
 export const Utils = mongoose.model('Utils', utilsSchema);
