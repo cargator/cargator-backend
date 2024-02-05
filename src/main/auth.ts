@@ -16,7 +16,7 @@ export async function handleLogin(req: Request, res: Response) {
         throw new Error(`Invalid Mobile Number!`);
       }
       let driver = await Driver.findOne({
-        mobileNumber: mobileNumber,
+        mobileNumber: `91${mobileNumber}` ,
         status: 'active',
       }).lean();
       if (!driver) {
@@ -24,9 +24,9 @@ export async function handleLogin(req: Request, res: Response) {
       }
       // Find or create a driver document with the provided mobile number
       let driverDoc = await Driver.findOneAndUpdate(
-        { mobileNumber: mobileNumber },
+        { mobileNumber: `91${mobileNumber}` },
         {
-          mobileNumber: mobileNumber,
+          mobileNumber: `91${mobileNumber}`,
           liveLocation: liveLocation,
         },
         { upsert: true, new: true },
@@ -36,7 +36,7 @@ export async function handleLogin(req: Request, res: Response) {
       if (mobileNumber.toString().startsWith('00')) {
         otp = '0000';
         const update = await Driver.findOneAndUpdate(
-          { mobileNumber },
+          { mobileNumber: `91${mobileNumber}` },
           {
             otp,
           },
@@ -57,7 +57,7 @@ export async function handleLogin(req: Request, res: Response) {
         const otpExpire: any = process.env.OTP_EXPIRE || 0.5; // OTP Expiration Time is "30 Seconds".
 
         await Driver.findOneAndUpdate(
-          { mobileNumber },
+          { mobileNumber: `91${mobileNumber}` },
           {
             otp,
             otpExpirationTime: new Date(
@@ -70,7 +70,7 @@ export async function handleLogin(req: Request, res: Response) {
         if (mobileNumber.toString().startsWith('00')) {
           return res
             .status(200)
-            .send({ message: `OTP sent to mobile number ${mobileNumber}.` });
+            .send({ message: `OTP sent to mobile number 91${mobileNumber}.` });
         } else {
           // const sendSmsRes = await axios.get(
           //   // `http://sms.bulkssms.com/submitsms.jsp?user=icallsms&key=d1cd9d7799XX&mobile=${mobileNumber}&message=Welcome to Cargator! Your login OTP is ${otp}.This code is valid for 5 minutes only.&senderid=MiCALL&accusage=1&entityid=1201159179632441114&tempid=1507167275825310764`, // ! NOT WORKING.
@@ -83,7 +83,7 @@ export async function handleLogin(req: Request, res: Response) {
           console.log(`sendSmsRes :>> `, sendSmsRes?.data);
           return res
             .status(200)
-            .send({ message: `OTP sent to mobile number ${mobileNumber}.` });
+            .send({ message: `OTP sent to mobile number 91${mobileNumber}.` });
         }
       } else {
         // throw new Error(`Wait for 30 seconds before requesting another OTP!`);
@@ -100,8 +100,8 @@ export async function handleLogin(req: Request, res: Response) {
 
       // Find or create a rider document with the provided mobile number
       let riderDoc = await Riders.findOneAndUpdate(
-        { mobileNumber: mobileNumber },
-        { mobileNumber: mobileNumber },
+        { mobileNumber: `91${mobileNumber}` },
+        { mobileNumber: `91${mobileNumber}` },
         { upsert: true, new: true },
       ).lean();
 
@@ -129,7 +129,7 @@ export async function handleLogin(req: Request, res: Response) {
         const otpExpire: any = process.env.OTP_EXPIRE || 0.5; // OTP Expiration Time is "30 Seconds".
 
         await Riders.findOneAndUpdate(
-          { mobileNumber },
+          { mobileNumber: `91${mobileNumber}` },
           {
             otp,
             otpExpirationTime: new Date(
@@ -141,7 +141,7 @@ export async function handleLogin(req: Request, res: Response) {
 
         if (mobileNumber.toString().startsWith('00')) {
           return res.status(200).send({
-            message: `OTP sent to mobile number ${mobileNumber}.`,
+            message: `OTP sent to mobile number 91${mobileNumber}.`,
           });
         } else {
           // const sendSmsRes=await axios.get(`https://api.authkey.io/request?authkey=641af54d28834eb0&mobile=${mobileNumber}&country_code=91&sms=Hello, your OTP is ${otp}&sender=641af54d28834eb0`)
@@ -156,13 +156,13 @@ export async function handleLogin(req: Request, res: Response) {
           console.log(`sendSmsRes :>> `, sendSmsRes?.data);
           return res
             .status(200)
-            .send({ message: `OTP sent to mobile number ${mobileNumber}.` });
+            .send({ message: `OTP sent to mobile number 91${mobileNumber}.` });
         }
       } else {
         // throw new Error(`Wait for 30 seconds before requesting another OTP!`);
         return res
           .status(200)
-          .send({ message: `OTP sent to mobile number ${mobileNumber}.` });
+          .send({ message: `OTP sent to mobile number 91${mobileNumber}.` });
       }
     }
   } catch (error: any) {
@@ -189,7 +189,7 @@ export async function verifyOtp(req: Request, res: Response) {
 
       // Find the driver based on the provided mobile number
       let user: any = await Driver.findOne({
-        mobileNumber,
+         mobileNumber: `91${mobileNumber}` 
       }).lean();
       let profileImageKey = user.profileImageKey;
 
@@ -236,7 +236,7 @@ export async function verifyOtp(req: Request, res: Response) {
 
       // Find the rider based on the provided mobile number
       let user: any = await Riders.findOne({
-        mobileNumber,
+         mobileNumber: `91${mobileNumber}` 
       }).lean();
       let userData = user;
       // Check if the rider is registered
