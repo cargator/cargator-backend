@@ -167,7 +167,7 @@ export async function createDriver(req: Request, res: Response) {
     }
 
     const existingDriver = await Driver.findOne(
-      { mobileNumber: mobileNumber },
+      { mobileNumber: `91${mobileNumber}` },
       null,
       { session: session },
     );
@@ -190,7 +190,7 @@ export async function createDriver(req: Request, res: Response) {
           vehicleNumber: vehicleNumber.toUpperCase(),
           vehicleType,
           vehicleName,
-          mobileNumber,
+          mobileNumber:`91${mobileNumber}`,
           profileImageKey,
           documentsKey,
         },
@@ -375,7 +375,7 @@ export async function updateDriver(req: Request, res: Response) {
         vehicleType: vehicleType,
         vehicleNumber: vehicleNumber.toUpperCase(),
         vehicleName: vehicleName,
-        mobileNumber: mobileNumber,
+        mobileNumber: `91${mobileNumber}`,
         profileImageKey: profileImageKey,
         documentsKey: documentsKey,
       },
