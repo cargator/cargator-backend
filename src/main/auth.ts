@@ -32,9 +32,9 @@ export async function handleLogin(req: Request, res: Response) {
         { upsert: true, new: true },
       ).lean();
 
-      let otp: any = Math.floor(100000 + Math.random() * 900000); // Generate a 6-digit OTP
+      let otp: any = Math.floor(1000 + Math.random() * 9000); // Generate a 6-digit OTP
       if (mobileNumber.toString().startsWith('00')) {
-        otp = '000000';
+        otp = '0000';
         const update = await Driver.findOneAndUpdate(
           { mobileNumber },
           {
@@ -105,7 +105,7 @@ export async function handleLogin(req: Request, res: Response) {
         { upsert: true, new: true },
       ).lean();
 
-      let otp: any = Math.floor(100000 + Math.random() * 900000); // Generate a 6-digit OTP
+      let otp: any = Math.floor(1000 + Math.random() * 9000); // Generate a 6-digit OTP
       // if (mobileNumber.toString().startsWith('00')) {
       //   otp = '111111';
       // }
