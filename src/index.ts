@@ -84,6 +84,7 @@ import axios from 'axios';
 import { handleWebhookPost, handleWebhookVerification } from './main/whatsAppChat';
 import { createVehicleType, deleteVehicleType, getVehicleOne, getVehicleType, updateVehicleType } from './main/vehicleType';
 import { createFare, getFareValue, upDateFareValue } from './main/fare';
+import { createApp, getAppValue, upDateAppValue } from './main/app';
 
 let utilsData: any;
 
@@ -443,7 +444,7 @@ app.post('/razorPayCallback', (req, res) => {
 });
 
 app.post('/presignedurl', async (req, res) => {
-  // console.log('object req:>> ', req.body);
+  console.log('object req:>> ', req.body);
   try {
     const { key, contentType, type } = req.body;
 
@@ -470,6 +471,7 @@ app.post('/presignedurl', async (req, res) => {
       type == 'put' ? 'putObject' : 'getObject',
       s3Params,
     );
+    console.log("url",url);
     if (!url) {
       throw new Error('URL not generated');
     }
@@ -780,6 +782,14 @@ app.post('/add-fare',createFare)
 app.get('/get-fare',getFareValue)
 
 app.patch('/update-fare/:uid',upDateFareValue)
+
+// appName and Image
+
+app.post('/create-app',createApp)
+
+app.get('/get-app',getAppValue)
+
+app.patch('/update-app/:uid',upDateAppValue)
 
 // vehicle crud
 

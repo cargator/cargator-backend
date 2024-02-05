@@ -306,10 +306,22 @@ const faresSchema = new mongoose.Schema(
   },
 );
 
+const appsSchema = new mongoose.Schema(
+  {
+    name: String,
+    profileImageKey: String,
+  },
+  {
+    timestamps: true,
+    collection: 'apps',
+  },
+);
+
 
 export const Admin = mongoose.model('Admin', adminSchema);
 export const VehicleTypes = mongoose.model('vehicleTypes', vehicleTypeSchema);
 export const fares = mongoose.model('fares', faresSchema);
+export const apps = mongoose.model('apps', appsSchema);
 export const Driver = mongoose.model('Driver', driverSchema);
 export const Riders = mongoose.model('Riders', ridersSchema);
 export const Utils = mongoose.model('Utils', utilsSchema);
