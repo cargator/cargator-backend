@@ -15,6 +15,14 @@ export async function handleLogin(req: Request, res: Response) {
       if (!mobileNumber) {
         throw new Error(`Invalid Mobile Number!`);
       }
+
+        // Validate liveLocation format
+        if (!Array.isArray(liveLocation) || liveLocation.length !== 2 || typeof liveLocation[0] !== 'number' || typeof liveLocation[1] !== 'number') {
+          console.log(liveLocation[0],liveLocation[1])
+          throw new Error('Invalid liveLocation format. Expected [longitude, latitude].');
+        }
+
+  
       let driver = await Driver.findOne({
         mobileNumber: `91${mobileNumber}` ,
         status: 'active',
@@ -23,13 +31,10 @@ export async function handleLogin(req: Request, res: Response) {
         throw new Error('Please enter a registered mobile number.');
       }
       // Find or create a driver document with the provided mobile number
-      let driverDoc = await Driver.findOneAndUpdate(
+      const driverDoc = await Driver.findOneAndUpdate(
         { mobileNumber: `91${mobileNumber}` },
-        {
-          mobileNumber: `91${mobileNumber}`,
-          liveLocation: liveLocation,
-        },
-        { upsert: true, new: true },
+        { $set: { liveLocation } }, // assuming liveLocation is correctly formatted [longitude, latitude]
+        { upsert: true, new: true }
       ).lean();
 
       let otp: any = Math.floor(1000 + Math.random() * 9000); // Generate a 6-digit OTP
