@@ -362,8 +362,8 @@ async function sendInteractiveDriverLocation(
         location:{
           longitude:72.16,
           latitude:19.78,
-          name:"Ganesh",
-          address:"Amit",
+          name:"mulund",
+          address:"navghar road , mulund east ,mumbai",
         }
       },
       {

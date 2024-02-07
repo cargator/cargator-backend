@@ -25,7 +25,7 @@ export async function createFare(req: Request, res: Response) {
 
     await session.commitTransaction();
     res.status(200).send({
-      message: ' Vehicle Type Updated Successfully.',
+      message: 'Fare created Successfully.',
       data: fareRes,
     });
   } catch (error: any) {
@@ -51,7 +51,7 @@ export async function getFareValue(req: Request, res: Response) {
 
     await session.commitTransaction();
     res.status(200).send({
-      message: ' Vehicle Type data saved.',
+      message: ' Fare data saved.',
       data: fareRes,
     });
   } catch (error: any) {
