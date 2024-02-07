@@ -185,7 +185,7 @@ export async function handleWebhookPost(req: Request, res: Response) {
           // Join the ride room and emit ride-status event
           const formattedString = driver?.vehicleNumber?.replace(/([A-Z]{2})(\d{2})([A-Z]{2})(\d{4})/, "$1-$2-$3-$4");
           interactiveMessageBody['title'] =
-            `Thank You, an ambulance is on the way. The driver is ${driver?.firstName} ${driver?.lastName} and the number is +91${driver?.mobileNumber}. Plate number is ${formattedString}`;
+            `Thank You, an ambulance is on the way. The driver is ${driver?.firstName} ${driver?.lastName} and the number is +${driver?.mobileNumber}. Plate number is ${formattedString}`;
           interactiveMessageBody['messages'] = [
             {
               type: 'reply',
