@@ -16,8 +16,8 @@ jobs:
 
     env:
       PROJECT_ID: ${{ secrets.PROJECT_ID }}
-      SERVICE_NAME: cab-e-socket-service-dev
-      REGION: asia-south1
+      SERVICE_NAME: cargator
+      REGION: asia-southeast1
 
     steps:
       - name: Checkout
