@@ -21,12 +21,12 @@ export async function createApp(req: Request, res: Response) {
     );
 
     if (!fareRes) {
-      throw new Error('Error while getting fare');
+      throw new Error('Error while getting app name and logo');
     }
 
     await session.commitTransaction();
     res.status(200).send({
-      message: ' App Updated Successfully.',
+      message: ' App name and logo updated successfully.',
       data: fareRes,
     });
   } catch (error: any) {
@@ -52,7 +52,7 @@ export async function getAppValue(req: Request, res: Response) {
 
     await session.commitTransaction();
     res.status(200).send({
-      message: 'App data saved.',
+      message: 'App name and logo data saved.',
       data: fareRes,
     });
   } catch (error: any) {
@@ -87,7 +87,7 @@ export async function upDateAppValue(req: Request, res: Response) {
 
     await session.commitTransaction();
     res.status(200).send({
-      message: 'App updated successfully.',
+      message: 'App name and logo updated successfully.',
       data: faresRes,
     });
   } catch (error: any) {
