@@ -444,7 +444,6 @@ app.post('/razorPayCallback', (req, res) => {
 });
 
 app.post('/presignedurl', async (req, res) => {
-  console.log('object req:>> ', req.body);
   try {
     const { key, contentType, type } = req.body;
 
@@ -471,7 +470,6 @@ app.post('/presignedurl', async (req, res) => {
       type == 'put' ? 'putObject' : 'getObject',
       s3Params,
     );
-    console.log("url",url);
     if (!url) {
       throw new Error('URL not generated');
     }
