@@ -46,6 +46,8 @@ jobs:
           envKey_REFRESH_TOKEN_CLIENT_SECRET: ${{secrets.REFRESH_TOKEN_CLIENT_SECRET}}
           envKey_AUTHKEY_OTP: ${{secrets.AUTHKEY_OTP}}
           envKey_OTP_SID: ${{secrets.OTP_SID}}
+          envKey_WHATSAPP_AUTH_TOKEN: ${{secrets.WHATSAPP_AUTH_TOKEN}}
+          envKey_PREBOOK_RIDES_TIME_IN_MINUTES: ${{secrets.PREBOOK_RIDES_TIME_IN_MINUTES}}
       # Autheticatw with google
       - name: "Autheticate with Google"
         uses: "google-github-actions/auth@v1"
