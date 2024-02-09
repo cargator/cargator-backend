@@ -288,6 +288,8 @@ whatsappChatSchema.index({ pickUpLocation: '2d' });
 const vehicleTypeSchema = new mongoose.Schema(
   {
     vehicleType: String,
+    vehicleModel: String,
+    vehicleMake: String
   },
   {
     timestamps: true,

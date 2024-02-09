@@ -106,7 +106,9 @@ export async function getVehicleType(req: Request, res: Response) {
 
       const vehiclesType = await VehicleTypes.findOneAndUpdate({_id:id},
       {
-        vehicleType:req.body.vehicleType
+        vehicleType:req.body.vehicleType,
+        vehicleMake:req.body.vehicleMake,
+        vehicleModel:req.body.vehicleModel,
       },
       {new:true});
   
@@ -138,6 +140,8 @@ export async function createVehicleType(req: Request, res: Response) {
       session = await mongoose.startSession();
       const {
         vehicleType,
+        vehicleMake,
+        vehicleModel
       } = req.body;
       // console.log('object1 :>> ');
       session.startTransaction();
@@ -146,6 +150,8 @@ export async function createVehicleType(req: Request, res: Response) {
         [
           {
             vehicleType,
+            vehicleMake,
+            vehicleModel
           },
         ],
         { session: session },
