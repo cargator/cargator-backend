@@ -3,21 +3,22 @@ import express, { Request, Response, json } from 'express';
 import mongoose, { Types } from 'mongoose';
 import { formatSocketResponse } from '../helpers/common';
 import { getUtils } from '..';
+import environmentVars from '../constantsVars'
 
 const Razorpay = require('razorpay');
 const _ = require('lodash');
 const crypto = require('crypto');
 const razorpay = new Razorpay({
-  key_id: process.env.DEV_RAZORPAY_KEY_ID
-    ? process.env.DEV_RAZORPAY_KEY_ID
+  key_id: environmentVars.DEV_RAZORPAY_KEY_ID
+    ? environmentVars.DEV_RAZORPAY_KEY_ID
     : '',
-  key_secret: process.env.DEV_RAZORPAY_KEY_SECRET
-    ? process.env.DEV_RAZORPAY_KEY_SECRET
+  key_secret: environmentVars.DEV_RAZORPAY_KEY_SECRET
+    ? environmentVars.DEV_RAZORPAY_KEY_SECRET
     : '',
 });
 
 async function verifyRazorpayData(body: any, razorpaySignature: string) {
-  const secretKey: any = process.env.DEV_RAZORPAY_KEY_SECRET;
+  const secretKey: any = environmentVars.DEV_RAZORPAY_KEY_SECRET;
   const hmac = crypto.createHmac('sha256', secretKey);
   hmac.update(JSON.stringify(body));
   const digest = hmac.digest('hex');

@@ -2,11 +2,12 @@ import { Driver, Vehicles } from '../models';
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { getUtils } from '..';
+import environmentVars from '../constantsVars'
 const AWS = require('aws-sdk');
 AWS.config.update({
-  region: process.env.AWS_REGION,
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  region: environmentVars.AWS_REGION,
+  accessKeyId: environmentVars.AWS_ACCESS_KEY_ID,
+  secretAccessKey: environmentVars.AWS_SECRET_ACCESS_KEY,
 });
 
 const getSearchDriver = async (req: Request) => {

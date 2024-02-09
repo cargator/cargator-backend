@@ -2,6 +2,7 @@ import { Driver, Rides, Admin } from '../models';
 import { Request, Response } from 'express';
 const jwt = require('jsonwebtoken');
 const _ = require('lodash');
+import environmentVars from '../constantsVars'
 
 export async function adminLogin(req: Request, res: Response) {
   try {
@@ -26,7 +27,7 @@ export async function adminLogin(req: Request, res: Response) {
     }
 
     // Generate a JWT token
-    const token = jwt.sign({ email }, process.env.PUBLIC_KEY, {
+    const token = jwt.sign({ email }, environmentVars.PUBLIC_KEY, {
       expiresIn: '7d',
     });
 
@@ -63,7 +64,7 @@ export async function adminRegister(req: Request, res: Response) {
     // console.log(`admin-register >> adminDoc :>> `, adminDoc);
 
     // Generate a JWT token
-    const token = jwt.sign({ email }, process.env.PUBLIC_KEY, {
+    const token = jwt.sign({ email }, environmentVars.PUBLIC_KEY, {
       expiresIn: '7d',
     });
 
@@ -111,7 +112,7 @@ export async function changePassword(req: Request, res: Response) {
     }
 
     // Generate a JWT token
-    const token = jwt.sign({ email }, process.env.PUBLIC_KEY, {
+    const token = jwt.sign({ email }, environmentVars.PUBLIC_KEY, {
       expiresIn: '7d',
     });
 

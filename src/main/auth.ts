@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { Driver, Riders } from '../models';
+import environmentVars from '../constantsVars'
 import { Request, Response } from 'express';
 const jwt = require('jsonwebtoken');
 const _ = require('lodash');
@@ -59,7 +60,7 @@ export async function handleLogin(req: Request, res: Response) {
         (driverDoc.otpExpirationTime &&
           new Date(driverDoc.otpExpirationTime) < new Date())
       ) {
-        const otpExpire: any = process.env.OTP_EXPIRE || 0.5; // OTP Expiration Time is "30 Seconds".
+        const otpExpire: any = environmentVars.OTP_EXPIRE || 0.5; // OTP Expiration Time is "30 Seconds".
 
         await Driver.findOneAndUpdate(
           { mobileNumber: `91${mobileNumber}` },
@@ -83,7 +84,7 @@ export async function handleLogin(req: Request, res: Response) {
           // );
           // console.log(`sendSmsRes :>> `, sendSmsRes?.data);
           const sendSmsRes = await axios.get(
-            `https://api.authkey.io/request?authkey=${process.env.AUTHKEY_OTP}&mobile=${mobileNumber}&country_code=91&sid=${process.env.OTP_SID}&otp=${otp}`,
+            `https://api.authkey.io/request?authkey=${environmentVars.AUTHKEY_OTP}&mobile=${mobileNumber}&country_code=91&sid=${environmentVars.OTP_SID}&otp=${otp}`,
           );
           console.log(`sendSmsRes :>> `, sendSmsRes?.data);
           return res
@@ -131,7 +132,7 @@ export async function handleLogin(req: Request, res: Response) {
         (riderDoc.otpExpirationTime &&
           new Date(riderDoc.otpExpirationTime) < new Date())
       ) {
-        const otpExpire: any = process.env.OTP_EXPIRE || 0.5; // OTP Expiration Time is "30 Seconds".
+        const otpExpire: any = environmentVars.OTP_EXPIRE || 0.5; // OTP Expiration Time is "30 Seconds".
 
         await Riders.findOneAndUpdate(
           { mobileNumber: `91${mobileNumber}` },
@@ -151,7 +152,7 @@ export async function handleLogin(req: Request, res: Response) {
         } else {
           // const sendSmsRes=await axios.get(`https://api.authkey.io/request?authkey=641af54d28834eb0&mobile=${mobileNumber}&country_code=91&sms=Hello, your OTP is ${otp}&sender=641af54d28834eb0`)
           const sendSmsRes = await axios.get(
-            `https://api.authkey.io/request?authkey=${process.env.AUTHKEY_OTP}&mobile=${mobileNumber}&country_code=91&sid=${process.env.OTP_SID}&otp=${otp}`,
+            `https://api.authkey.io/request?authkey=${environmentVars.AUTHKEY_OTP}&mobile=${mobileNumber}&country_code=91&sid=${environmentVars.OTP_SID}&otp=${otp}`,
           );
           // const sendSmsRes = await axios.get(
           //   // `http://sms.bulkssms.com/submitsms.jsp?user=icallsms&key=d1cd9d7799XX&mobile=${mobileNumber}&message=Welcome to Cargator! Your login OTP is ${otp}.This code is valid for 5 minutes only.&senderid=MiCALL&accusage=1&entityid=1201159179632441114&tempid=1507167275825310764`, // ! NOT WORKING.
@@ -210,7 +211,7 @@ export async function verifyOtp(req: Request, res: Response) {
         user = _.pick(user, ['_id', 'mobileNumber', 'documentsKey']);
         const token = jwt.sign(
           { user, type: 'driver' },
-          process.env.PUBLIC_KEY,
+          environmentVars.PUBLIC_KEY,
           {
             expiresIn: '7d',
           },
@@ -256,7 +257,7 @@ export async function verifyOtp(req: Request, res: Response) {
         user = _.pick(user, ['_id', 'mobileNumber']);
         const token = jwt.sign(
           { user, type: 'rider' },
-          process.env.PUBLIC_KEY,
+          environmentVars.PUBLIC_KEY,
           {
             expiresIn: '7d',
           },

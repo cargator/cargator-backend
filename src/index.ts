@@ -7,6 +7,7 @@ import cors from 'cors';
 import express, { Request, Response, json } from 'express';
 import { createClient } from 'redis';
 import { Server, Socket } from 'socket.io';
+import environmentVars from './constantsVars'
 import { Types } from 'mongoose';
 // Files Imports
 import mongoConnect from './config/mongo';
@@ -96,10 +97,12 @@ const crypto = require('crypto');
 const Razorpay = require('razorpay');
 const cron = require('node-cron');
 const CronJob = require('cron').CronJob;
+
+
 AWS.config.update({
-  region: process.env.AWS_REGION,
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  region: environmentVars.AWS_REGION,
+  accessKeyId: environmentVars.AWS_ACCESS_KEY_ID,
+  secretAccessKey: environmentVars.AWS_SECRET_ACCESS_KEY,
 });
 
 // Function to add available drivers to a ride room and notify them about a new ride request
@@ -180,11 +183,11 @@ app.use(cors());
 app.use(json());
 
 const razorpay = new Razorpay({
-  key_id: process.env.DEV_RAZORPAY_KEY_ID
-    ? process.env.DEV_RAZORPAY_KEY_ID
+  key_id: environmentVars.DEV_RAZORPAY_KEY_ID
+    ? environmentVars.DEV_RAZORPAY_KEY_ID
     : '',
-  key_secret: process.env.DEV_RAZORPAY_KEY_SECRET
-    ? process.env.DEV_RAZORPAY_KEY_SECRET
+  key_secret: environmentVars.DEV_RAZORPAY_KEY_SECRET
+    ? environmentVars.DEV_RAZORPAY_KEY_SECRET
     : '',
 });
 
@@ -194,12 +197,12 @@ const refreshToken = async () => {
         // Make a request to obtain a new token (assuming you have the necessary API endpoint)
     const data = {
       grant_type: 'client_credentials',
-      client_id: `${process.env.REFRESH_TOKEN_CLIENT_ID}`,
-      client_secret: `${process.env.REFRESH_TOKEN_CLIENT_SECRET}`,
+      client_id: `${environmentVars.REFRESH_TOKEN_CLIENT_ID}`,
+      client_secret: `${environmentVars.REFRESH_TOKEN_CLIENT_SECRET}`,
     };
 
         const token: any = await axios.post(
-      `${process.env.REFRESH_TOKEN_URL}`,
+      `${environmentVars.REFRESH_TOKEN_URL}`,
       data,
       {
         headers: { 'content-type': 'application/x-www-form-urlencoded' },
@@ -395,7 +398,7 @@ const authorize = async (req: any, res: Response, next: any) => {
     const token = req?.headers?.authorization?.split(' ')[1];
     if (token) {
       // Verify the JWT token
-      jwt.verify(token, process.env.PUBLIC_KEY, (err: any, decoded: any) => {
+      jwt.verify(token, environmentVars.PUBLIC_KEY, (err: any, decoded: any) => {
         if (err) {
           throw new Error('Invalid token');
           // res.status(401).send({ message: 'Token invalid' });
@@ -415,7 +418,7 @@ const authorize = async (req: any, res: Response, next: any) => {
 
 const decodeToken = (token: any) => {
   try {
-    const data = jwt.verify(token, process.env.PUBLIC_KEY);
+    const data = jwt.verify(token, environmentVars.PUBLIC_KEY);
     // return JSON.parse(data);
     return data
   } catch (error) {
@@ -496,7 +499,7 @@ app.use(authorize);
 
 app.post('/add-profile-details', addProfileDetails);
 
-if (process.env.MAP_MY_INDIA == 'false') {
+if (environmentVars.MAP_MY_INDIA == 'false') {
   // Route for fetching address predictions from Google Places Autocomplete API
   app.post('/get-address-from-autocomplete', getAddressFromAutocomplete);
 
@@ -817,7 +820,7 @@ app.post('/chat-gpt-api', chatGptApi);
 // Redis pub/sub setup
 export const pubClient = createClient({
   url:
-    process.env.REDIS_URL ||
+  environmentVars.REDIS_URL ||
     'redis://default:Titandevil@12@redis-19288.c212.ap-south-1-1.ec2.cloud.redislabs.com:19288',
 });
 export const subClient = pubClient.duplicate();

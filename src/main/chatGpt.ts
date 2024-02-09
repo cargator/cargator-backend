@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
 import axios from 'axios';
 import { Rides } from '../models';
-const apiUrl: any = process.env.OPEN_AI_API_URL;
+import environmentVars from '../constantsVars'
+const apiUrl: any = environmentVars.OPEN_AI_API_URL;
 
 export async function chatGptApi(req: Request, res: Response) {
   const mode = req.body.mode;
@@ -53,7 +54,7 @@ export async function chatGptApi(req: Request, res: Response) {
       const response = await axios.post(apiUrl, requestData, {
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${process.env.OPEN_AI_API_KEY}`,
+          Authorization: `Bearer ${environmentVars.OPEN_AI_API_KEY}`,
         },
       });
 
@@ -113,7 +114,7 @@ export async function chatGptApi(req: Request, res: Response) {
         const response = await axios.post(apiUrl, requestData, {
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${process.env.OPEN_AI_API_KEY}`,
+            Authorization: `Bearer ${environmentVars.OPEN_AI_API_KEY}`,
           },
         });
 
@@ -173,7 +174,7 @@ export async function chatGptApi(req: Request, res: Response) {
         const response = await axios.post(apiUrl, requestData, {
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${process.env.OPEN_AI_API_KEY}`,
+            Authorization: `Bearer ${environmentVars.OPEN_AI_API_KEY}`,
           },
         });
 

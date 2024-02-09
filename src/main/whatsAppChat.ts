@@ -11,14 +11,12 @@ import get from 'lodash/get.js';
 import dotenv from 'dotenv';
 import { Driver, Rides, whatsappChats } from '../models';
 import { getUtils } from '..';
+import environmentVars from '../constantsVars'
 dotenv.config();
 
 interface InteractiveMessageBody {
   [key: string]: any;
 }
-
-const token = process.env.WHATSAPP_AUTH_TOKEN;
-console.log("process.env.WHATSAPP_AUTH_TOKEN Outside.",process.env.WHATSAPP_AUTH_TOKEN)
 
 export async function handleWebhookVerification(req: Request, res: Response) {
   console.log(req.query['hub.verify_token']);
@@ -28,8 +26,7 @@ export async function handleWebhookVerification(req: Request, res: Response) {
 
 export async function handleWebhookPost(req: Request, res: Response) {
   try {
-    console.log('whatsAppChatBot');
-    console.log("process.env.WHATSAPP_AUTH_TOKEN Inside.",process.env.WHATSAPP_AUTH_TOKEN)
+    console.log('whatsAppChatBot')
     const interactiveMessageBody: InteractiveMessageBody = {};
     let riderData: InteractiveMessageBody = {};
     const body_param = req.body;
@@ -308,7 +305,7 @@ async function sendInteractiveMessagesButtons(
       },
       {
         headers: {
-          authorization: `Bearer ${process.env.WHATSAPP_AUTH_TOKEN}`,
+          authorization: `Bearer ${environmentVars.WHATSAPP_AUTH_TOKEN}`,
         },
       },
     );
@@ -339,7 +336,7 @@ async function sendInteractiveMessagesButtons1(interactiveMessageBody: any) {
       },
       {
         headers: {
-          Authorization: `Bearer ${process.env.WHATSAPP_AUTH_TOKEN}`,
+          Authorization: `Bearer ${environmentVars.WHATSAPP_AUTH_TOKEN}`,
         },
       },
     );
@@ -370,7 +367,7 @@ async function sendInteractiveDriverLocation(
       },
       {
         headers: {
-          authorization: `Bearer ${process.env.WHATSAPP_AUTH_TOKEN}`,
+          authorization: `Bearer ${environmentVars.WHATSAPP_AUTH_TOKEN}`,
         },
       },
     );
@@ -397,7 +394,7 @@ async function sendTextMessagesV2(
       },
       {
         headers: {
-          authorization: `Bearer ${process.env.WHATSAPP_AUTH_TOKEN}`,
+          authorization: `Bearer ${environmentVars.WHATSAPP_AUTH_TOKEN}`,
         },
       },
     );
