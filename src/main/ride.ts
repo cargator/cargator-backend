@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { Rides } from '../models';
 import mongoose, { Types } from 'mongoose';
+import { platform } from 'os';
 
 export async function getRidesByFilters(req: Request, res: Response) {
   try {
@@ -41,6 +42,7 @@ export async function getRidesByFilters(req: Request, res: Response) {
                 dropAddress: 1,
                 status: 1,
                 fare: 1,
+                platform:1,
                 createdAt: 1,
                 'driverDetails.mobileNumber': 1, // Include the name field from the User collection
                 'riderDetails.mobileNumber': 1, // Include the email field from the User collection
@@ -255,6 +257,7 @@ export async function getCurrentRide(req: Request, res: Response) {
                 dropAddress: 1,
                 status: 1,
                 fare: 1,
+                platform:1,
                 createdAt: 1,
                 'driverDetails.mobileNumber': 1, // Include the name field from the User collection
                 'riderDetails.mobileNumber': 1, // Include the email field from the User collection
