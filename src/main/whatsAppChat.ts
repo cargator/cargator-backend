@@ -18,6 +18,7 @@ interface InteractiveMessageBody {
 }
 
 const token = process.env.WHATSAPP_AUTH_TOKEN;
+console.log("process.env.WHATSAPP_AUTH_TOKEN Outside.",process.env.WHATSAPP_AUTH_TOKEN)
 
 export async function handleWebhookVerification(req: Request, res: Response) {
   console.log(req.query['hub.verify_token']);
@@ -28,6 +29,7 @@ export async function handleWebhookVerification(req: Request, res: Response) {
 export async function handleWebhookPost(req: Request, res: Response) {
   try {
     console.log('whatsAppChatBot');
+    console.log("process.env.WHATSAPP_AUTH_TOKEN Inside.",process.env.WHATSAPP_AUTH_TOKEN)
     const interactiveMessageBody: InteractiveMessageBody = {};
     let riderData: InteractiveMessageBody = {};
     const body_param = req.body;
