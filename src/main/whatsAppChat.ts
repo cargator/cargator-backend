@@ -143,13 +143,13 @@ async function locationReply(
   req: any,
 ) {
   try {
-    // checking pickup location in DB
+    // getting senderNumber Data in DB
     const resp = await whatsappChats.findOne({
       mobileNumber: senderNumber,
     });
 
+    // if already i have pickupLocation in db then storing drop location in db and create ride .
     if (resp?.pickUpLocation) {
-      // if already i have pickupLocation in db then storing drop location in db and create ride .
       await addingDropLocAndCreateRide(
         senderNumber,
         interactiveMessageBody,
