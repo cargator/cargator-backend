@@ -9,10 +9,13 @@ import axios from 'axios';
 import { Request, Response } from 'express';
 import get from 'lodash/get.js';
 import dotenv from 'dotenv';
+import { Resend } from 'resend';
 import { Driver, Rides, whatsappChats } from '../models';
 import { getUtils } from '..';
-import environmentVars from '../constantsVars'
+import environmentVars from '../constantsVars';
 dotenv.config();
+
+const resendClient = new Resend(environmentVars.EMAIL_AUTHKEY);
 
 interface InteractiveMessageBody {
   [key: string]: any;
@@ -26,29 +29,46 @@ export async function handleWebhookVerification(req: Request, res: Response) {
 
 export async function handleWebhookPost(req: Request, res: Response) {
   try {
-    console.log('whatsAppChatBot')
+    console.log('whatsAppChatBot');
     const interactiveMessageBody: InteractiveMessageBody = {};
-    let riderData: InteractiveMessageBody = {};
+    // let riderData: InteractiveMessageBody = {};
     const body_param = req.body;
     let typeOfInteractive, idOfInteractive;
+
     let typeOfMessage = get(
       body_param,
       'entry[0].changes[0].value.messages[0].type',
       undefined,
     );
+
     const senderNumber = get(
       body_param,
       'entry[0].changes[0].value.messages[0].from',
       undefined,
     );
+
     const phoneId = get(
       body_param,
       'entry[0].changes[0].value.metadata.phone_number_id',
       undefined,
     );
-
+    
     if (!typeOfMessage || !senderNumber) return;
     console.log('typeOfMessage ', typeOfMessage);
+
+    // getting phone-number and id for sending reply
+    interactiveMessageBody['sender'] = senderNumber;
+    interactiveMessageBody['phoneId'] = phoneId;
+
+     // sending welcome message with sending request for pickup location
+    if (typeOfMessage == 'text') {
+      await textReply(senderNumber,interactiveMessageBody);
+    }
+
+    // accepting pickup location and drop location here , According to that we are sending reply
+    if (typeOfMessage == 'location') {
+      await locationReply(senderNumber,interactiveMessageBody,req);
+    }
 
     if (typeOfMessage == 'interactive') {
       typeOfInteractive = get(
@@ -61,216 +81,21 @@ export async function handleWebhookPost(req: Request, res: Response) {
         'entry[0].changes[0].value.messages[0].interactive.button_reply.id',
         undefined,
       );
-      if (typeOfInteractive == 'button_reply')
-        typeOfMessage = 'button_interactive';
+
+      // converting typeOfMessage for understanding what type of message i have to send for reply
       if (
         typeOfInteractive == 'button_reply' &&
         idOfInteractive.startsWith('Yes')
-      )
-        typeOfMessage = 'board_interactive';
+      ) {
+        // sending request for Drop location with text
+        await dropLocationRequest(interactiveMessageBody);
+      }
       if (
         typeOfInteractive == 'button_reply' &&
         idOfInteractive.startsWith('No')
-      )
-        typeOfMessage = 'board_interactive';
-      if (
-        typeOfInteractive == 'button_reply' &&
-        idOfInteractive.startsWith('track_Location')
-      )
-        typeOfMessage = 'driver_interactive';
-    }
-  
-
-    interactiveMessageBody['sender'] = senderNumber;
-    interactiveMessageBody['phoneId'] = phoneId;
-
-    switch (typeOfMessage) {
-      case 'text': {
-        const resp3 = await whatsappChats.findOneAndUpdate(
-          { mobileNumber: senderNumber },
-          { dropLocation: null, pickUpLocation: null , pickAddress:null, dropAddress:null},
-          { new: true },
-        );
-
-        interactiveMessageBody['title'] =
-          'Hello, Thank You for contacting Zenzo. Please share your current/preferred location for an ambulance pickup.';
-        interactiveMessageBody['messages'] = [
-          {
-            type: 'reply',
-            reply: {
-              id: `sendLoc`,
-              title: `Send Location`,
-          }
-        }
-        ];
-        await sendInteractiveMessagesButtons(interactiveMessageBody);
-        break;
-      }
-
-      case 'location': {
-        const resp3 = await whatsappChats.findOne({
-          mobileNumber: senderNumber,
-        });
-        if (resp3?.pickUpLocation) {
-          const respDrop = await whatsappChats.findOneAndUpdate(
-            { mobileNumber: senderNumber },
-            {
-              dropLocation:
-                [req.body.entry[0].changes[0].value.messages[0].location.latitude,req.body.entry[0].changes[0].value.messages[0].location.longitude],
-              dropAddress: req?.body?.entry[0]?.changes[0].value.messages[0].location?.address
-            },
-            { new: true },
-          );
-          const utilsdata = getUtils();
-          const nearbyDriversDistanceInKm: any =
-            utilsdata.nearbyDriversDistanceInKm;
-          const nearbyDriversDistanceInRadians =
-            nearbyDriversDistanceInKm / 111.12;
-          const availableDrivers = await Driver.find({
-            rideStatus: 'online', // is acceptingRides(online) or not (offline)
-            status: 'active', // drivers current ride status i.e if on a ride(on-ride) or free(active)
-            liveLocation: {
-              // $near: [72.9656312, 19.1649861],
-              $near: [
-                respDrop?.pickUpLocation[1],
-                respDrop?.pickUpLocation[0],
-                // rideDetails.pickUpLocation[1],
-                // rideDetails.pickUpLocation[0],
-              ],
-              // $maxDistance: nearbyDriversDistanceInRadians,
-            },
-          })
-          .limit(20)
-          .lean();
-          
-          const driver = availableDrivers[0];
-
-          if(!driver){
-            interactiveMessageBody['title'] =
-            `Driver is not available, Please try again`;
-            await sendTextMessagesV2(interactiveMessageBody);
-            break;
-          }
-          console.log("resp",respDrop?.pickUpLocation);
-          let newRide: any = await Rides.create({
-            pickUpAddress: respDrop?.pickAddress,
-            dropAddress: respDrop?.dropAddress,
-            // driverPathToPickUp:[{latitude:driver?.liveLocation[0],longitude:driver?.liveLocation[1]},{latitude:respDrop?.pickUpLocation[0],longitude:respDrop?.pickUpLocation[1]}],
-            // pickupToDropPath:[{latitude:respDrop?.pickUpLocation[0],longitude:respDrop?.pickUpLocation[1]},{latitude:respDrop?.dropLocation[0],longitude:respDrop?.dropLocation[1]}],
-            pickUpLocation: respDrop?.pickUpLocation,
-            dropLocation: respDrop?.dropLocation,
-            riderId: respDrop?._id,
-            vehicleNumber: availableDrivers[0]?.vehicleNumber,
-            driverId: availableDrivers[0]?._id,
-            platform:'whatsApp',
-            bookingTime:new Date(),
-            status: 'pending-arrival',
-            otp:"0000",
-          });
-          // const setSocket = setDriverSocket(JSON.stringify(driver._id))
-        //   let tempDriverId = driver._id.toString();
-        //  const driverSocket =  setDriverSocket(tempDriverId,socket);
-        //  const driversSocket = getDriverSocket(tempDriverId);
-        //  console.log("driverSocket",driversSocket);
-        //  console.log("driverSocket",driverSocket);
-        //  driverSocket.emit('ride-request', formatSocketResponse([newRide]));
-          // if (driversSocket) {
-          //   console.log("driver Socket connected")
-          //   driversSocket.emit('ride-request', formatSocketResponse([newRide]));
-          //   driversSocket.join(`${newRide._id.toString()}-ride-room`);
-          // }
-          // console.log("availableDrivers",availableDrivers)
-          // IF it's a Scheduled-Ride, then continue:
-          // Join the ride room and emit ride-status event
-          const formattedString = driver?.vehicleNumber?.replace(/([A-Z]{2})(\d{2})([A-Z]{2})(\d{4})/, "$1-$2-$3-$4");
-          interactiveMessageBody['title'] =
-            `Thank You, an ambulance is on the way. The driver is ${driver?.firstName} ${driver?.lastName} and the number is +${driver?.mobileNumber}. Plate number is ${formattedString}`;
-          interactiveMessageBody['messages'] = [
-            {
-              type: 'reply',
-              reply: {
-                id: `track_Location`,
-                title: `Track Location`,
-              },
-            },
-          ];
-          await sendTextMessagesV2(interactiveMessageBody);
-          break;
-        } else {
-          const respPick = await whatsappChats.findOneAndUpdate(
-            { mobileNumber: senderNumber },
-            {
-              pickUpLocation:
-              [req.body?.entry[0].changes[0].value.messages[0].location.latitude,req.body.entry[0].changes[0].value.messages[0].location.longitude],
-              pickAddress:req?.body?.entry[0]?.changes[0].value.messages[0].location?.address
-            },
-            { new: true },
-          );
-          if (!respPick) {
-            const defaultAddress = "default_value";
-            const resp1 = await whatsappChats.create({
-              mobileNumber: senderNumber,
-              pickUpLocation: [
-                req?.body.entry[0]?.changes[0].value.messages[0].location.latitude,
-                req?.body.entry[0]?.changes[0].value.messages[0].location.longitude
-              ],
-              pickAddress: req?.body?.entry[0]?.changes[0].value.messages[0].location?.address || defaultAddress,
-            });
-          }
-        }
-        interactiveMessageBody['title'] =
-          'Do you need an ambulance with an oxygen cylinder?';
-        interactiveMessageBody['messages'] = [
-          {
-            type: 'reply',
-            reply: {
-              id: `Yes`,
-              title: `Yes`,
-            },
-          },
-          {
-            type: 'reply',
-            reply: {
-              id: `No`,
-              title: `No`,
-            },
-          },
-        ];
-        await sendInteractiveMessagesButtons1(interactiveMessageBody);
-        break;
-      }
-
-      case 'board_interactive': {
-        interactiveMessageBody['title'] = 'Where do you need to go?';
-        interactiveMessageBody['messages'] = [
-          {
-            type: 'reply',
-            reply: {
-              id: `dropLoc`,
-              title: `Drop Location`,
-            },
-          },
-        ];
-        await sendInteractiveMessagesButtons(interactiveMessageBody);
-        break;
-      }
-
-      case 'driver_interactive' : {
-        const respRider = await whatsappChats.findOneAndUpdate(
-          { mobileNumber: senderNumber })
-        const respRide = await Rides.findOne({riderId:respRider?._id})
-        interactiveMessageBody['title'] = 'Plz wait for Location';
-        interactiveMessageBody['messages'] = [
-          {
-            type: 'reply',
-            reply: {
-              id: `dropLoc`,
-              title: `Drop Location`,
-            },
-          },
-        ];
-        await sendInteractiveDriverLocation(interactiveMessageBody);
-        break;
+      ) {
+        // sending request for Drop location with text
+        await dropLocationRequest(interactiveMessageBody);
       }
     }
 
@@ -281,11 +106,222 @@ export async function handleWebhookPost(req: Request, res: Response) {
   }
 }
 
+async function textReply(senderNumber:any,interactiveMessageBody:any) {
+  try {
+    const resp3 = await whatsappChats.findOneAndUpdate(
+      { mobileNumber: senderNumber },
+      {
+        dropLocation: null,
+        pickUpLocation: null,
+        pickAddress: null,
+        dropAddress: null,
+      },
+      { new: true },
+    );
+
+    interactiveMessageBody['title'] =
+      'Hello, Thank You for contacting Zenzo. Please share your current/preferred location for an ambulance pickup.';
+    interactiveMessageBody['messages'] = [
+      {
+        type: 'reply',
+        reply: {
+          id: `sendLoc`,
+          title: `Send Location`,
+        },
+      },
+    ];
+    await sendInteractiveMessagesButtons(interactiveMessageBody);
+  } catch (error) {}
+}
+
+async function locationReply(senderNumber:any,interactiveMessageBody:any,req:any) {
+  try {
+    // checking pickup location in DB
+    const resp = await whatsappChats.findOne({
+      mobileNumber: senderNumber,
+    });
+
+    if (resp?.pickUpLocation) {
+      // if already i have pickupLocation in db then storing drop location in db and create ride .
+      await addingDropLocAndCreateRide(senderNumber,interactiveMessageBody,req);
+      return;
+    }
+
+    // if pickupLocation not present in Db then storing pickup location in db
+    await addingPickupLocation(senderNumber,req);
+
+    // sending OxygenCylinder Request YES Or NO .
+    interactiveMessageBody['title'] =
+      'Do you need an ambulance with an oxygen cylinder?';
+
+    interactiveMessageBody['messages'] = [
+      {
+        type: 'reply',
+        reply: {
+          id: `Yes`,
+          title: `Yes`,
+        },
+      },
+      {
+        type: 'reply',
+        reply: {
+          id: `No`,
+          title: `No`,
+        },
+      },
+    ];
+
+    await sendInteractiveMessagesYesNoButtons(interactiveMessageBody);
+  } catch (error) {
+    console.log('error', error);
+  }
+}
+
+async function dropLocationRequest(interactiveMessageBody:any) {
+  interactiveMessageBody['title'] = 'Where do you need to go?';
+  interactiveMessageBody['messages'] = [
+    {
+      type: 'reply',
+      reply: {
+        id: `dropLoc`,
+        title: `Drop Location`,
+      },
+    },
+  ];
+
+  await sendInteractiveMessagesButtons(interactiveMessageBody);
+}
+
+async function addingPickupLocation(senderNumber:any,req:any) {
+  // if already user data or number present in db then we are updating pickupLocation
+  const respPick = await whatsappChats.findOneAndUpdate(
+    { mobileNumber: senderNumber },
+    {
+      pickUpLocation: [
+        req.body?.entry[0].changes[0].value.messages[0].location.latitude,
+        req.body?.entry[0].changes[0].value.messages[0].location.longitude,
+      ],
+      pickAddress:
+        req?.body?.entry[0]?.changes[0].value.messages[0].location?.address,
+    },
+    { new: true },
+  );
+
+  // if already user data or number is present in db then creating new entry in DB with pickupLoaction
+  if (!respPick) {
+    const resp1 = await whatsappChats.create({
+      mobileNumber: senderNumber,
+      pickUpLocation: [
+        req?.body.entry[0]?.changes[0].value.messages[0].location.latitude,
+        req?.body.entry[0]?.changes[0].value.messages[0].location.longitude,
+      ],
+      pickAddress:
+        req?.body?.entry[0]?.changes[0].value.messages[0].location
+          ?.address || '',
+    });
+  }
+}
+
+async function addingDropLocAndCreateRide(senderNumber:any,interactiveMessageBody:any,req:any) {
+  try {
+    // adding drop location in DB
+    const respDrop = await whatsappChats.findOneAndUpdate(
+      { mobileNumber: senderNumber },
+      {
+        dropLocation: [
+          req.body.entry[0].changes[0].value.messages[0].location.latitude,
+          req.body.entry[0].changes[0].value.messages[0].location.longitude,
+        ],
+        dropAddress:
+          req?.body?.entry[0]?.changes[0].value.messages[0].location
+            ?.address,
+      },
+      { new: true },
+    );
+    // const utilsdata = getUtils();
+    // const nearbyDriversDistanceInKm: any =
+    //   utilsdata.nearbyDriversDistanceInKm;
+    // const nearbyDriversDistanceInRadians =
+    //   nearbyDriversDistanceInKm / 111.12;
+
+    const nearbyDriversDistanceInRadians = 5 / 111.12;
+
+    // finding near by Drivers for Rider
+    const availableDrivers = await Driver.find({
+      rideStatus: 'online', // is acceptingRides(online) or not (offline)
+      status: 'active', // drivers current ride status i.e if on a ride(on-ride) or free(active)
+      liveLocation: {
+        $near: [respDrop?.pickUpLocation[1], respDrop?.pickUpLocation[0]],
+        $maxDistance: nearbyDriversDistanceInRadians,
+      },
+    })
+      .limit(20)
+      .lean();
+
+    const driver = availableDrivers[0];
+
+    //sending email to organization
+
+    const mailParams = {
+      from: 'onboarding@resend.dev',
+      to: ['manish@cargator.org'],
+      subject: 'Hello World',
+      html: '<p>Congrats on sending your <strong>first email</strong>!</p>',
+    };
+
+    // resendClient.emails.send(mailParams).then((response) => {
+    //     console.log(`Sent message ${JSON.stringify(response)}`);
+    // }).catch((error) => {
+    //     console.error(`Error while sending email: ${error}`);
+    // });
+
+    // driver is not present
+    if (!driver) {
+      interactiveMessageBody[
+        'title'
+      ] = `Driver is not available, Please try again`;
+      await sendTextMessages(interactiveMessageBody);
+      return;
+    }
+    console.log('resp', respDrop?.pickUpLocation);
+
+    // Creating rides
+    let newRide: any = await Rides.create({
+      pickUpAddress: respDrop?.pickAddress,
+      dropAddress: respDrop?.dropAddress,
+      // driverPathToPickUp:[{latitude:driver?.liveLocation[0],longitude:driver?.liveLocation[1]},{latitude:respDrop?.pickUpLocation[0],longitude:respDrop?.pickUpLocation[1]}],
+      // pickupToDropPath:[{latitude:respDrop?.pickUpLocation[0],longitude:respDrop?.pickUpLocation[1]},{latitude:respDrop?.dropLocation[0],longitude:respDrop?.dropLocation[1]}],
+      pickUpLocation: respDrop?.pickUpLocation,
+      dropLocation: respDrop?.dropLocation,
+      riderId: respDrop?._id,
+      vehicleNumber: availableDrivers[0]?.vehicleNumber,
+      driverId: availableDrivers[0]?._id,
+      platform: 'whatsApp',
+      bookingTime: new Date(),
+      status: 'pending-arrival',
+      otp: '0000',
+    });
+
+    const formattedString = driver?.vehicleNumber?.replace(
+      /([A-Z]{2})(\d{2})([A-Z]{2})(\d{4})/,
+      '$1-$2-$3-$4',
+    );
+
+    // sending driver information to user
+    interactiveMessageBody[
+      'title'
+    ] = `Thank You, an ambulance is on the way. The driver is ${driver?.firstName} ${driver?.lastName} and the number is +${driver?.mobileNumber}. Plate number is ${formattedString}`;
+
+    await sendTextMessages(interactiveMessageBody);
+  } catch (error) {
+    console.log('error', error);
+  }
+}
+
 async function sendInteractiveMessagesButtons(
   interactiveMessageBody: InteractiveMessageBody,
 ) {
   try {
-
     let responce = axios.post(
       `https://graph.facebook.com/v17.0/${interactiveMessageBody.phoneId}/messages`,
       {
@@ -294,12 +330,12 @@ async function sendInteractiveMessagesButtons(
         to: interactiveMessageBody.sender,
         type: 'interactive',
         interactive: {
-          type: "location_request_message",
+          type: 'location_request_message',
           body: {
             text: `${interactiveMessageBody.title}`,
           },
           action: {
-            name: "send_location" 
+            name: 'send_location',
           },
         },
       },
@@ -310,12 +346,14 @@ async function sendInteractiveMessagesButtons(
       },
     );
   } catch (error) {
-    console.log("error",error);
+    console.log('error', error);
     throw Error('error in sendInteractiveMessagesButtons');
   }
 }
 
-async function sendInteractiveMessagesButtons1(interactiveMessageBody: any) {
+async function sendInteractiveMessagesYesNoButtons(
+  interactiveMessageBody: any,
+) {
   try {
     const response = await axios.post(
       `https://graph.facebook.com/v17.0/${interactiveMessageBody.phoneId}/messages`,
@@ -347,36 +385,7 @@ async function sendInteractiveMessagesButtons1(interactiveMessageBody: any) {
   }
 }
 
-async function sendInteractiveDriverLocation(
-  interactiveMessageBody: InteractiveMessageBody,
-) {
-  try {
-    axios.post(
-      `https://graph.facebook.com/v17.0/${interactiveMessageBody.phoneId}/messages`,
-      {
-        messaging_product: 'whatsapp',
-        recipient_type: 'individual',
-        to: interactiveMessageBody.sender,
-        type: 'location',
-        location:{
-          longitude:72.16,
-          latitude:19.78,
-          name:"mulund",
-          address:"navghar road , mulund east ,mumbai",
-        }
-      },
-      {
-        headers: {
-          authorization: `Bearer ${environmentVars.WHATSAPP_AUTH_TOKEN}`,
-        },
-      },
-    );
-  } catch (error) {
-    throw Error('error in sendInteractiveMessagesList');
-  }
-}
-
-async function sendTextMessagesV2(
+async function sendTextMessages(
   interactiveMessageBody: InteractiveMessageBody,
 ) {
   try {
