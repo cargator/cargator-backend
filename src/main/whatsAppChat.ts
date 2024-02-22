@@ -286,12 +286,32 @@ async function addingDropLocAndCreateRide(
     const driver = availableDrivers[0];
 
     //sending email to organization
+    // console.log("Data",senderNumber,respDrop?.pickAddress,respDrop?.dropAddress,respDrop?.pickUpLocation[0],respDrop?.pickUpLocation[1]
+    // ,respDrop?.dropLocation[0],respDrop?.dropLocation[1])
+
+    const htmldata = `<p>Congrats on sending your <strong>first email</strong>!</p>
+    <ul>
+        <li>Rider Number: <span id="senderNumber">${[senderNumber]}</span></li>
+        <li>Pick Up Address: <span id="pickUpAddress">${[respDrop?.pickAddress]}</span></li>
+        <li>Drop Address: <span id="dropAddress">${[respDrop?.dropAddress]}</span></li>
+  
+        <li>Pickup to Drop Path: 
+            <ul>
+                <li>Latitude: ${[respDrop?.pickUpLocation[0]]}</li>
+                <li>Longitude: ${[respDrop?.pickUpLocation[1]]}</li>
+            </ul>
+            <ul>
+                <li>Latitude: ${[respDrop?.dropLocation[0]]}</li>
+                <li>Longitude: ${[respDrop?.dropLocation[1]]}</li>
+            </ul>
+        </li>
+    </ul>`
 
     const mailParams = {
       from: 'onboarding@resend.dev',
       to: ['manish@cargator.org'],
-      subject: 'Hello World',
-      html: '<p>Congrats on sending your <strong>first email</strong>!</p>',
+      subject: 'Rider Details',
+      html: htmldata,
     };
 
     // resendClient.emails.send(mailParams).then((response) => {
