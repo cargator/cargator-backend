@@ -52,7 +52,7 @@ export async function handleWebhookPost(req: Request, res: Response) {
       'entry[0].changes[0].value.metadata.phone_number_id',
       undefined,
     );
-    
+
     if (!typeOfMessage || !senderNumber) return;
     console.log('typeOfMessage ', typeOfMessage);
 
@@ -60,14 +60,14 @@ export async function handleWebhookPost(req: Request, res: Response) {
     interactiveMessageBody['sender'] = senderNumber;
     interactiveMessageBody['phoneId'] = phoneId;
 
-     // sending welcome message with sending request for pickup location
+    // sending welcome message with sending request for pickup location
     if (typeOfMessage == 'text') {
-      await textReply(senderNumber,interactiveMessageBody);
+      await textReply(senderNumber, interactiveMessageBody);
     }
 
     // accepting pickup location and drop location here , According to that we are sending reply
     if (typeOfMessage == 'location') {
-      await locationReply(senderNumber,interactiveMessageBody,req);
+      await locationReply(senderNumber, interactiveMessageBody, req);
     }
 
     if (typeOfMessage == 'interactive') {
@@ -106,7 +106,7 @@ export async function handleWebhookPost(req: Request, res: Response) {
   }
 }
 
-async function textReply(senderNumber:any,interactiveMessageBody:any) {
+async function textReply(senderNumber: any, interactiveMessageBody: any) {
   try {
     const resp3 = await whatsappChats.findOneAndUpdate(
       { mobileNumber: senderNumber },
@@ -131,10 +131,17 @@ async function textReply(senderNumber:any,interactiveMessageBody:any) {
       },
     ];
     await sendInteractiveMessagesButtons(interactiveMessageBody);
-  } catch (error) {}
+  } catch (error) {
+    console.log('error', error);
+    throw Error('error in textReply');
+  }
 }
 
-async function locationReply(senderNumber:any,interactiveMessageBody:any,req:any) {
+async function locationReply(
+  senderNumber: any,
+  interactiveMessageBody: any,
+  req: any,
+) {
   try {
     // checking pickup location in DB
     const resp = await whatsappChats.findOne({
@@ -143,12 +150,16 @@ async function locationReply(senderNumber:any,interactiveMessageBody:any,req:any
 
     if (resp?.pickUpLocation) {
       // if already i have pickupLocation in db then storing drop location in db and create ride .
-      await addingDropLocAndCreateRide(senderNumber,interactiveMessageBody,req);
+      await addingDropLocAndCreateRide(
+        senderNumber,
+        interactiveMessageBody,
+        req,
+      );
       return;
     }
 
     // if pickupLocation not present in Db then storing pickup location in db
-    await addingPickupLocation(senderNumber,req);
+    await addingPickupLocation(senderNumber, req);
 
     // sending OxygenCylinder Request YES Or NO .
     interactiveMessageBody['title'] =
@@ -174,55 +185,70 @@ async function locationReply(senderNumber:any,interactiveMessageBody:any,req:any
     await sendInteractiveMessagesYesNoButtons(interactiveMessageBody);
   } catch (error) {
     console.log('error', error);
+    throw Error('error in locationReply');
   }
 }
 
-async function dropLocationRequest(interactiveMessageBody:any) {
-  interactiveMessageBody['title'] = 'Where do you need to go?';
-  interactiveMessageBody['messages'] = [
-    {
-      type: 'reply',
-      reply: {
-        id: `dropLoc`,
-        title: `Drop Location`,
+async function dropLocationRequest(interactiveMessageBody: any) {
+  try {
+    interactiveMessageBody['title'] = 'Where do you need to go?';
+    interactiveMessageBody['messages'] = [
+      {
+        type: 'reply',
+        reply: {
+          id: `dropLoc`,
+          title: `Drop Location`,
+        },
       },
-    },
-  ];
+    ];
 
-  await sendInteractiveMessagesButtons(interactiveMessageBody);
-}
-
-async function addingPickupLocation(senderNumber:any,req:any) {
-  // if already user data or number present in db then we are updating pickupLocation
-  const respPick = await whatsappChats.findOneAndUpdate(
-    { mobileNumber: senderNumber },
-    {
-      pickUpLocation: [
-        req.body?.entry[0].changes[0].value.messages[0].location.latitude,
-        req.body?.entry[0].changes[0].value.messages[0].location.longitude,
-      ],
-      pickAddress:
-        req?.body?.entry[0]?.changes[0].value.messages[0].location?.address,
-    },
-    { new: true },
-  );
-
-  // if already user data or number is present in db then creating new entry in DB with pickupLoaction
-  if (!respPick) {
-    const resp1 = await whatsappChats.create({
-      mobileNumber: senderNumber,
-      pickUpLocation: [
-        req?.body.entry[0]?.changes[0].value.messages[0].location.latitude,
-        req?.body.entry[0]?.changes[0].value.messages[0].location.longitude,
-      ],
-      pickAddress:
-        req?.body?.entry[0]?.changes[0].value.messages[0].location
-          ?.address || '',
-    });
+    await sendInteractiveMessagesButtons(interactiveMessageBody);
+  } catch (error) {
+    console.log("error",error)
+    throw Error('error in dropLocationRequest');
   }
 }
 
-async function addingDropLocAndCreateRide(senderNumber:any,interactiveMessageBody:any,req:any) {
+async function addingPickupLocation(senderNumber: any, req: any) {
+  try {
+    // if already user data or number present in db then we are updating pickupLocation
+    const respPick = await whatsappChats.findOneAndUpdate(
+      { mobileNumber: senderNumber },
+      {
+        pickUpLocation: [
+          req.body?.entry[0].changes[0].value.messages[0].location.latitude,
+          req.body?.entry[0].changes[0].value.messages[0].location.longitude,
+        ],
+        pickAddress:
+          req?.body?.entry[0]?.changes[0].value.messages[0].location?.address,
+      },
+      { new: true },
+    );
+
+    // if already user data or number is present in db then creating new entry in DB with pickupLoaction
+    if (!respPick) {
+      const resp1 = await whatsappChats.create({
+        mobileNumber: senderNumber,
+        pickUpLocation: [
+          req?.body.entry[0]?.changes[0].value.messages[0].location.latitude,
+          req?.body.entry[0]?.changes[0].value.messages[0].location.longitude,
+        ],
+        pickAddress:
+          req?.body?.entry[0]?.changes[0].value.messages[0].location?.address ||
+          '',
+      });
+    }
+  } catch (error) {
+    console.log('error', error);
+    throw Error('error in addingPickupLocation');
+  }
+}
+
+async function addingDropLocAndCreateRide(
+  senderNumber: any,
+  interactiveMessageBody: any,
+  req: any,
+) {
   try {
     // adding drop location in DB
     const respDrop = await whatsappChats.findOneAndUpdate(
@@ -233,8 +259,7 @@ async function addingDropLocAndCreateRide(senderNumber:any,interactiveMessageBod
           req.body.entry[0].changes[0].value.messages[0].location.longitude,
         ],
         dropAddress:
-          req?.body?.entry[0]?.changes[0].value.messages[0].location
-            ?.address,
+          req?.body?.entry[0]?.changes[0].value.messages[0].location?.address,
       },
       { new: true },
     );
@@ -315,6 +340,7 @@ async function addingDropLocAndCreateRide(senderNumber:any,interactiveMessageBod
     await sendTextMessages(interactiveMessageBody);
   } catch (error) {
     console.log('error', error);
+    throw Error('error in addingDropLocAndCreateRide');
   }
 }
 
@@ -409,5 +435,6 @@ async function sendTextMessages(
     );
   } catch (error) {
     console.log(error);
+    throw Error('error in sendInteractiveMessages');
   }
 }
