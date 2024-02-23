@@ -62,7 +62,14 @@ export async function handleWebhookPost(req: Request, res: Response) {
 
     // sending welcome message with sending request for pickup location
     if (typeOfMessage == 'text') {
-      await textReply(senderNumber, interactiveMessageBody);
+      console.log("req",req.body?.entry[0].changes[0].value.messages[0].text.body)
+      const text = req.body?.entry[0].changes[0].value.messages[0].text.body
+      // checking email address or simple text
+      if(text.includes('@')){
+        await emailReply(interactiveMessageBody);
+      }else{
+        await textReply(senderNumber, interactiveMessageBody);
+      }
     }
 
     // accepting pickup location and drop location here , According to that we are sending reply
@@ -83,6 +90,27 @@ export async function handleWebhookPost(req: Request, res: Response) {
       );
 
       // converting typeOfMessage for understanding what type of message i have to send for reply
+      if (
+        typeOfInteractive == 'button_reply' &&
+        idOfInteractive.startsWith('Ambulance_flow')
+      ) {
+        // sending request for Drop location with text
+        await ambulanceFlow(senderNumber, interactiveMessageBody);
+      }
+      if (
+        typeOfInteractive == 'button_reply' &&
+        idOfInteractive.startsWith('Taxi_flow_Reply')
+      ) {
+        // sending request for Drop location with text
+        await taxiFlow(senderNumber, interactiveMessageBody);
+      }
+      if (
+        typeOfInteractive == 'button_reply' &&
+        idOfInteractive.startsWith('Contact_us_Reply')
+      ) {
+        // sending request for Drop location with text
+        await contactUsReply(senderNumber, interactiveMessageBody);
+      }
       if (
         typeOfInteractive == 'button_reply' &&
         idOfInteractive.startsWith('Yes')
@@ -120,6 +148,52 @@ async function textReply(senderNumber: any, interactiveMessageBody: any) {
     );
 
     interactiveMessageBody['title'] =
+      'Welcome to the CarGator chatbot, the open-source mobility stack. You can try several user flows via this interface With options';
+    interactiveMessageBody['messages'] = [
+      {
+        type: 'reply',
+        reply: {
+          id: `Ambulance_flow`,
+          title: `Ambulance flow`,
+        },
+      },
+      {
+        type: 'reply',
+        reply: {
+          id: `Taxi_flow_Reply`,
+          title: `Taxi flow`,
+        },
+      },
+      {
+        type: 'reply',
+        reply: {
+          id: `Contact_us_Reply`,
+          title: `Contact us`,
+        },
+      },
+    ];
+
+    await sendInteractiveMessagesYesNoButtons(interactiveMessageBody);
+  } catch (error) {
+    console.log('error', error);
+    throw Error('error in textReply');
+  }
+}
+
+async function ambulanceFlow(senderNumber: any, interactiveMessageBody: any) {
+  try {
+    const resp3 = await whatsappChats.findOneAndUpdate(
+      { mobileNumber: senderNumber },
+      {
+        dropLocation: null,
+        pickUpLocation: null,
+        pickAddress: null,
+        dropAddress: null,
+      },
+      { new: true },
+    );
+
+    interactiveMessageBody['title'] =
       'Hello, Thank You for contacting Zenzo. Please share your current/preferred location for an ambulance pickup.';
     interactiveMessageBody['messages'] = [
       {
@@ -130,11 +204,52 @@ async function textReply(senderNumber: any, interactiveMessageBody: any) {
         },
       },
     ];
+
+    // await sendInteractiveMessagesOptionsButtons(interactiveMessageBody);
     await sendInteractiveMessagesButtons(interactiveMessageBody);
   } catch (error) {
     console.log('error', error);
     throw Error('error in textReply');
   }
+}
+
+async function contactUsReply(senderNumber: any, interactiveMessageBody: any) {
+  try {
+    interactiveMessageBody['title'] =
+      'Provide your email address, and we will get back to you.';
+    interactiveMessageBody['messages'] = [
+      {
+        type: 'reply',
+        reply: {
+          id: `sendEmail`,
+          title: `Send Email`,
+        },
+      },
+    ];
+
+    await sendInteractiveMessagesForContact(interactiveMessageBody);
+  } catch (error) {
+    console.log('error', error);
+    throw Error('error in textReply');
+  }
+}
+
+async function taxiFlow(senderNumber: any, interactiveMessageBody: any) {
+  try {
+    interactiveMessageBody['title'] = 'Coming Soon…';
+    await sendTextMessages(interactiveMessageBody);
+  } catch (error) {
+    console.log('error', error);
+    throw Error('error in textReply');
+  }
+}
+
+async function emailReply(interactiveMessageBody: any) {
+  interactiveMessageBody[
+    'title'
+  ] = `Thank you for providing your email address.`;
+
+  await sendTextMessages(interactiveMessageBody);
 }
 
 async function locationReply(
@@ -204,7 +319,7 @@ async function dropLocationRequest(interactiveMessageBody: any) {
 
     await sendInteractiveMessagesButtons(interactiveMessageBody);
   } catch (error) {
-    console.log("error",error)
+    console.log('error', error);
     throw Error('error in dropLocationRequest');
   }
 }
@@ -289,36 +404,45 @@ async function addingDropLocAndCreateRide(
     // console.log("Data",senderNumber,respDrop?.pickAddress,respDrop?.dropAddress,respDrop?.pickUpLocation[0],respDrop?.pickUpLocation[1]
     // ,respDrop?.dropLocation[0],respDrop?.dropLocation[1])
 
-    const htmldata = `<p>Congrats on sending your <strong>first email</strong>!</p>
+    const htmldata = `<p><strong>Rider Details</strong>!</p>
     <ul>
         <li>Rider Number: <span id="senderNumber">${[senderNumber]}</span></li>
-        <li>Pick Up Address: <span id="pickUpAddress">${[respDrop?.pickAddress]}</span></li>
-        <li>Drop Address: <span id="dropAddress">${[respDrop?.dropAddress]}</span></li>
+        <li>Pick Up Address: <span id="pickUpAddress">${[
+          respDrop?.pickAddress,
+        ]}</span></li>
+        <li>Drop Address: <span id="dropAddress">${[
+          respDrop?.dropAddress,
+        ]}</span></li>
   
-        <li>Pickup to Drop Path: 
+        <li>Pickup Path: 
             <ul>
                 <li>Latitude: ${[respDrop?.pickUpLocation[0]]}</li>
                 <li>Longitude: ${[respDrop?.pickUpLocation[1]]}</li>
             </ul>
+        </li>
+        <li>Drop Path: 
             <ul>
                 <li>Latitude: ${[respDrop?.dropLocation[0]]}</li>
                 <li>Longitude: ${[respDrop?.dropLocation[1]]}</li>
             </ul>
         </li>
-    </ul>`
+    </ul>`;
 
     const mailParams = {
       from: 'onboarding@resend.dev',
-      to: ['manish@cargator.org'],
+      to: ['beep@cargator.org'],
       subject: 'Rider Details',
       html: htmldata,
     };
 
-    // resendClient.emails.send(mailParams).then((response) => {
-    //     console.log(`Sent message ${JSON.stringify(response)}`);
-    // }).catch((error) => {
-    //     console.error(`Error while sending email: ${error}`);
-    // });
+    resendClient.emails
+      .send(mailParams)
+      .then((response) => {
+        console.log(`Sent message ${JSON.stringify(response)}`);
+      })
+      .catch((error) => {
+        console.error(`Error while sending email: ${error}`);
+      });
 
     // driver is not present
     if (!driver) {
@@ -456,5 +580,33 @@ async function sendTextMessages(
   } catch (error) {
     console.log(error);
     throw Error('error in sendInteractiveMessages');
+  }
+}
+
+async function sendInteractiveMessagesForContact(
+  interactiveMessageBody: InteractiveMessageBody,
+) {
+  try {
+    let response = await axios.post(
+      `https://graph.facebook.com/v17.0/${interactiveMessageBody.phoneId}/messages`,
+      {
+        messaging_product: 'whatsapp',
+        recipient_type: 'individual',
+        to: interactiveMessageBody.sender,
+        type: 'text',
+        text: {
+          preview_url: false,
+          body: `${interactiveMessageBody.title}`,
+        },
+      },
+      {
+        headers: {
+          authorization: `Bearer ${environmentVars.WHATSAPP_AUTH_TOKEN}`,
+        },
+      },
+    );
+  } catch (error) {
+    console.log('error', error);
+    throw Error('error in sendInteractiveMessagesButtons');
   }
 }
