@@ -194,7 +194,7 @@ async function ambulanceFlow(senderNumber: any, interactiveMessageBody: any) {
     );
 
     interactiveMessageBody['title'] =
-      'Hello, Thank You for contacting Zenzo. Please share your current/preferred location for an ambulance pickup.';
+      'Hello, Thank You for contacting XYZ ambulance. Please share your current/preferred location for an ambulance pickup.';
     interactiveMessageBody['messages'] = [
       {
         type: 'reply',
