@@ -48,6 +48,7 @@ jobs:
           envKey_OTP_SID: ${{secrets.OTP_SID}}
           envKey_WHATSAPP_AUTH_TOKEN: ${{secrets.WHATSAPP_AUTH_TOKEN}}
           envKey_PREBOOK_RIDES_TIME_IN_MINUTES: ${{secrets.PREBOOK_RIDES_TIME_IN_MINUTES}}
+          envKey_EMAIL_AUTHKEY: ${{secrets.EMAIL_AUTHKEY}}
       # Autheticatw with google
       - name: "Autheticate with Google"
         uses: "google-github-actions/auth@v1"
