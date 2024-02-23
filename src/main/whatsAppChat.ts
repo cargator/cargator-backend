@@ -148,7 +148,7 @@ async function textReply(senderNumber: any, interactiveMessageBody: any) {
     );
 
     interactiveMessageBody['title'] =
-      'Welcome to the CarGator chatbot, the open-source mobility stack. You can try several user flows via this interface With options';
+      'Welcome to the CarGator chatbot, the open-source mobility stack.\n \nYou can try several user flows via this interface, please select from below.';
     interactiveMessageBody['messages'] = [
       {
         type: 'reply',
