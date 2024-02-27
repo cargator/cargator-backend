@@ -429,7 +429,7 @@ async function addingDropLocAndCreateRide(
     </ul>`;
 
     const mailParams = {
-      from: 'onboarding@resend.dev',
+      from: 'beep@cargator.org',
       to: ['beep@cargator.org'],
       subject: 'Rider Details',
       html: htmldata,
