@@ -219,7 +219,7 @@ async function textReply(senderNumber: any, interactiveMessageBody: any) {
     ];
 
     // await sendInteractiveMessagesYesNoButtons(interactiveMessageBody);
-    interactiveMessageBody['heading'] = 'FLOW_OPTIONS';
+    interactiveMessageBody['heading'] = 'FLOW OPTIONS';
     await sendInteractiveMessagesList(interactiveMessageBody);
   } catch (error) {
     console.log('error', error);
@@ -547,9 +547,9 @@ async function addingDropLocAndCreateRide(
     </ul>`;
 
     const mailParams = {
-      from: 'beep@cargator.org',
+      from: 'CarGator <hello@cargator.org>',
       to: ['beep@cargator.org'],
-      subject: 'Rider Details',
+      subject: 'Trip Details',
       html: htmldata,
     };
 
