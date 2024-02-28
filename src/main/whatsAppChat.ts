@@ -394,7 +394,7 @@ async function towTruckFlow(senderNumber: any, interactiveMessageBody: any) {
 async function contactUsReply(senderNumber: any, interactiveMessageBody: any) {
   try {
     interactiveMessageBody['title'] =
-      'Provide your email address, and we will get back to you.';
+      'Contact me is just a text box: \n \nPlease enter your email address and we will contact you. Thank you';
     interactiveMessageBody['messages'] = [
       {
         type: 'reply',
@@ -768,14 +768,14 @@ async function addingDropLocAndCreateRide(
       html: htmldata,
     };
 
-    // resendClient.emails
-    //   .send(mailParams)
-    //   .then((response) => {
-    //     console.log(`Sent message ${JSON.stringify(response)}`);
-    //   })
-    //   .catch((error) => {
-    //     console.error(`Error while sending email: ${error}`);
-    //   });
+    resendClient.emails
+      .send(mailParams)
+      .then((response) => {
+        console.log(`Sent message ${JSON.stringify(response)}`);
+      })
+      .catch((error) => {
+        console.error(`Error while sending email: ${error}`);
+      });
 
     // driver is not present
     console.log('resp', respDrop?.flowType);
