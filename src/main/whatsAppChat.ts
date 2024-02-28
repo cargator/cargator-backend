@@ -72,6 +72,43 @@ export async function handleWebhookPost(req: Request, res: Response) {
       const text = req.body?.entry[0].changes[0].value.messages[0].text.body;
       // checking email address or simple text
       if (text.includes('@')) {
+        const name =
+          req?.body?.entry[0]?.changes[0].value.contacts[0]?.profile.name;
+        const currentTime = new Date();
+        const date = currentTime.toLocaleString('en-US', {
+          timeZone: 'Asia/Kolkata',
+        });
+        console.log("pN",name)
+        console.log("date",date);
+        console.log("senderNumber",senderNumber);
+        console.log("text",text);
+
+        const htmldata = `<h2><strong>Trip Details</strong></h2>
+        <ul>
+          <li>Date/Time of request: <span id="date">${[date]}</span></li>
+          <li>Rider Name: <span id="senderName">${[name]}</span></li>
+          <li>Rider Number: <span id="senderNumber">${[
+            senderNumber,
+          ]}</span></li> 
+          <li>Email: <span id="email">${[text]}</span></li> 
+        </ul>`;
+
+        const mailParams = {
+          from: 'CarGator <hello@cargator.org>',
+          to: ['beep@cargator.org'],
+          subject: 'Trip Details',
+          html: htmldata,
+        };
+
+        // resendClient.emails
+        //   .send(mailParams)
+        //   .then((response) => {
+        //     console.log(`Sent message ${JSON.stringify(response)}`);
+        //   })
+        //   .catch((error) => {
+        //     console.error(`Error while sending email: ${error}`);
+        //   });
+
         await emailReply(interactiveMessageBody);
       } else {
         await textReply(senderNumber, interactiveMessageBody);
@@ -140,6 +177,62 @@ export async function handleWebhookPost(req: Request, res: Response) {
       ) {
         // sending request for Drop location with text
         await contactUsReply(senderNumber, interactiveMessageBody);
+      }
+      if (
+        typeOfInteractive == 'button_reply' &&
+        idOfInteractive.startsWith('Maruti')
+      ) {
+        // sending request for Drop location with text
+        await marutiCar(interactiveMessageBody);
+      }
+      if (
+        typeOfInteractive == 'button_reply' &&
+        idOfInteractive.startsWith('Hyundai')
+      ) {
+        // sending request for Drop location with text
+        await hyundaiCar(interactiveMessageBody);
+      }
+      if (
+        typeOfInteractive == 'button_reply' &&
+        idOfInteractive.startsWith('Porsche')
+      ) {
+        // sending request for Drop location with text
+        await porscheCar(interactiveMessageBody);
+      }
+      if (
+        (typeOfInteractive == 'button_reply' &&
+          idOfInteractive.startsWith('ertiga')) ||
+        (typeOfInteractive == 'button_reply' &&
+          idOfInteractive.startsWith('swift')) ||
+        (typeOfInteractive == 'button_reply' &&
+          idOfInteractive.startsWith('creta')) ||
+        (typeOfInteractive == 'button_reply' &&
+          idOfInteractive.startsWith('i20')) ||
+        (typeOfInteractive == 'button_reply' &&
+          idOfInteractive.startsWith('macan')) ||
+        (typeOfInteractive == 'button_reply' &&
+          idOfInteractive.startsWith('911'))
+      ) {
+        interactiveMessageBody['title'] = 'Do you require a flatbed tow truck?';
+
+        interactiveMessageBody['messages'] = [
+          {
+            type: 'reply',
+            reply: {
+              id: `Yes`,
+              title: `Yes`,
+            },
+          },
+          {
+            type: 'reply',
+            reply: {
+              id: `No`,
+              title: `No`,
+            },
+          },
+        ];
+
+        await sendInteractiveMessagesYesNoButtons(interactiveMessageBody);
       }
       if (
         typeOfInteractive == 'button_reply' &&
@@ -396,29 +489,29 @@ async function locationReply(
     }
 
     // sending OxygenCylinder Request YES Or NO .
-    if (resp?.flowType === 'Towing_Service') {
-      interactiveMessageBody['title'] = 'Do you require a flatbed tow truck?';
+    // if (resp?.flowType === 'Towing_Service') {
+    //   interactiveMessageBody['title'] = 'Do you require a flatbed tow truck?';
 
-      interactiveMessageBody['messages'] = [
-        {
-          type: 'reply',
-          reply: {
-            id: `Yes`,
-            title: `Yes`,
-          },
-        },
-        {
-          type: 'reply',
-          reply: {
-            id: `No`,
-            title: `No`,
-          },
-        },
-      ];
+    //   interactiveMessageBody['messages'] = [
+    //     {
+    //       type: 'reply',
+    //       reply: {
+    //         id: `Yes`,
+    //         title: `Yes`,
+    //       },
+    //     },
+    //     {
+    //       type: 'reply',
+    //       reply: {
+    //         id: `No`,
+    //         title: `No`,
+    //       },
+    //     },
+    //   ];
 
-      await sendInteractiveMessagesYesNoButtons(interactiveMessageBody);
-      return;
-    }
+    //   await sendInteractiveMessagesYesNoButtons(interactiveMessageBody);
+    //   return;
+    // }
 
     interactiveMessageBody['title'] =
       'Do you need an ambulance with an oxygen cylinder?';
@@ -444,6 +537,87 @@ async function locationReply(
   } catch (error) {
     console.log('error', error);
     throw Error('error in locationReply');
+  }
+}
+
+async function marutiCar(interactiveMessageBody: any) {
+  try {
+    interactiveMessageBody['title'] = 'Select your Make/Model';
+    interactiveMessageBody['messages'] = [
+      {
+        type: 'reply',
+        reply: {
+          id: `ertiga`,
+          title: `Ertiga`,
+        },
+      },
+      {
+        type: 'reply',
+        reply: {
+          id: `swift`,
+          title: `Swift`,
+        },
+      },
+    ];
+
+    await sendInteractiveMessagesYesNoButtons(interactiveMessageBody);
+  } catch (error) {
+    console.log('error', error);
+    throw Error('error in dropLocationRequest');
+  }
+}
+
+async function hyundaiCar(interactiveMessageBody: any) {
+  try {
+    interactiveMessageBody['title'] = 'Select your Make/Model';
+    interactiveMessageBody['messages'] = [
+      {
+        type: 'reply',
+        reply: {
+          id: `creta`,
+          title: `Creta`,
+        },
+      },
+      {
+        type: 'reply',
+        reply: {
+          id: `i20`,
+          title: `i20`,
+        },
+      },
+    ];
+
+    await sendInteractiveMessagesYesNoButtons(interactiveMessageBody);
+  } catch (error) {
+    console.log('error', error);
+    throw Error('error in dropLocationRequest');
+  }
+}
+
+async function porscheCar(interactiveMessageBody: any) {
+  try {
+    interactiveMessageBody['title'] = 'Select your Make/Model';
+    interactiveMessageBody['messages'] = [
+      {
+        type: 'reply',
+        reply: {
+          id: `macan`,
+          title: `Macan`,
+        },
+      },
+      {
+        type: 'reply',
+        reply: {
+          id: `911`,
+          title: `911`,
+        },
+      },
+    ];
+
+    await sendInteractiveMessagesYesNoButtons(interactiveMessageBody);
+  } catch (error) {
+    console.log('error', error);
+    throw Error('error in dropLocationRequest');
   }
 }
 
@@ -552,7 +726,9 @@ async function addingDropLocAndCreateRide(
       req?.body?.entry[0]?.changes[0].value.contacts[0]?.profile.name;
     const oxygenCylinder = respDrop?.oxygenCylinder;
     const currentTime = new Date();
-    const date = currentTime.toLocaleString('en-US', {timeZone: 'Asia/Kolkata'});
+    const date = currentTime.toLocaleString('en-US', {
+      timeZone: 'Asia/Kolkata',
+    });
     // console.log("date",date);
 
     const htmldata = `<h2><strong>Trip Details</strong></h2>
@@ -560,9 +736,11 @@ async function addingDropLocAndCreateRide(
         <li>Date/Time of request: <span id="date">${[date]}</span></li>
         <li>Rider Name: <span id="senderName">${[name]}</span></li>
         <li>Rider Number: <span id="senderNumber">${[senderNumber]}</span></li> 
-        <li>${respDrop?.flowType === 'Towing_Service' ?  "flatbed tow truck" : "Oxygen Cylinder"}: <span id="oxygenCylinder">${[
-          oxygenCylinder,
-        ]}</span></li> 
+        <li>${
+          respDrop?.flowType === 'Towing_Service'
+            ? 'flatbed tow truck'
+            : 'Oxygen Cylinder'
+        }: <span id="oxygenCylinder">${[oxygenCylinder]}</span></li> 
         <li>Pickup Address: <span id="pickUpAddress">${[
           respDrop?.pickAddress,
         ]}</span></li>
