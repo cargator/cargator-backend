@@ -146,6 +146,13 @@ export async function handleWebhookPost(req: Request, res: Response) {
         idOfInteractive.startsWith('Yes')
       ) {
         // sending request for Drop location with text
+        const respDrop = await whatsappChats.findOneAndUpdate(
+          { mobileNumber: senderNumber },
+          {
+            oxygenCylinder:'Yes'
+          },
+          { new: true },
+        );
         await dropLocationRequest(interactiveMessageBody);
       }
       if (
@@ -153,6 +160,13 @@ export async function handleWebhookPost(req: Request, res: Response) {
         idOfInteractive.startsWith('No')
       ) {
         // sending request for Drop location with text
+        const respDrop = await whatsappChats.findOneAndUpdate(
+          { mobileNumber: senderNumber },
+          {
+            oxygenCylinder:'No'
+          },
+          { new: true },
+        );
         await dropLocationRequest(interactiveMessageBody);
       }
     }
@@ -174,6 +188,7 @@ async function textReply(senderNumber: any, interactiveMessageBody: any) {
         pickAddress: null,
         dropAddress: null,
         flowType: null,
+        oxygenCylinder:null,
       },
       { new: true },
     );
@@ -222,6 +237,7 @@ async function ambulanceFlow(senderNumber: any, interactiveMessageBody: any) {
         pickAddress: null,
         dropAddress: null,
         flowType: 'Ambulance_Service',
+        oxygenCylinder: null,
       },
       { new: true },
     );
@@ -256,6 +272,7 @@ async function towTruckFlow(senderNumber: any, interactiveMessageBody: any) {
         pickAddress: null,
         dropAddress: null,
         flowType: 'Towing_Service',
+        oxygenCylinder: null,
       },
       { new: true },
     );
@@ -497,24 +514,31 @@ async function addingDropLocAndCreateRide(
     //sending email to organization
     // console.log("Data",senderNumber,respDrop?.pickAddress,respDrop?.dropAddress,respDrop?.pickUpLocation[0],respDrop?.pickUpLocation[1]
     // ,respDrop?.dropLocation[0],respDrop?.dropLocation[1])
+    // console.log("name",req?.body.entry[0].changes[0].value.contacts[0].profile.name);
+    // console.log("Oxygen",respDrop)
+    const name = req?.body?.entry[0]?.changes[0].value.contacts[0]?.profile.name;
+    const oxygenCylinder = respDrop?.oxygenCylinder;
+    // console.log("date",new Date());
 
-    const htmldata = `<p><strong>Rider Details</strong>!</p>
+    const htmldata = `<h2><strong>Trip Details</strong></h2>
     <ul>
-        <li>Rider Number: <span id="senderNumber">${[senderNumber]}</span></li>
-        <li>Pick Up Address: <span id="pickUpAddress">${[
+        <li>Date/Time of request: <span id="date">${[new Date()]}</span></li>
+        <li>Rider Name: <span id="senderName">${[name]}</span></li>
+        <li>Rider Number: <span id="senderNumber">${[senderNumber]}</span></li> 
+        <li>Oxygen Cylinder: <span id="oxygenCylinder">${[oxygenCylinder]}</span></li> 
+        <li>Pickup Address: <span id="pickUpAddress">${[
           respDrop?.pickAddress,
         ]}</span></li>
-        <li>Drop Address: <span id="dropAddress">${[
-          respDrop?.dropAddress,
-        ]}</span></li>
-  
-        <li>Pickup Path: 
+        <li>Pickup geo: 
             <ul>
                 <li>Latitude: ${[respDrop?.pickUpLocation[0]]}</li>
                 <li>Longitude: ${[respDrop?.pickUpLocation[1]]}</li>
             </ul>
         </li>
-        <li>Drop Path: 
+        <li>Drop off Address: <span id="dropAddress">${[
+          respDrop?.dropAddress,
+        ]}</span></li>
+        <li>Drop geo: 
             <ul>
                 <li>Latitude: ${[respDrop?.dropLocation[0]]}</li>
                 <li>Longitude: ${[respDrop?.dropLocation[1]]}</li>
@@ -529,14 +553,14 @@ async function addingDropLocAndCreateRide(
       html: htmldata,
     };
 
-    // resendClient.emails
-    //   .send(mailParams)
-    //   .then((response) => {
-    //     console.log(`Sent message ${JSON.stringify(response)}`);
-    //   })
-    //   .catch((error) => {
-    //     console.error(`Error while sending email: ${error}`);
-    //   });
+    resendClient.emails
+      .send(mailParams)
+      .then((response) => {
+        console.log(`Sent message ${JSON.stringify(response)}`);
+      })
+      .catch((error) => {
+        console.error(`Error while sending email: ${error}`);
+      });
 
     // driver is not present
     console.log('resp', respDrop?.flowType);
@@ -582,7 +606,7 @@ async function addingDropLocAndCreateRide(
       return;
     }
 
-    // for ambulance service 
+    // for ambulance service
     interactiveMessageBody[
       'title'
     ] = `Thank You, an ambulance is on the way. The driver is ${driver?.firstName} ${driver?.lastName} and the number is +${driver?.mobileNumber}. Plate number is ${formattedString}`;
