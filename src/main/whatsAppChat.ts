@@ -527,7 +527,7 @@ async function addingDropLocAndCreateRide(
         <li>Date/Time of request: <span id="date">${[new Date()]}</span></li>
         <li>Rider Name: <span id="senderName">${[name]}</span></li>
         <li>Rider Number: <span id="senderNumber">${[senderNumber]}</span></li> 
-        <li>Oxygen Cylinder: <span id="oxygenCylinder">${[
+        <li>${respDrop?.flowType === 'Towing_Service' ?  "flatbed tow truck" : "Oxygen Cylinder"}: <span id="oxygenCylinder">${[
           oxygenCylinder,
         ]}</span></li> 
         <li>Pickup Address: <span id="pickUpAddress">${[
