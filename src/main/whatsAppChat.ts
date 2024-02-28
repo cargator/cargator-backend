@@ -120,13 +120,13 @@ export async function handleWebhookPost(req: Request, res: Response) {
         // sending request for Drop location with text
         await ambulanceFlow(senderNumber, interactiveMessageBody);
       }
-      if (
-        typeOfInteractive == 'button_reply' &&
-        idOfInteractive.startsWith('Taxi_flow_Reply')
-      ) {
-        // sending request for Drop location with text
-        await taxiFlow(senderNumber, interactiveMessageBody);
-      }
+      // if (
+      //   typeOfInteractive == 'button_reply' &&
+      //   idOfInteractive.startsWith('Taxi_flow_Reply')
+      // ) {
+      //   // sending request for Drop location with text
+      //   await taxiFlow(senderNumber, interactiveMessageBody);
+      // }
       if (
         typeOfInteractive == 'button_reply' &&
         idOfInteractive.startsWith('Tow_Truck_flow')
@@ -134,13 +134,13 @@ export async function handleWebhookPost(req: Request, res: Response) {
         // sending request for Drop location with text
         await towTruckFlow(senderNumber, interactiveMessageBody);
       }
-      // if (
-      //   typeOfInteractive == 'button_reply' &&
-      //   idOfInteractive.startsWith('Contact_us_Reply')
-      // ) {
-      //   // sending request for Drop location with text
-      //   await contactUsReply(senderNumber, interactiveMessageBody);
-      // }
+      if (
+        typeOfInteractive == 'button_reply' &&
+        idOfInteractive.startsWith('Contact_us_Reply')
+      ) {
+        // sending request for Drop location with text
+        await contactUsReply(senderNumber, interactiveMessageBody);
+      }
       if (
         typeOfInteractive == 'button_reply' &&
         idOfInteractive.startsWith('Yes')
@@ -206,15 +206,15 @@ async function textReply(senderNumber: any, interactiveMessageBody: any) {
       {
         type: 'reply',
         reply: {
-          id: `Taxi_flow_Reply`,
-          title: `Taxi flow`,
+          id: `Tow_Truck_flow`,
+          title: `Tow Truck flow`,
         },
       },
       {
         type: 'reply',
         reply: {
-          id: `Tow_Truck_flow`,
-          title: `Tow Truck flow`,
+          id: `Contact_us_Reply`,
+          title: `Contact us`,
         },
       },
     ];
@@ -298,36 +298,36 @@ async function towTruckFlow(senderNumber: any, interactiveMessageBody: any) {
   }
 }
 
-// async function contactUsReply(senderNumber: any, interactiveMessageBody: any) {
-//   try {
-//     interactiveMessageBody['title'] =
-//       'Provide your email address, and we will get back to you.';
-//     interactiveMessageBody['messages'] = [
-//       {
-//         type: 'reply',
-//         reply: {
-//           id: `sendEmail`,
-//           title: `Send Email`,
-//         },
-//       },
-//     ];
-
-//     await sendInteractiveMessagesForContact(interactiveMessageBody);
-//   } catch (error) {
-//     console.log('error', error);
-//     throw Error('error in textReply');
-//   }
-// }
-
-async function taxiFlow(senderNumber: any, interactiveMessageBody: any) {
+async function contactUsReply(senderNumber: any, interactiveMessageBody: any) {
   try {
-    interactiveMessageBody['title'] = 'Coming Soon…';
-    await sendTextMessages(interactiveMessageBody);
+    interactiveMessageBody['title'] =
+      'Provide your email address, and we will get back to you.';
+    interactiveMessageBody['messages'] = [
+      {
+        type: 'reply',
+        reply: {
+          id: `sendEmail`,
+          title: `Send Email`,
+        },
+      },
+    ];
+
+    await sendInteractiveMessagesForContact(interactiveMessageBody);
   } catch (error) {
     console.log('error', error);
     throw Error('error in textReply');
   }
 }
+
+// async function taxiFlow(senderNumber: any, interactiveMessageBody: any) {
+//   try {
+//     interactiveMessageBody['title'] = 'Coming Soon…';
+//     await sendTextMessages(interactiveMessageBody);
+//   } catch (error) {
+//     console.log('error', error);
+//     throw Error('error in textReply');
+//   }
+// }
 
 async function emailReply(interactiveMessageBody: any) {
   interactiveMessageBody[
@@ -363,6 +363,37 @@ async function locationReply(
 
     // if pickupLocation not present in Db then storing pickup location in db
     await addingPickupLocation(senderNumber, req);
+
+    if (resp?.flowType === 'Towing_Service' && !resp?.oxygenCylinder) {
+      interactiveMessageBody['title'] = 'Select your Make/Model';
+
+      interactiveMessageBody['messages'] = [
+        {
+          type: 'reply',
+          reply: {
+            id: `Maruti`,
+            title: `Maruti`,
+          },
+        },
+        {
+          type: 'reply',
+          reply: {
+            id: `Hyundai`,
+            title: `Hyundai`,
+          },
+        },
+        {
+          type: 'reply',
+          reply: {
+            id: `Porsche`,
+            title: `Porsche`,
+          },
+        },
+      ];
+
+      await sendInteractiveMessagesYesNoButtons(interactiveMessageBody);
+      return;
+    }
 
     // sending OxygenCylinder Request YES Or NO .
     if (resp?.flowType === 'Towing_Service') {
