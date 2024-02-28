@@ -145,7 +145,7 @@ export async function handleWebhookPost(req: Request, res: Response) {
         typeOfInteractive == 'button_reply' &&
         idOfInteractive.startsWith('Yes')
       ) {
-        // sending request for Drop location with text
+        // added oxygenCylinder status in db and sending request for Drop location with text
         const respDrop = await whatsappChats.findOneAndUpdate(
           { mobileNumber: senderNumber },
           {
@@ -159,7 +159,7 @@ export async function handleWebhookPost(req: Request, res: Response) {
         typeOfInteractive == 'button_reply' &&
         idOfInteractive.startsWith('No')
       ) {
-        // sending request for Drop location with text
+        //  added oxygenCylinder status in db  and sending request for Drop location with text
         const respDrop = await whatsappChats.findOneAndUpdate(
           { mobileNumber: senderNumber },
           {
