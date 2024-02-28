@@ -16,6 +16,12 @@ import environmentVars from '../constantsVars';
 dotenv.config();
 
 const resendClient = new Resend(environmentVars.EMAIL_AUTHKEY);
+let statPoints = [
+  'Ambulance flow',
+  'Taxi flow',
+  'Tow Truck Flow',
+  'Contact us',
+];
 
 interface InteractiveMessageBody {
   [key: string]: any;
@@ -33,7 +39,7 @@ export async function handleWebhookPost(req: Request, res: Response) {
     const interactiveMessageBody: InteractiveMessageBody = {};
     // let riderData: InteractiveMessageBody = {};
     const body_param = req.body;
-    let typeOfInteractive, idOfInteractive;
+    let typeOfInteractive, idOfInteractive, idOfInteractiveListReply;
 
     let typeOfMessage = get(
       body_param,
@@ -62,19 +68,25 @@ export async function handleWebhookPost(req: Request, res: Response) {
 
     // sending welcome message with sending request for pickup location
     if (typeOfMessage == 'text') {
-      console.log("req",req.body?.entry[0].changes[0].value.messages[0].text.body)
-      const text = req.body?.entry[0].changes[0].value.messages[0].text.body
+      // console.log('req', req.body?.entry[0].changes[0].value.messages[0].text);
+      const text = req.body?.entry[0].changes[0].value.messages[0].text.body;
       // checking email address or simple text
-      if(text.includes('@')){
+      if (text.includes('@')) {
         await emailReply(interactiveMessageBody);
-      }else{
+      } else {
         await textReply(senderNumber, interactiveMessageBody);
       }
     }
 
     // accepting pickup location and drop location here , According to that we are sending reply
     if (typeOfMessage == 'location') {
-      await locationReply(senderNumber, interactiveMessageBody, req);
+      // console.log('req', req.body?.entry[0]?.changes[0].value.messages[0].id);
+      await locationReply(
+        senderNumber,
+        interactiveMessageBody,
+        req,
+        idOfInteractiveListReply,
+      );
     }
 
     if (typeOfMessage == 'interactive') {
@@ -83,30 +95,48 @@ export async function handleWebhookPost(req: Request, res: Response) {
         'entry[0].changes[0].value.messages[0].interactive.type',
         undefined,
       );
+
       idOfInteractive = get(
         body_param,
         'entry[0].changes[0].value.messages[0].interactive.button_reply.id',
         undefined,
       );
 
+      idOfInteractiveListReply = get(
+        body_param,
+        'entry[0].changes[0].value.messages[0].interactive.list_reply.id',
+        undefined,
+      );
+
+      console.log('typeOfInteractive', typeOfInteractive);
+      console.log('idOfInteractive', idOfInteractive);
+      console.log('idOfInteractiveListReply', idOfInteractiveListReply);
+
       // converting typeOfMessage for understanding what type of message i have to send for reply
       if (
-        typeOfInteractive == 'button_reply' &&
-        idOfInteractive.startsWith('Ambulance_flow')
+        typeOfInteractive == 'list_reply' &&
+        idOfInteractiveListReply.startsWith('Ambulance_flow')
       ) {
         // sending request for Drop location with text
         await ambulanceFlow(senderNumber, interactiveMessageBody);
       }
       if (
-        typeOfInteractive == 'button_reply' &&
-        idOfInteractive.startsWith('Taxi_flow_Reply')
+        typeOfInteractive == 'list_reply' &&
+        idOfInteractiveListReply.startsWith('Taxi_flow_Reply')
       ) {
         // sending request for Drop location with text
         await taxiFlow(senderNumber, interactiveMessageBody);
       }
       if (
-        typeOfInteractive == 'button_reply' &&
-        idOfInteractive.startsWith('Contact_us_Reply')
+        typeOfInteractive == 'list_reply' &&
+        idOfInteractiveListReply.startsWith('Tow_Truck_flow')
+      ) {
+        // sending request for Drop location with text
+        await towTruckFlow(senderNumber, interactiveMessageBody);
+      }
+      if (
+        typeOfInteractive == 'list_reply' &&
+        idOfInteractiveListReply.startsWith('Contact_us_Reply')
       ) {
         // sending request for Drop location with text
         await contactUsReply(senderNumber, interactiveMessageBody);
@@ -143,37 +173,39 @@ async function textReply(senderNumber: any, interactiveMessageBody: any) {
         pickUpLocation: null,
         pickAddress: null,
         dropAddress: null,
+        flowType: null,
       },
       { new: true },
     );
 
     interactiveMessageBody['title'] =
-      'Welcome to the CarGator chatbot, the open-source mobility stack.\n \nYou can try several user flows via this interface, please select from below.';
+      'Welcome to the CarGator chatbot, the open-source mobility stack.\n \nYou can try several user flows via this interface, please select from below list.';
     interactiveMessageBody['messages'] = [
       {
-        type: 'reply',
-        reply: {
-          id: `Ambulance_flow`,
-          title: `Ambulance flow`,
-        },
-      },
-      {
-        type: 'reply',
-        reply: {
-          id: `Taxi_flow_Reply`,
-          title: `Taxi flow`,
-        },
-      },
-      {
-        type: 'reply',
-        reply: {
-          id: `Contact_us_Reply`,
-          title: `Contact us`,
-        },
+        rows: [
+          {
+            id: 'Ambulance_flow',
+            title: statPoints[0],
+          },
+          {
+            id: 'Taxi_flow_Reply',
+            title: statPoints[1],
+          },
+          {
+            id: 'Tow_Truck_flow',
+            title: statPoints[2],
+          },
+          {
+            id: 'Contact_us_Reply',
+            title: statPoints[3],
+          },
+        ],
       },
     ];
 
-    await sendInteractiveMessagesYesNoButtons(interactiveMessageBody);
+    // await sendInteractiveMessagesYesNoButtons(interactiveMessageBody);
+    interactiveMessageBody['heading'] = 'FLOW_OPTIONS';
+    await sendInteractiveMessagesList(interactiveMessageBody);
   } catch (error) {
     console.log('error', error);
     throw Error('error in textReply');
@@ -189,12 +221,47 @@ async function ambulanceFlow(senderNumber: any, interactiveMessageBody: any) {
         pickUpLocation: null,
         pickAddress: null,
         dropAddress: null,
+        flowType: 'Ambulance_Service',
       },
       { new: true },
     );
 
     interactiveMessageBody['title'] =
       'Hello, Thank You for contacting XYZ ambulance. Please share your current/preferred location for an ambulance pickup.';
+    interactiveMessageBody['messages'] = [
+      {
+        type: 'reply',
+        reply: {
+          id: `sendLoc`,
+          title: `Send Location`,
+        },
+      },
+    ];
+
+    // await sendInteractiveMessagesOptionsButtons(interactiveMessageBody);
+    await sendInteractiveMessagesButtons(interactiveMessageBody);
+  } catch (error) {
+    console.log('error', error);
+    throw Error('error in textReply');
+  }
+}
+
+async function towTruckFlow(senderNumber: any, interactiveMessageBody: any) {
+  try {
+    const resp3 = await whatsappChats.findOneAndUpdate(
+      { mobileNumber: senderNumber },
+      {
+        dropLocation: null,
+        pickUpLocation: null,
+        pickAddress: null,
+        dropAddress: null,
+        flowType: 'Towing_Service',
+      },
+      { new: true },
+    );
+
+    interactiveMessageBody['title'] =
+      'Hello, Thank You for contacting Mumbai Towing Service. Please share your current/preferred location for a tow truck.';
     interactiveMessageBody['messages'] = [
       {
         type: 'reply',
@@ -256,6 +323,7 @@ async function locationReply(
   senderNumber: any,
   interactiveMessageBody: any,
   req: any,
+  idOfInteractiveListReply: any,
 ) {
   try {
     // getting senderNumber Data in DB
@@ -273,10 +341,36 @@ async function locationReply(
       return;
     }
 
+    console.log('resp', resp);
+
     // if pickupLocation not present in Db then storing pickup location in db
     await addingPickupLocation(senderNumber, req);
 
     // sending OxygenCylinder Request YES Or NO .
+    if (resp?.flowType === 'Towing_Service') {
+      interactiveMessageBody['title'] = 'Do you require a flatbed tow truck?';
+
+      interactiveMessageBody['messages'] = [
+        {
+          type: 'reply',
+          reply: {
+            id: `Yes`,
+            title: `Yes`,
+          },
+        },
+        {
+          type: 'reply',
+          reply: {
+            id: `No`,
+            title: `No`,
+          },
+        },
+      ];
+
+      await sendInteractiveMessagesYesNoButtons(interactiveMessageBody);
+      return;
+    }
+
     interactiveMessageBody['title'] =
       'Do you need an ambulance with an oxygen cylinder?';
 
@@ -435,16 +529,17 @@ async function addingDropLocAndCreateRide(
       html: htmldata,
     };
 
-    resendClient.emails
-      .send(mailParams)
-      .then((response) => {
-        console.log(`Sent message ${JSON.stringify(response)}`);
-      })
-      .catch((error) => {
-        console.error(`Error while sending email: ${error}`);
-      });
+    // resendClient.emails
+    //   .send(mailParams)
+    //   .then((response) => {
+    //     console.log(`Sent message ${JSON.stringify(response)}`);
+    //   })
+    //   .catch((error) => {
+    //     console.error(`Error while sending email: ${error}`);
+    //   });
 
     // driver is not present
+    console.log('resp', respDrop?.flowType);
     if (!driver) {
       interactiveMessageBody[
         'title'
@@ -452,7 +547,7 @@ async function addingDropLocAndCreateRide(
       await sendTextMessages(interactiveMessageBody);
       return;
     }
-    console.log('resp', respDrop?.pickUpLocation);
+    // console.log('resp', respDrop?.pickUpLocation);
 
     // Creating rides
     let newRide: any = await Rides.create({
@@ -477,6 +572,17 @@ async function addingDropLocAndCreateRide(
     );
 
     // sending driver information to user
+    if (respDrop?.flowType === 'Towing_Service') {
+      // for towing service
+      interactiveMessageBody[
+        'title'
+      ] = `Thank You, The tow truck is on the way. The driver is ${driver?.firstName} ${driver?.lastName} and the number is +${driver?.mobileNumber}. Plate number is ${formattedString}`;
+
+      await sendTextMessages(interactiveMessageBody);
+      return;
+    }
+
+    // for ambulance service 
     interactiveMessageBody[
       'title'
     ] = `Thank You, an ambulance is on the way. The driver is ${driver?.firstName} ${driver?.lastName} and the number is +${driver?.mobileNumber}. Plate number is ${formattedString}`;
@@ -518,6 +624,37 @@ async function sendInteractiveMessagesButtons(
   } catch (error) {
     console.log('error', error);
     throw Error('error in sendInteractiveMessagesButtons');
+  }
+}
+
+async function sendInteractiveMessagesList(interactiveMessageBody: any) {
+  try {
+    axios.post(
+      `https://graph.facebook.com/v17.0/${interactiveMessageBody.phoneId}/messages`,
+      {
+        messaging_product: 'whatsapp',
+        recipient_type: 'individual',
+        to: interactiveMessageBody.sender,
+        type: 'interactive',
+        interactive: {
+          type: 'list',
+          body: {
+            text: `${interactiveMessageBody.title}`,
+          },
+          action: {
+            button: interactiveMessageBody.heading,
+            sections: interactiveMessageBody.messages,
+          },
+        },
+      },
+      {
+        headers: {
+          authorization: `Bearer ${environmentVars.WHATSAPP_AUTH_TOKEN}`,
+        },
+      },
+    );
+  } catch (error) {
+    throw Error('error in sendInteractiveMessagesList');
   }
 }
 
