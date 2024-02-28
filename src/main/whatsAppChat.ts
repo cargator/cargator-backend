@@ -145,9 +145,9 @@ export async function handleWebhookPost(req: Request, res: Response) {
         undefined,
       );
 
-      console.log('typeOfInteractive', typeOfInteractive);
-      console.log('idOfInteractive', idOfInteractive);
-      console.log('idOfInteractiveListReply', idOfInteractiveListReply);
+      // console.log('typeOfInteractive', typeOfInteractive);
+      // console.log('idOfInteractive', idOfInteractive);
+      // console.log('idOfInteractiveListReply', idOfInteractiveListReply);
 
       // converting typeOfMessage for understanding what type of message i have to send for reply
       if (
@@ -451,8 +451,6 @@ async function locationReply(
       );
       return;
     }
-
-    console.log('resp', resp);
 
     // if pickupLocation not present in Db then storing pickup location in db
     await addingPickupLocation(senderNumber, req);
