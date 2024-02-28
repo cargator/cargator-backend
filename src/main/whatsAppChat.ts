@@ -114,33 +114,33 @@ export async function handleWebhookPost(req: Request, res: Response) {
 
       // converting typeOfMessage for understanding what type of message i have to send for reply
       if (
-        typeOfInteractive == 'list_reply' &&
-        idOfInteractiveListReply.startsWith('Ambulance_flow')
+        typeOfInteractive == 'button_reply' &&
+        idOfInteractive.startsWith('Ambulance_flow')
       ) {
         // sending request for Drop location with text
         await ambulanceFlow(senderNumber, interactiveMessageBody);
       }
       if (
-        typeOfInteractive == 'list_reply' &&
-        idOfInteractiveListReply.startsWith('Taxi_flow_Reply')
+        typeOfInteractive == 'button_reply' &&
+        idOfInteractive.startsWith('Taxi_flow_Reply')
       ) {
         // sending request for Drop location with text
         await taxiFlow(senderNumber, interactiveMessageBody);
       }
       if (
-        typeOfInteractive == 'list_reply' &&
-        idOfInteractiveListReply.startsWith('Tow_Truck_flow')
+        typeOfInteractive == 'button_reply' &&
+        idOfInteractive.startsWith('Tow_Truck_flow')
       ) {
         // sending request for Drop location with text
         await towTruckFlow(senderNumber, interactiveMessageBody);
       }
-      if (
-        typeOfInteractive == 'list_reply' &&
-        idOfInteractiveListReply.startsWith('Contact_us_Reply')
-      ) {
-        // sending request for Drop location with text
-        await contactUsReply(senderNumber, interactiveMessageBody);
-      }
+      // if (
+      //   typeOfInteractive == 'button_reply' &&
+      //   idOfInteractive.startsWith('Contact_us_Reply')
+      // ) {
+      //   // sending request for Drop location with text
+      //   await contactUsReply(senderNumber, interactiveMessageBody);
+      // }
       if (
         typeOfInteractive == 'button_reply' &&
         idOfInteractive.startsWith('Yes')
@@ -149,7 +149,7 @@ export async function handleWebhookPost(req: Request, res: Response) {
         const respDrop = await whatsappChats.findOneAndUpdate(
           { mobileNumber: senderNumber },
           {
-            oxygenCylinder:'Yes'
+            oxygenCylinder: 'Yes',
           },
           { new: true },
         );
@@ -163,7 +163,7 @@ export async function handleWebhookPost(req: Request, res: Response) {
         const respDrop = await whatsappChats.findOneAndUpdate(
           { mobileNumber: senderNumber },
           {
-            oxygenCylinder:'No'
+            oxygenCylinder: 'No',
           },
           { new: true },
         );
@@ -188,7 +188,7 @@ async function textReply(senderNumber: any, interactiveMessageBody: any) {
         pickAddress: null,
         dropAddress: null,
         flowType: null,
-        oxygenCylinder:null,
+        oxygenCylinder: null,
       },
       { new: true },
     );
@@ -197,30 +197,31 @@ async function textReply(senderNumber: any, interactiveMessageBody: any) {
       'Welcome to the CarGator chatbot, the open-source mobility stack.\n \nYou can try several user flows via this interface, please select from below list.';
     interactiveMessageBody['messages'] = [
       {
-        rows: [
-          {
-            id: 'Ambulance_flow',
-            title: statPoints[0],
-          },
-          {
-            id: 'Taxi_flow_Reply',
-            title: statPoints[1],
-          },
-          {
-            id: 'Tow_Truck_flow',
-            title: statPoints[2],
-          },
-          {
-            id: 'Contact_us_Reply',
-            title: statPoints[3],
-          },
-        ],
+        type: 'reply',
+        reply: {
+          id: `Ambulance_flow`,
+          title: `Ambulance flow`,
+        },
+      },
+      {
+        type: 'reply',
+        reply: {
+          id: `Taxi_flow_Reply`,
+          title: `Taxi flow`,
+        },
+      },
+      {
+        type: 'reply',
+        reply: {
+          id: `Tow_Truck_flow`,
+          title: `Tow Truck flow`,
+        },
       },
     ];
 
-    // await sendInteractiveMessagesYesNoButtons(interactiveMessageBody);
-    interactiveMessageBody['heading'] = 'FLOW OPTIONS';
-    await sendInteractiveMessagesList(interactiveMessageBody);
+    await sendInteractiveMessagesYesNoButtons(interactiveMessageBody);
+    // interactiveMessageBody['heading'] = 'FLOW OPTIONS';
+    // await sendInteractiveMessagesList(interactiveMessageBody);
   } catch (error) {
     console.log('error', error);
     throw Error('error in textReply');
@@ -297,26 +298,26 @@ async function towTruckFlow(senderNumber: any, interactiveMessageBody: any) {
   }
 }
 
-async function contactUsReply(senderNumber: any, interactiveMessageBody: any) {
-  try {
-    interactiveMessageBody['title'] =
-      'Provide your email address, and we will get back to you.';
-    interactiveMessageBody['messages'] = [
-      {
-        type: 'reply',
-        reply: {
-          id: `sendEmail`,
-          title: `Send Email`,
-        },
-      },
-    ];
+// async function contactUsReply(senderNumber: any, interactiveMessageBody: any) {
+//   try {
+//     interactiveMessageBody['title'] =
+//       'Provide your email address, and we will get back to you.';
+//     interactiveMessageBody['messages'] = [
+//       {
+//         type: 'reply',
+//         reply: {
+//           id: `sendEmail`,
+//           title: `Send Email`,
+//         },
+//       },
+//     ];
 
-    await sendInteractiveMessagesForContact(interactiveMessageBody);
-  } catch (error) {
-    console.log('error', error);
-    throw Error('error in textReply');
-  }
-}
+//     await sendInteractiveMessagesForContact(interactiveMessageBody);
+//   } catch (error) {
+//     console.log('error', error);
+//     throw Error('error in textReply');
+//   }
+// }
 
 async function taxiFlow(senderNumber: any, interactiveMessageBody: any) {
   try {
@@ -516,7 +517,8 @@ async function addingDropLocAndCreateRide(
     // ,respDrop?.dropLocation[0],respDrop?.dropLocation[1])
     // console.log("name",req?.body.entry[0].changes[0].value.contacts[0].profile.name);
     // console.log("Oxygen",respDrop)
-    const name = req?.body?.entry[0]?.changes[0].value.contacts[0]?.profile.name;
+    const name =
+      req?.body?.entry[0]?.changes[0].value.contacts[0]?.profile.name;
     const oxygenCylinder = respDrop?.oxygenCylinder;
     // console.log("date",new Date());
 
@@ -525,7 +527,9 @@ async function addingDropLocAndCreateRide(
         <li>Date/Time of request: <span id="date">${[new Date()]}</span></li>
         <li>Rider Name: <span id="senderName">${[name]}</span></li>
         <li>Rider Number: <span id="senderNumber">${[senderNumber]}</span></li> 
-        <li>Oxygen Cylinder: <span id="oxygenCylinder">${[oxygenCylinder]}</span></li> 
+        <li>Oxygen Cylinder: <span id="oxygenCylinder">${[
+          oxygenCylinder,
+        ]}</span></li> 
         <li>Pickup Address: <span id="pickUpAddress">${[
           respDrop?.pickAddress,
         ]}</span></li>
