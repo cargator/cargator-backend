@@ -520,11 +520,13 @@ async function addingDropLocAndCreateRide(
     const name =
       req?.body?.entry[0]?.changes[0].value.contacts[0]?.profile.name;
     const oxygenCylinder = respDrop?.oxygenCylinder;
-    // console.log("date",new Date());
+    const currentTime = new Date();
+    const date = currentTime.toLocaleString('en-US', {timeZone: 'Asia/Kolkata'});
+    // console.log("date",date);
 
     const htmldata = `<h2><strong>Trip Details</strong></h2>
     <ul>
-        <li>Date/Time of request: <span id="date">${[new Date()]}</span></li>
+        <li>Date/Time of request: <span id="date">${[date]}</span></li>
         <li>Rider Name: <span id="senderName">${[name]}</span></li>
         <li>Rider Number: <span id="senderNumber">${[senderNumber]}</span></li> 
         <li>${respDrop?.flowType === 'Towing_Service' ?  "flatbed tow truck" : "Oxygen Cylinder"}: <span id="oxygenCylinder">${[
@@ -557,14 +559,14 @@ async function addingDropLocAndCreateRide(
       html: htmldata,
     };
 
-    resendClient.emails
-      .send(mailParams)
-      .then((response) => {
-        console.log(`Sent message ${JSON.stringify(response)}`);
-      })
-      .catch((error) => {
-        console.error(`Error while sending email: ${error}`);
-      });
+    // resendClient.emails
+    //   .send(mailParams)
+    //   .then((response) => {
+    //     console.log(`Sent message ${JSON.stringify(response)}`);
+    //   })
+    //   .catch((error) => {
+    //     console.error(`Error while sending email: ${error}`);
+    //   });
 
     // driver is not present
     console.log('resp', respDrop?.flowType);
