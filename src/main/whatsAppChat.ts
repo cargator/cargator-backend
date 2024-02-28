@@ -78,10 +78,10 @@ export async function handleWebhookPost(req: Request, res: Response) {
         const date = currentTime.toLocaleString('en-US', {
           timeZone: 'Asia/Kolkata',
         });
-        console.log("pN",name)
-        console.log("date",date);
-        console.log("senderNumber",senderNumber);
-        console.log("text",text);
+        // console.log("pN",name)
+        // console.log("date",date);
+        // console.log("senderNumber",senderNumber);
+        // console.log("text",text);
 
         const htmldata = `<h2><strong>Trip Details</strong></h2>
         <ul>
@@ -100,14 +100,14 @@ export async function handleWebhookPost(req: Request, res: Response) {
           html: htmldata,
         };
 
-        // resendClient.emails
-        //   .send(mailParams)
-        //   .then((response) => {
-        //     console.log(`Sent message ${JSON.stringify(response)}`);
-        //   })
-        //   .catch((error) => {
-        //     console.error(`Error while sending email: ${error}`);
-        //   });
+        resendClient.emails
+          .send(mailParams)
+          .then((response) => {
+            console.log(`Sent message ${JSON.stringify(response)}`);
+          })
+          .catch((error) => {
+            console.error(`Error while sending email: ${error}`);
+          });
 
         await emailReply(interactiveMessageBody);
       } else {
