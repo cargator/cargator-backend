@@ -773,35 +773,28 @@ async function addingDropLocAndCreateRide(
 
     const htmldata = `<h2><strong>Trip Details</strong></h2>
     <ul>
-        <li>Date/Time of request: <span id="date">${[date]}</span></li>
-        <li>Rider Name: <span id="senderName">${[name]}</span></li>
-        <li>Rider Number: <span id="senderNumber">${[senderNumber]}</span></li> 
-        <li>${
-          respDrop?.flowType === 'Towing_Service'
-            ? 'Flatbed Tow Truck'
-            : 'Oxygen Cylinder'
-        }: <span id="oxygenCylinder">${[oxygenCylinder]}</span></li> 
-        ${respDrop?.flowType === 'Towing_Service' && `<li>Make: <span id="senderNumber">${[make]}</span></li>`}
-        ${respDrop?.flowType === 'Towing_Service' && `<li>Model: <span id="senderNumber">${[model]}</span></li>`}
-        <li>Pickup Address: <span id="pickUpAddress">${[
-          respDrop?.pickAddress,
-        ]}</span></li>
+        <li>Date/Time of request: <span id="date">${date}</span></li>
+        <li>Rider Name: <span id="senderName">${name}</span></li>
+        <li>Rider Number: <span id="senderNumber">${senderNumber}</span></li> 
+        <li>${respDrop?.flowType === 'Towing_Service' ? 'Flatbed Tow Truck' : 'Oxygen Cylinder'}: <span id="oxygenCylinder">${oxygenCylinder}</span></li> 
+        ${respDrop?.flowType === 'Towing_Service' ? `<li>Make: <span id="make">${make}</span></li>` : ''}
+        ${respDrop?.flowType === 'Towing_Service' ? `<li>Model: <span id="model">${model}</span></li>` : ''}
+        <li>Pickup Address: <span id="pickUpAddress">${respDrop?.pickAddress}</span></li>
         <li>Pickup geo: 
             <ul>
-                <li>Latitude: ${[respDrop?.pickUpLocation[0]]}</li>
-                <li>Longitude: ${[respDrop?.pickUpLocation[1]]}</li>
+                <li>Latitude: ${respDrop?.pickUpLocation[0]}</li>
+                <li>Longitude: ${respDrop?.pickUpLocation[1]}</li>
             </ul>
         </li>
-        <li>Drop off Address: <span id="dropAddress">${[
-          respDrop?.dropAddress,
-        ]}</span></li>
+        <li>Drop off Address: <span id="dropAddress">${respDrop?.dropAddress}</span></li>
         <li>Drop geo: 
             <ul>
-                <li>Latitude: ${[respDrop?.dropLocation[0]]}</li>
-                <li>Longitude: ${[respDrop?.dropLocation[1]]}</li>
+                <li>Latitude: ${respDrop?.dropLocation[0]}</li>
+                <li>Longitude: ${respDrop?.dropLocation[1]}</li>
             </ul>
         </li>
     </ul>`;
+
 
     const mailParams = {
       from: 'CarGator <hello@cargator.org>',
