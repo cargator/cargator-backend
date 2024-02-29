@@ -182,6 +182,14 @@ export async function handleWebhookPost(req: Request, res: Response) {
         typeOfInteractive == 'button_reply' &&
         idOfInteractive.startsWith('Maruti')
       ) {
+        const respDrop = await whatsappChats.findOneAndUpdate(
+          { mobileNumber: senderNumber },
+          {
+            make: 'Maruti',
+          },
+          { new: true },
+        );
+        // console.log("make",respDrop)
         // sending request for Drop location with text
         await marutiCar(interactiveMessageBody);
       }
@@ -189,6 +197,14 @@ export async function handleWebhookPost(req: Request, res: Response) {
         typeOfInteractive == 'button_reply' &&
         idOfInteractive.startsWith('Hyundai')
       ) {
+        const respDrop = await whatsappChats.findOneAndUpdate(
+          { mobileNumber: senderNumber },
+          {
+            make: 'Hyundai',
+          },
+          { new: true },
+        );
+        // console.log("make",respDrop)
         // sending request for Drop location with text
         await hyundaiCar(interactiveMessageBody);
       }
@@ -196,23 +212,39 @@ export async function handleWebhookPost(req: Request, res: Response) {
         typeOfInteractive == 'button_reply' &&
         idOfInteractive.startsWith('Porsche')
       ) {
+        const respDrop = await whatsappChats.findOneAndUpdate(
+          { mobileNumber: senderNumber },
+          {
+            make: 'Porsche',
+          },
+          { new: true },
+        );
+        // console.log("make",respDrop)
         // sending request for Drop location with text
         await porscheCar(interactiveMessageBody);
       }
       if (
         (typeOfInteractive == 'button_reply' &&
-          idOfInteractive.startsWith('ertiga')) ||
+          idOfInteractive.startsWith('Ertiga')) ||
         (typeOfInteractive == 'button_reply' &&
-          idOfInteractive.startsWith('swift')) ||
+          idOfInteractive.startsWith('Swift')) ||
         (typeOfInteractive == 'button_reply' &&
-          idOfInteractive.startsWith('creta')) ||
+          idOfInteractive.startsWith('Creta')) ||
         (typeOfInteractive == 'button_reply' &&
           idOfInteractive.startsWith('i20')) ||
         (typeOfInteractive == 'button_reply' &&
-          idOfInteractive.startsWith('macan')) ||
+          idOfInteractive.startsWith('Macan')) ||
         (typeOfInteractive == 'button_reply' &&
           idOfInteractive.startsWith('911'))
       ) {
+        const respDrop = await whatsappChats.findOneAndUpdate(
+          { mobileNumber: senderNumber },
+          {
+            model: idOfInteractive,
+          },
+          { new: true },
+        );
+        // console.log("model",respDrop)
         interactiveMessageBody['title'] = 'Do you require a flatbed tow truck?';
 
         interactiveMessageBody['messages'] = [
@@ -282,6 +314,8 @@ async function textReply(senderNumber: any, interactiveMessageBody: any) {
         dropAddress: null,
         flowType: null,
         oxygenCylinder: null,
+        make:null,
+        model:null,
       },
       { new: true },
     );
@@ -332,6 +366,8 @@ async function ambulanceFlow(senderNumber: any, interactiveMessageBody: any) {
         dropAddress: null,
         flowType: 'Ambulance_Service',
         oxygenCylinder: null,
+        make:null,
+        model:null,
       },
       { new: true },
     );
@@ -367,6 +403,8 @@ async function towTruckFlow(senderNumber: any, interactiveMessageBody: any) {
         dropAddress: null,
         flowType: 'Towing_Service',
         oxygenCylinder: null,
+        make:null,
+        model:null,
       },
       { new: true },
     );
@@ -456,7 +494,7 @@ async function locationReply(
     await addingPickupLocation(senderNumber, req);
 
     if (resp?.flowType === 'Towing_Service' && !resp?.oxygenCylinder) {
-      interactiveMessageBody['title'] = 'Select your Make/Model';
+      interactiveMessageBody['title'] = 'Select your Make';
 
       interactiveMessageBody['messages'] = [
         {
@@ -540,19 +578,19 @@ async function locationReply(
 
 async function marutiCar(interactiveMessageBody: any) {
   try {
-    interactiveMessageBody['title'] = 'Select your Make/Model';
+    interactiveMessageBody['title'] = 'Select your Model';
     interactiveMessageBody['messages'] = [
       {
         type: 'reply',
         reply: {
-          id: `ertiga`,
+          id: `Ertiga`,
           title: `Ertiga`,
         },
       },
       {
         type: 'reply',
         reply: {
-          id: `swift`,
+          id: `Swift`,
           title: `Swift`,
         },
       },
@@ -567,12 +605,12 @@ async function marutiCar(interactiveMessageBody: any) {
 
 async function hyundaiCar(interactiveMessageBody: any) {
   try {
-    interactiveMessageBody['title'] = 'Select your Make/Model';
+    interactiveMessageBody['title'] = 'Select your Model';
     interactiveMessageBody['messages'] = [
       {
         type: 'reply',
         reply: {
-          id: `creta`,
+          id: `Creta`,
           title: `Creta`,
         },
       },
@@ -594,12 +632,12 @@ async function hyundaiCar(interactiveMessageBody: any) {
 
 async function porscheCar(interactiveMessageBody: any) {
   try {
-    interactiveMessageBody['title'] = 'Select your Make/Model';
+    interactiveMessageBody['title'] = 'Select your Model';
     interactiveMessageBody['messages'] = [
       {
         type: 'reply',
         reply: {
-          id: `macan`,
+          id: `Macan`,
           title: `Macan`,
         },
       },
@@ -723,11 +761,15 @@ async function addingDropLocAndCreateRide(
     const name =
       req?.body?.entry[0]?.changes[0].value.contacts[0]?.profile.name;
     const oxygenCylinder = respDrop?.oxygenCylinder;
+    const make = respDrop?.make;
+    const model = respDrop?.model;
     const currentTime = new Date();
     const date = currentTime.toLocaleString('en-US', {
       timeZone: 'Asia/Kolkata',
     });
     // console.log("date",date);
+    // console.log("make",make)
+    // console.log("model",model)
 
     const htmldata = `<h2><strong>Trip Details</strong></h2>
     <ul>
@@ -736,9 +778,11 @@ async function addingDropLocAndCreateRide(
         <li>Rider Number: <span id="senderNumber">${[senderNumber]}</span></li> 
         <li>${
           respDrop?.flowType === 'Towing_Service'
-            ? 'flatbed tow truck'
+            ? 'Flatbed Tow Truck'
             : 'Oxygen Cylinder'
         }: <span id="oxygenCylinder">${[oxygenCylinder]}</span></li> 
+        ${respDrop?.flowType === 'Towing_Service' && `<li>Make: <span id="senderNumber">${[make]}</span></li>`}
+        ${respDrop?.flowType === 'Towing_Service' && `<li>Model: <span id="senderNumber">${[model]}</span></li>`}
         <li>Pickup Address: <span id="pickUpAddress">${[
           respDrop?.pickAddress,
         ]}</span></li>

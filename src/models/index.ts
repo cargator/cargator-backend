@@ -278,6 +278,8 @@ const whatsappChatSchema = new mongoose.Schema(
     pickAddress: String,
     dropAddress: String,
     flowType:String,
+    make:String,
+    model:String,
     oxygenCylinder:String,
   },
   {
