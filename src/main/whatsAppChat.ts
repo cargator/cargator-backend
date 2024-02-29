@@ -16,12 +16,6 @@ import environmentVars from '../constantsVars';
 dotenv.config();
 
 const resendClient = new Resend(environmentVars.EMAIL_AUTHKEY);
-let statPoints = [
-  'Ambulance flow',
-  'Taxi flow',
-  'Tow Truck Flow',
-  'Contact us',
-];
 
 interface InteractiveMessageBody {
   [key: string]: any;
@@ -901,36 +895,36 @@ async function sendInteractiveMessagesButtons(
   }
 }
 
-async function sendInteractiveMessagesList(interactiveMessageBody: any) {
-  try {
-    axios.post(
-      `https://graph.facebook.com/v17.0/${interactiveMessageBody.phoneId}/messages`,
-      {
-        messaging_product: 'whatsapp',
-        recipient_type: 'individual',
-        to: interactiveMessageBody.sender,
-        type: 'interactive',
-        interactive: {
-          type: 'list',
-          body: {
-            text: `${interactiveMessageBody.title}`,
-          },
-          action: {
-            button: interactiveMessageBody.heading,
-            sections: interactiveMessageBody.messages,
-          },
-        },
-      },
-      {
-        headers: {
-          authorization: `Bearer ${environmentVars.WHATSAPP_AUTH_TOKEN}`,
-        },
-      },
-    );
-  } catch (error) {
-    throw Error('error in sendInteractiveMessagesList');
-  }
-}
+// async function sendInteractiveMessagesList(interactiveMessageBody: any) {
+//   try {
+//     axios.post(
+//       `https://graph.facebook.com/v17.0/${interactiveMessageBody.phoneId}/messages`,
+//       {
+//         messaging_product: 'whatsapp',
+//         recipient_type: 'individual',
+//         to: interactiveMessageBody.sender,
+//         type: 'interactive',
+//         interactive: {
+//           type: 'list',
+//           body: {
+//             text: `${interactiveMessageBody.title}`,
+//           },
+//           action: {
+//             button: interactiveMessageBody.heading,
+//             sections: interactiveMessageBody.messages,
+//           },
+//         },
+//       },
+//       {
+//         headers: {
+//           authorization: `Bearer ${environmentVars.WHATSAPP_AUTH_TOKEN}`,
+//         },
+//       },
+//     );
+//   } catch (error) {
+//     throw Error('error in sendInteractiveMessagesList');
+//   }
+// }
 
 async function sendInteractiveMessagesYesNoButtons(
   interactiveMessageBody: any,
