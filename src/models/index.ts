@@ -127,6 +127,7 @@ const ridesSchema = new mongoose.Schema(
         'payment-failed',
         'completed',
         'cancelled',
+        'Failed'
       ],
     },
     otp: String,

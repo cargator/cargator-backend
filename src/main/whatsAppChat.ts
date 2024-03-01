@@ -809,6 +809,21 @@ async function addingDropLocAndCreateRide(
     // driver is not present
     console.log('resp', respDrop?.flowType);
     if (!driver) {
+      let newRide: any = await Rides.create({
+        pickUpAddress: respDrop?.pickAddress,
+        dropAddress: respDrop?.dropAddress,
+        // driverPathToPickUp:[{latitude:driver?.liveLocation[0],longitude:driver?.liveLocation[1]},{latitude:respDrop?.pickUpLocation[0],longitude:respDrop?.pickUpLocation[1]}],
+        // pickupToDropPath:[{latitude:respDrop?.pickUpLocation[0],longitude:respDrop?.pickUpLocation[1]},{latitude:respDrop?.dropLocation[0],longitude:respDrop?.dropLocation[1]}],
+        pickUpLocation: respDrop?.pickUpLocation,
+        dropLocation: respDrop?.dropLocation,
+        riderId: respDrop?._id,
+        vehicleNumber: availableDrivers[0]?.vehicleNumber,
+        driverId: availableDrivers[0]?._id,
+        platform: 'whatsApp',
+        bookingTime: new Date(),
+        status: 'Failed',
+        otp: '0000',
+      });
       interactiveMessageBody[
         'title'
       ] = `Driver is not available, Please try again`;
