@@ -86,6 +86,7 @@ import { handleWebhookPost, handleWebhookVerification } from './main/whatsAppCha
 import { createVehicleType, deleteVehicleType, getVehicleOne, getVehicleType, updateVehicleType } from './main/vehicleType';
 import { createFare, getFareValue, upDateFareValue } from './main/fare';
 import { createApp, getAppValue, upDateAppValue } from './main/app';
+import { createSpot, deleteSpot, getActiveSpot, getSpotList, getSpotListVehicle } from './main/spots';
 
 let utilsData: any;
 
@@ -783,6 +784,16 @@ app.post('/add-fare',createFare)
 app.get('/get-fare',getFareValue)
 
 app.patch('/update-fare/:uid',upDateFareValue)
+
+// spots crud
+app.post("/create-spot", createSpot);
+
+app.get("/get-spot-list", getSpotList);
+
+app.delete("/delete-spot/:id", deleteSpot);
+
+app.get('/get-active-spot', getActiveSpot);
+app.get('/get-spot-list-vehicle',getSpotListVehicle)
 
 // appName and Image
 

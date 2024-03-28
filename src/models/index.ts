@@ -323,12 +323,28 @@ const appsSchema = new mongoose.Schema(
   },
 );
 
+const spots = new mongoose.Schema(
+  {
+    spotName: {
+      type: String,
+      unique: true,
+    },
+    vehicleNumber: String,
+    bounds: [],
+  },
+  {
+    timestamps: true,
+    collection: "spots",
+  },
+);
+
 
 export const Admin = mongoose.model('Admin', adminSchema);
 export const VehicleTypes = mongoose.model('vehicleTypes', vehicleTypeSchema);
 export const fares = mongoose.model('fares', faresSchema);
 export const apps = mongoose.model('apps', appsSchema);
 export const Driver = mongoose.model('Driver', driverSchema);
+export const Spots = mongoose.model('Spots', spots);
 export const Riders = mongoose.model('Riders', ridersSchema);
 export const Utils = mongoose.model('Utils', utilsSchema);
 export const Rides = mongoose.model('Rides', ridesSchema);
