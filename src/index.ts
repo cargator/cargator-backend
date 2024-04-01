@@ -71,6 +71,7 @@ import {
   updateRiderStatus,
 } from './main/rider';
 import {
+  allAllVehicles,
   allAvailableVehicles,
   createVehicleData,
   deleteVehicle,
@@ -824,6 +825,8 @@ app.post('/nearBydriver', nearBydriver);
 app.post('/ride-assigned-by-admin', rideAssignedByAdmin);
 
 app.get('/allAvailableVehicles', allAvailableVehicles);
+
+app.get('/allAllVehicles', allAllVehicles);
 
 app.post('/chat-gpt-api', chatGptApi);
 

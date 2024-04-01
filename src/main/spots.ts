@@ -11,10 +11,10 @@ export async function createSpot(req: Request, res: Response) {
     // console.log('object1 :>> ');
     session.startTransaction();
 
-    const checkStatus = await Vehicles.findOne(
+    const checkStatus = await Spots.findOne(
       {
         vehicleNumber: vehicleNumber.toUpperCase(),
-        vehicleStatus: "unavailable",
+        // vehicleStatus: "unavailable",
       },
       null,
       { session: session }

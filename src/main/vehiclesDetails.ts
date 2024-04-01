@@ -388,3 +388,19 @@ export async function allAvailableVehicles(req: Request, res: Response) {
     res.status(400).json({ success: false, message: error.message });
   }
 }
+
+export async function allAllVehicles(req: Request, res: Response) {
+  try {
+    const vehicleData = await Vehicles.find({});
+    // console.log('vehicleData  allAvailableVehicles :>> ', vehicleData);
+    if (!vehicleData) {
+      throw new Error('Vehicles not found');
+    }
+    res.status(200).json({
+      message: 'fetched vehicle data successfully',
+      data: vehicleData,
+    });
+  } catch (error: any) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+}
