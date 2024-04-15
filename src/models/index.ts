@@ -323,6 +323,19 @@ const appsSchema = new mongoose.Schema(
   },
 );
 
+// country code schema
+
+const countryCodeSchema = new mongoose.Schema(
+  {
+    countryCode:String,
+    countryName:String,
+  },
+  {
+    timestamps: true,
+    collection: 'countryCodes',
+  },
+)
+
 
 export const Admin = mongoose.model('Admin', adminSchema);
 export const VehicleTypes = mongoose.model('vehicleTypes', vehicleTypeSchema);
@@ -352,3 +365,6 @@ export const addressLatlongmapyindia = mongoose.model(
   'addressLatlongmapyindia',
   addresslatlongSchemamapmy,
 );
+
+export const CountryCode = mongoose.model("CountryCode", countryCodeSchema);
+
