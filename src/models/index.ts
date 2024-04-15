@@ -337,6 +337,18 @@ const spots = new mongoose.Schema(
     collection: "spots",
   },
 );
+// country code schema
+
+const countryCodeSchema = new mongoose.Schema(
+  {
+    countryCode:String,
+    countryName:String,
+  },
+  {
+    timestamps: true,
+    collection: 'countryCodes',
+  },
+)
 
 
 export const Admin = mongoose.model('Admin', adminSchema);
@@ -368,3 +380,6 @@ export const addressLatlongmapyindia = mongoose.model(
   'addressLatlongmapyindia',
   addresslatlongSchemamapmy,
 );
+
+export const CountryCode = mongoose.model("CountryCode", countryCodeSchema);
+

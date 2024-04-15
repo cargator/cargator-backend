@@ -88,6 +88,7 @@ import { createVehicleType, deleteVehicleType, getVehicleOne, getVehicleType, up
 import { createFare, getFareValue, upDateFareValue } from './main/fare';
 import { createApp, getAppValue, upDateAppValue } from './main/app';
 import { createSpot, deleteSpot, getActiveSpot, getSpotList, getSpotListVehicle } from './main/spots';
+import { createCountryCode, deleteCountryCode, getCountryCodeMobiles, getCountryCodes } from './main/countrycode';
 
 let utilsData: any;
 
@@ -430,7 +431,7 @@ const decodeToken = (token: any) => {
 
 // Route for user login with OTP generation
 app.post('/login', handleLogin);
-
+app.get('/getCountryCodeMobile', getCountryCodeMobiles);
 // Route for verifying OTP and generating authentication token
 app.post('/verifyOtp', verifyOtp);
 
@@ -829,6 +830,14 @@ app.get('/allAvailableVehicles', allAvailableVehicles);
 app.get('/allAllVehicles', allAllVehicles);
 
 app.post('/chat-gpt-api', chatGptApi);
+
+
+// Country Code Crud
+
+app.post("/create-country-code", createCountryCode);
+app.get("/get-country-code", getCountryCodes);
+// app.get("/get-country-code/:id", getCountryCodeOne);
+app.delete("/delete-country-code/:id",  deleteCountryCode);
 
 // redis clients
 // Redis pub/sub setup
