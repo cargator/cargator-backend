@@ -157,7 +157,7 @@ const ridesSchema = new mongoose.Schema(
         }
       }
     ],
-
+    rideType: String,
   },
   {
     timestamps: true,
