@@ -54,6 +54,7 @@ import {
 } from './main/payment';
 import {
   cancelScheduledRide,
+  createCustomRides,
   getAllRide,
   getAllScheduleRides,
   getCurrentRide,
@@ -61,6 +62,7 @@ import {
   getRideHistory,
   getRidesByFilters,
   searchRide,
+  updateRides,
 } from './main/ride';
 import {
   addProfileDetails,
@@ -86,7 +88,7 @@ import axios from 'axios';
 import { handleWebhookPost, handleWebhookVerification } from './main/whatsAppChat';
 import { createVehicleType, deleteVehicleType, getVehicleOne, getVehicleType, updateVehicleType } from './main/vehicleType';
 import { createFare, getFareValue, upDateFareValue } from './main/fare';
-import { createApp, getAppValue, upDateAppValue } from './main/app';
+import { createApp, createDriverAppFlow, getAppFlow, getAppFlowMobile, getAppValue, upDateAppValue, updateAppFlow } from './main/app';
 import { createSpot, deleteSpot, getActiveSpot, getSpotList, getSpotListVehicle } from './main/spots';
 import { createCountryCode, deleteCountryCode, getCountryCodeMobiles, getCountryCodes } from './main/countrycode';
 
@@ -184,7 +186,6 @@ let io: Server;
 // Configure Express app with necessary middleware
 app.use(cors());
 app.use(json());
-
 const razorpay = new Razorpay({
   key_id: environmentVars.DEV_RAZORPAY_KEY_ID
     ? environmentVars.DEV_RAZORPAY_KEY_ID
@@ -804,6 +805,22 @@ app.post('/create-app',createApp)
 app.get('/get-app',getAppValue)
 
 app.patch('/update-app/:uid',upDateAppValue)
+
+// driverAppFlow
+app.get("/getAppFlowMobile", getAppFlowMobile);
+
+app.post("/create-app-flow", createDriverAppFlow);
+
+app.get("/get-app-flow", getAppFlow);
+
+app.patch('/update-app-flow/:id' ,updateAppFlow)
+
+// custom rides crud -----------------------------
+
+app.post("/createRide", createCustomRides);
+
+app.patch("/updateRide" ,updateRides);
+
 
 // vehicle crud
 

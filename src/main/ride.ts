@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Rides } from '../models';
+import { Driver, Rides } from '../models';
 import mongoose, { Types } from 'mongoose';
 import { platform } from 'os';
 
@@ -17,7 +17,7 @@ export async function getRidesByFilters(req: Request, res: Response) {
         $facet: {
           data: [
             {
-              $match: {status: filter},
+              $match: { status: filter },
             },
             {
               $lookup: {
@@ -42,7 +42,7 @@ export async function getRidesByFilters(req: Request, res: Response) {
                 dropAddress: 1,
                 status: 1,
                 fare: 1,
-                platform:1,
+                platform: 1,
                 createdAt: 1,
                 'driverDetails.mobileNumber': 1, // Include the name field from the User collection
                 'riderDetails.mobileNumber': 1, // Include the email field from the User collection
@@ -60,7 +60,7 @@ export async function getRidesByFilters(req: Request, res: Response) {
           ],
           count: [
             {
-              $match: {status: filter},
+              $match: { status: filter },
             },
 
             { $count: 'totalcount' },
@@ -128,12 +128,12 @@ export async function getAllRide(req: Request, res: Response) {
                 dropAddress: 1,
                 status: 1,
                 fare: 1,
-                platform:1,
+                platform: 1,
                 createdAt: 1,
                 'driverDetails.mobileNumber': 1,
                 riderDetails: {
                   $cond: {
-                    if: { $eq: ['$riderDetails', []] }, 
+                    if: { $eq: ['$riderDetails', []] },
                     then: [
                       {
                         mobileNumber: {
@@ -257,7 +257,7 @@ export async function getCurrentRide(req: Request, res: Response) {
                 dropAddress: 1,
                 status: 1,
                 fare: 1,
-                platform:1,
+                platform: 1,
                 createdAt: 1,
                 'driverDetails.mobileNumber': 1, // Include the name field from the User collection
                 'riderDetails.mobileNumber': 1, // Include the email field from the User collection
@@ -511,4 +511,176 @@ export async function cancelScheduledRide(req: Request, res: Response) {
     console.log('error', error.message);
     res.status(400).send({ success: false, message: error.message });
   }
+}
+
+
+
+// custom rides ------------------------
+
+export async function createCustomRides(req: Request, res: Response) {
+  try {
+    const { driverId, status, driverPath } = req.body;
+
+    console.log("driverId, status, driverPath- - - - -", driverId, status, driverPath)
+
+    const checkStatus = await Rides.findOne(
+      {
+        driverId: driverId,
+        status: status,
+      }
+    );
+
+    console.log("checkStatus -----------", checkStatus)
+
+    if (checkStatus) {
+      throw new Error("Vehicle might be assigned to someone");
+    }
+
+    const driver = await Driver.findOne({ _id: driverId });
+
+    console.log("driver- - - - - - ", driver)
+
+    const newStatusUpdate = { status: status, time: new Date() };
+
+
+    let newRide: any = await Rides.create(
+      {
+        driverId: driverId,
+        driverMobileNumber: driver?.mobileNumber,
+        status: status,
+        rideComplete: "false",
+        realPath: driverPath,
+        vehicleNumber: driver?.vehicleNumber,
+        statusUpdates: [newStatusUpdate],
+      }
+    );
+
+    console.log("ride created -----------")
+
+    if (!newRide) {
+      throw new Error("Invalid data provided while creating newRide document.");
+    }
+
+    if (newRide.length == 0) {
+      throw new Error("Error while creating rides");
+    }
+
+    res.status(200).send({
+      message: " Ride data saved.",
+      data: newRide,
+    });
+
+  } catch (error: any) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+}
+
+
+export async function updateRides(req: Request, res: Response) {
+  try {
+    const { rideId, status, driverPath } = req.body;
+
+    console.log("data------------", rideId, status, driverPath)
+
+    let updatedRide: any;
+
+    // const breakPoints = await BreakingPoints.find().sort({ sequenceNo: 1 });
+    const lastbreakpoint = "Base In"
+
+    // console.log("brekpoints",breakPoints[breakPoints.length-1]?.breakingPointName)
+
+    if (driverPath && (status === "completed" || status === lastbreakpoint)) {
+      const farePerKm = 10; // Example fare rate per kilometer
+
+      const totalDistance = calculateTotalDistance(driverPath);
+      const fare = calculateFare(totalDistance, farePerKm);
+
+      // Push new status update to statusUpdates array
+      const newStatusUpdate = { status: status, time: new Date() };
+      const updateS = await Rides.findByIdAndUpdate(rideId, {
+        $push: { statusUpdates: newStatusUpdate },
+      });
+
+      // console.log("updateS",updateS);
+
+      // Update ride status and other fields
+      updatedRide = await Rides.findByIdAndUpdate(
+        rideId,
+        { status: status, realPath: driverPath, rideComplete: "true", fare: fare.toFixed(2),distance: totalDistance },
+        { new: true }
+      );
+      // console.log("updatedRide",updatedRide);
+    } else {
+      // Push new status update to statusUpdates array
+      console.log("22222222222222222")
+      const newStatusUpdate = { status: status, time: new Date() };
+      const updateS = await Rides.findByIdAndUpdate(rideId, {
+        $push: { statusUpdates: newStatusUpdate },
+      });
+
+      console.log("updateS------", updateS);
+
+      // Update ride status and other fields
+      updatedRide = await Rides.findByIdAndUpdate(
+        rideId,
+        { status: status, realPath: driverPath },
+        { new: true }
+      );
+
+      console.log("updatedRide------", updatedRide);
+    }
+
+    if (!updatedRide) {
+      throw new Error("Ride not found !");
+    }
+
+    res.status(200).send({
+      success: true,
+      message: "Ride status updated successfully",
+      data: updatedRide,
+    });
+
+
+  } catch (error: any) {
+    res.status(400).json({ success: false, message: error.message });
+    console.log("Error:", error)
+  }
+}
+
+// Calculate total distance traveled given a path array
+function calculateTotalDistance(path: any) {
+  let totalDistance = 0;
+  for (let i = 0; i < path.length - 1; i++) {
+    const point1 = path[i];
+    const point2 = path[i + 1];
+    totalDistance += calculateDistance(point1, point2);
+  }
+  return totalDistance;
+}
+
+// Calculate fare based on total distance traveled
+function calculateFare(totalDistance: any, farePerKm: any) {
+  return totalDistance * farePerKm;
+}
+
+// Calculate distance between two GPS points using Haversine formula
+function calculateDistance(point1: any, point2: any) {
+  const R = 6371; // Radius of the Earth in kilometers
+  const lat1 = point1.latitude;
+  const lon1 = point1.longitude;
+  const lat2 = point2.latitude;
+  const lon2 = point2.longitude;
+
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const distance = R * c;
+
+  return distance;
 }

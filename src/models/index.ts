@@ -118,22 +118,23 @@ const ridesSchema = new mongoose.Schema(
     duration: String,
     status: {
       type: String,
-      enum: [
-        'pending-accept',
-        'pending-arrival',
-        'pending-otp',
-        'ride-started',
-        'pending-payment',
-        'payment-failed',
-        'completed',
-        'cancelled',
-        'Failed'
-      ],
+      // enum: [
+      //   'pending-accept',
+      //   'pending-arrival',
+      //   'pending-otp',
+      //   'ride-started',
+      //   'pending-payment',
+      //   'payment-failed',
+      //   'completed',
+      //   'cancelled',
+      //   'Failed'
+      // ],
     },
     otp: String,
     // message: String,
     // driverLocation: Array,
     driverId: { type: mongoose.Schema.Types.ObjectId, index: true },
+    driverMobileNumber: String,
     vehicleNumber: String,
     driverDistanceToPickUp: Object,
     driverDurationToPickUp: Object,
@@ -146,6 +147,17 @@ const ridesSchema = new mongoose.Schema(
     driverUnreadMessagesCount: { type: Number, default: 0 },
     riderUnreadMessagesCount: { type: Number, default: 0 },
     bookingTime: Date,
+    rideComplete: String,
+    statusUpdates: [
+      {
+        status: String,
+        time: {
+          type: Date,
+          default: Date.now
+        }
+      }
+    ],
+
   },
   {
     timestamps: true,
@@ -273,15 +285,15 @@ paymentSchema.index({ 'payload.status': 1, 'payload.id': 1 }, { unique: true });
 const whatsappChatSchema = new mongoose.Schema(
   {
     riderId: { type: Types.ObjectId, index: true },
-    mobileNumber : String,
+    mobileNumber: String,
     pickUpLocation: Array,
     dropLocation: Array,
     pickAddress: String,
     dropAddress: String,
-    flowType:String,
-    make:String,
-    model:String,
-    oxygenCylinder:String,
+    flowType: String,
+    make: String,
+    model: String,
+    oxygenCylinder: String,
   },
   {
     timestamps: true,
@@ -341,8 +353,8 @@ const spots = new mongoose.Schema(
 
 const countryCodeSchema = new mongoose.Schema(
   {
-    countryCode:String,
-    countryName:String,
+    countryCode: String,
+    countryName: String,
   },
   {
     timestamps: true,
@@ -350,6 +362,17 @@ const countryCodeSchema = new mongoose.Schema(
   },
 )
 
+// Application flow driver
+
+const driverApplicationFlow = new mongoose.Schema(
+  {
+    applicationFLow: String
+  },
+  {
+    timestamps: true,
+    collection: 'driverAppFlow',
+  },
+)
 
 export const Admin = mongoose.model('Admin', adminSchema);
 export const VehicleTypes = mongoose.model('vehicleTypes', vehicleTypeSchema);
@@ -381,5 +404,8 @@ export const addressLatlongmapyindia = mongoose.model(
   addresslatlongSchemamapmy,
 );
 
+
+
 export const CountryCode = mongoose.model("CountryCode", countryCodeSchema);
+export const DriverAppFlow = mongoose.model("DriverAppFlow", driverApplicationFlow);
 

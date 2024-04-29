@@ -13,6 +13,7 @@ export async function handleLogin(req: Request, res: Response) {
     if (req.body.type == 'driver') {
       const liveLocation = req.body.liveLocation;
       const mobileNumber = req.body.mobileNumber;
+      console.log("object", mobileNumber)
       if (!mobileNumber) {
         throw new Error(`Invalid Mobile Number!`);
       }
