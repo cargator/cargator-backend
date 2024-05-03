@@ -3,9 +3,9 @@
 
 name: GCP deployment dev
 
-on: workflow_dispatch
-on:
-  push:
+on: 
+   workflow_dispatch:
+   push:
     branches:
       - "main"
 
