@@ -1,5 +1,6 @@
 // import { Vehicles } from './index';
 import mongoose, { Types } from 'mongoose';
+import customers from 'razorpay/dist/types/customers';
 
 const adminSchema = new mongoose.Schema(
   {
@@ -362,6 +363,19 @@ const countryCodeSchema = new mongoose.Schema(
   },
 )
 
+// flows point schema
+const breakingPointSchema = new mongoose.Schema(
+  {
+    breakingPointName: String,
+    sequenceNo: Number,
+  },
+  {
+    timestamps: true,
+    collection: 'flows',
+  },
+);
+
+
 // Application flow driver
 
 const driverApplicationFlow = new mongoose.Schema(
@@ -373,6 +387,74 @@ const driverApplicationFlow = new mongoose.Schema(
     collection: 'driverAppFlow',
   },
 )
+
+// Order Schema's
+
+const placeOrder = new mongoose.Schema(
+  {
+    orderDetails: {
+      orderTotal: {type: Number, default: 0},
+      paid: {type: Boolean, required: true},
+      vendorOrderId: {type: String, required: true},
+      orderSource: {type: String, required: true},
+      customerOrderId: {type: String, required: true}
+    },
+    pickupDetails: {
+      name: {type: String, required: true},
+      contactNumber: {type: String, required: true},
+      latitude: {type: Number, required: true},
+      longitude: {type: Number, required: true},
+      address: {type: String, required: true},
+      city: {type: String, required: true}
+    },
+    dropDetails: {
+      name: {type: String, required: true},
+      contactNumber: {type: String, required: true},
+      latitude: {type: Number, required: true},
+      longitude: {type: Number, required: true},
+      address: {type: String, required: true},
+      city: {type: String, required: true}
+    },
+    orderItems: [
+      {
+        id: String,
+        name: {type: String, required: true},
+        quantity: {type: Number, required: true},
+        price: {type: Number, required: true},
+      }
+    ]
+  }
+)
+
+const trackOrderStatus = new mongoose.Schema(
+  {
+    access_Token: {
+      type: String,
+      required: true
+    },
+    vendorOrderId: {
+      type: String,
+      required: true
+    }
+  }
+)
+
+const cancelTask = new mongoose.Schema(
+  {
+    access_Token: {
+      type: String,
+      required: true
+    },
+    vendorOrderId: {
+      type: String,
+      required: true
+    }
+  }
+)
+
+
+
+
 
 export const Admin = mongoose.model('Admin', adminSchema);
 export const VehicleTypes = mongoose.model('vehicleTypes', vehicleTypeSchema);
@@ -407,5 +489,9 @@ export const addressLatlongmapyindia = mongoose.model(
 
 
 export const CountryCode = mongoose.model("CountryCode", countryCodeSchema);
+export const Flows = mongoose.model('Flows', breakingPointSchema);
 export const DriverAppFlow = mongoose.model("DriverAppFlow", driverApplicationFlow);
+export const PlaceOrder = mongoose.model("PlaceOrder", placeOrder);
+export const TrackOrderStatus = mongoose.model("TrackOrderStatus", trackOrderStatus);
+export const CancelTask = mongoose.model("CancelTask", cancelTask);
 

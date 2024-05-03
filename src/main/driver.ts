@@ -151,7 +151,6 @@ export async function createDriver(req: Request, res: Response) {
       profileImageKey,
       documentsKey,
     } = req.body;
-    // console.log('object1 :>> ');
     session.startTransaction();
 
     const checkStatus = await Vehicles.findOne(
@@ -205,20 +204,20 @@ export async function createDriver(req: Request, res: Response) {
       throw new Error('Error while creating driver');
     }
 
-    const vehicle = await Vehicles.findOneAndUpdate(
-      {
-        vehicleNumber: vehicleNumber.toUpperCase(),
-        vehicleStatus: 'available',
-      },
-      { vehicleStatus: 'unavailable', vehicleAssignedToId: driver[0]._id },
-      { session: session },
-    );
+    // const vehicle = await Vehicles.findOneAndUpdate(
+    //   {
+    //     vehicleNumber: vehicleNumber.toUpperCase(),
+    //     vehicleStatus: 'available',
+    //   },
+    //   { vehicleStatus: 'unavailable', vehicleAssignedToId: driver[0]._id },
+    //   { session: session },
+    // );
 
     // console.log('object vehicle :>> ', vehicle);
 
-    if (!vehicle) {
-      throw new Error('Error while updating vehicle');
-    }
+    // if (!vehicle) {
+    //   throw new Error('Error while updating vehicle');
+    // }
 
     await session.commitTransaction();
     res.status(200).send({
@@ -241,6 +240,7 @@ export async function deleteDriver(req: Request, res: Response) {
   let session: any;
 
   try {
+    console.log("---------------------")
     const s3 = new AWS.S3();
     session = await mongoose.startSession();
     // const id = req.params.uid;

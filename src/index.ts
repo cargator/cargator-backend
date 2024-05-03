@@ -83,7 +83,7 @@ import {
   searchVehicles,
   updateVehicle,
 } from './main/vehiclesDetails';
-import { Driver, Orders, Payments, Rides, Utils, Vehicles } from './models';
+import { Driver, Orders, Payments, Rides, TrackOrderStatus, Utils, Vehicles } from './models';
 import axios from 'axios';
 import { handleWebhookPost, handleWebhookVerification } from './main/whatsAppChat';
 import { createVehicleType, deleteVehicleType, getVehicleOne, getVehicleType, updateVehicleType } from './main/vehicleType';
@@ -91,6 +91,8 @@ import { createFare, getFareValue, upDateFareValue } from './main/fare';
 import { createApp, createDriverAppFlow, getAppFlow, getAppFlowMobile, getAppValue, upDateAppValue, updateAppFlow } from './main/app';
 import { createSpot, deleteSpot, getActiveSpot, getSpotList, getSpotListVehicle } from './main/spots';
 import { createCountryCode, deleteCountryCode, getCountryCodeMobiles, getCountryCodes } from './main/countrycode';
+import { createBreakPoints, deleteBreakingPoints, getBreakPointOne, getBreakingPoints, getBreakingPointsMobile, updateBreakPoints } from './main/flows';
+import { cancelTask, placeOrder, trackOrderStatus } from './main/order';
 
 let utilsData: any;
 
@@ -806,6 +808,19 @@ app.get('/get-app',getAppValue)
 
 app.patch('/update-app/:uid',upDateAppValue)
 
+// flows crud
+app.post('/create-break-points', createBreakPoints);
+
+app.get('/get-breaking-points', getBreakingPoints);
+
+app.get('/get-breaking-points-mobile', getBreakingPointsMobile);
+
+app.delete('/delete-breakingPoints/:id', deleteBreakingPoints);
+
+app.patch('/update-break-points/:id',updateBreakPoints);
+
+app.get('/get-break-point-id/:id', getBreakPointOne);
+
 // driverAppFlow
 app.get("/getAppFlowMobile", getAppFlowMobile);
 
@@ -821,6 +836,13 @@ app.post("/createRide", createCustomRides);
 
 app.patch("/updateRide" ,updateRides);
 
+// Order API's--------------------
+
+app.post("/place-order", placeOrder);
+
+app.post("/track-order-status", trackOrderStatus)
+
+app.post("/cancel-task", cancelTask)
 
 // vehicle crud
 
@@ -976,3 +998,4 @@ const getUtils = (): any => {
 
 export { access_token, refreshToken };
 export { getUtils };
+
