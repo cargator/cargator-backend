@@ -262,6 +262,7 @@ const riderSocketConnected = async (
         riderId: _userId,
         status: 'pending-accept',
         otp: randomNumber,
+        rideType:'default'
       });
       // console.log(`request-ride newRide :>> `, newRide);
 

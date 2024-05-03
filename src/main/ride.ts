@@ -552,6 +552,7 @@ export async function createCustomRides(req: Request, res: Response) {
         realPath: driverPath,
         vehicleNumber: driver?.vehicleNumber,
         statusUpdates: [newStatusUpdate],
+        rideType: 'custom'
       }
     );
 
