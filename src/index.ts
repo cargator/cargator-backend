@@ -501,6 +501,15 @@ app.post('/admin-login', adminLogin);
 // Route for admin register
 app.post('/admin-register', adminRegister);
 
+
+// Order API's--------------------
+
+app.post("/place-order", placeOrder);
+
+app.post("/track-order-status", trackOrderStatus)
+
+app.post("/cancel-task", cancelTask)
+
 app.use(authorize);
 
 app.post('/add-profile-details', addProfileDetails);
@@ -836,13 +845,6 @@ app.post("/createRide", createCustomRides);
 
 app.patch("/updateRide" ,updateRides);
 
-// Order API's--------------------
-
-app.post("/place-order", placeOrder);
-
-app.post("/track-order-status", trackOrderStatus)
-
-app.post("/cancel-task", cancelTask)
 
 // vehicle crud
 

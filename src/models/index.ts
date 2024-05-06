@@ -428,7 +428,7 @@ const placeOrder = new mongoose.Schema(
 
 const trackOrderStatus = new mongoose.Schema(
   {
-    access_Token: {
+    accessToken: {
       type: String,
       required: true
     },
@@ -441,7 +441,7 @@ const trackOrderStatus = new mongoose.Schema(
 
 const cancelTask = new mongoose.Schema(
   {
-    access_Token: {
+    accessToken: {
       type: String,
       required: true
     },
