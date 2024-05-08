@@ -510,6 +510,9 @@ app.post("/track-order-status", trackOrderStatus)
 
 app.post("/cancel-task", cancelTask)
 
+app.get("/getAppFlowMobile", getAppFlowMobile);
+
+
 app.use(authorize);
 
 app.post('/add-profile-details', addProfileDetails);
@@ -831,7 +834,6 @@ app.patch('/update-break-points/:id',updateBreakPoints);
 app.get('/get-break-point-id/:id', getBreakPointOne);
 
 // driverAppFlow
-app.get("/getAppFlowMobile", getAppFlowMobile);
 
 app.post("/create-app-flow", createDriverAppFlow);
 
