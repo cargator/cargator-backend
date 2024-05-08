@@ -64,8 +64,9 @@ const riderSocketConnected = async (
           'payment-failed',
         ],
       },
+      rideType:'default'
     });
-    // console.log(`\nrider-connect onGoingRide :>> `, onGoingRide);
+    console.log(`\nrider-connect onGoingRide :>> `, onGoingRide);
 
     if (onGoingRide.length) {
       for (const ride of onGoingRide) {
@@ -119,7 +120,7 @@ const riderSocketConnected = async (
   socket.on('request-ride', async (body: any) => {
     // validation for ongoing ride, rider can only request for new ride if old ride is completed
     try {
-      // console.log('request-ride event body :>>', body);
+      console.log('request-ride event body :>>', body);
 
       // merge
       let onGoingRide = await Rides.find({
@@ -135,7 +136,10 @@ const riderSocketConnected = async (
             'pending-payment',
           ],
         },
+        rideType:'default'
       });
+
+
       if (onGoingRide.length) {
         //! Only one ride can be booked per-day.
         if (body.bookingTime) {
@@ -262,7 +266,7 @@ const riderSocketConnected = async (
         riderId: _userId,
         status: 'pending-accept',
         otp: randomNumber,
-        rideType:'default'
+        // rideType:'default'
       });
       // console.log(`request-ride newRide :>> `, newRide);
 

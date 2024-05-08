@@ -49,12 +49,13 @@ const driverSocketConnected = async (
     let onGoingRide = await Rides.findOne({
       driverId: _userId,
       status: { $nin: ['completed', 'cancelled'] },
+      rideType:'default',
     });
+
 
     if (onGoingRide) {
       // If an ongoing ride is found, join the corresponding ride room
       socket.join(`${onGoingRide._id.toString()}-ride-room`);
-
       // Emit a ride-status event to the ride room
       socket.emit(
         'ride-status',
