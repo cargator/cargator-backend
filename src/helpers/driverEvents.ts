@@ -49,6 +49,7 @@ const driverSocketConnected = async (
     let onGoingRide = await Rides.findOne({
       driverId: _userId,
       status: { $nin: ['completed', 'cancelled'] },
+      rideType:'default',
     });
 
 
