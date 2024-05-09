@@ -117,7 +117,7 @@ const getAddressFromCoordsmapmyindia = async (location: any) => {
         },
       },
     );
-    // console.log('response--->', response.data?.results[0]?.formatted_address);
+    console.log('response--->', response.data?.results[0]?.formatted_address);
     return response.data?.results[0]?.formatted_address;
   } catch (error) {
     console.log('getAddressFromCoordsmapmyindia error:', error);
