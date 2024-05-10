@@ -533,8 +533,9 @@ if (environmentVars.MAP_MY_INDIA == 'false') {
     getAddressFromAutocompletemapmyindia,
   );
 
-  // app.post('/get-address-from-coordinates', addressFromCoordinatesmapmyindia);
   app.post('/get-address-from-coordinates', addressFromCoordinates);
+  // app.post('/get-address-from-coordinates', addressFromCoordinatesmapmyindia);
+  
 
   app.post('/get-directions', getDirectionmapmyindia);
 
