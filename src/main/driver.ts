@@ -197,27 +197,27 @@ export async function createDriver(req: Request, res: Response) {
       ],
       { session: session },
     );
-    // console.log('driver data :>> ', driver);
+    console.log('driver data :>> ', driver);
     // throw new Error('Error while creating driver');
 
     if (driver.length == 0) {
       throw new Error('Error while creating driver');
     }
 
-    // const vehicle = await Vehicles.findOneAndUpdate(
-    //   {
-    //     vehicleNumber: vehicleNumber.toUpperCase(),
-    //     vehicleStatus: 'available',
-    //   },
-    //   { vehicleStatus: 'unavailable', vehicleAssignedToId: driver[0]._id },
-    //   { session: session },
-    // );
+    const vehicle = await Vehicles.findOneAndUpdate(
+      {
+        vehicleNumber: vehicleNumber.toUpperCase(),
+        vehicleStatus: 'available',
+      },
+      { vehicleStatus: 'unavailable', vehicleAssignedToId: driver[0]._id },
+      { session: session, new: true },
+    );
 
-    // console.log('object vehicle :>> ', vehicle);
+    console.log('object vehicle :>> ', vehicle);
 
-    // if (!vehicle) {
-    //   throw new Error('Error while updating vehicle');
-    // }
+    if (!vehicle) {
+      throw new Error('Error while updating vehicle');
+    }
 
     await session.commitTransaction();
     res.status(200).send({
