@@ -26,7 +26,7 @@ export async function placeOrder(req: Request, res: Response) {
         await session.commitTransaction();
         res.status(200).send({
             "status": true,
-            "vendor_order_id": orderData.vendor_order_id,
+            "vendor_order_id": orderData.order_details.vendor_order_id,
             "message": "Order created",
             "Status_code": "ACCEPTED"
         });
