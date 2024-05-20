@@ -17,6 +17,7 @@ export async function placeOrder(req: Request, res: Response) {
         // const newOrder:any = new PlaceOrder(orderData);
 
         // const saveOrder =await newOrder.save()
+        console.log("saveOrder--------", saveOrder)
 
         if(!saveOrder){
             throw new Error("error while placing oredr");
@@ -24,7 +25,10 @@ export async function placeOrder(req: Request, res: Response) {
 
         await session.commitTransaction();
         res.status(200).send({
-          message: ' Order Placed.',
+            "status": true,
+            "vendor_order_id": "123XXX456789",
+            "message": "Order created",
+            "Status_code": "ACCEPTED"
         });
 
 console.log('res sent');
