@@ -392,63 +392,72 @@ const driverApplicationFlow = new mongoose.Schema(
 
 const placeOrder = new mongoose.Schema(
   {
-    orderDetails: {
-      orderTotal: {type: Number, default: 0},
+    order_details: {
+      vendor_order_id: {type: String, required: true},
+      order_total: {type: Number, default: 0},
       paid: {type: Boolean, required: true},
-      vendorOrderId: {type: String, required: true},
-      orderSource: {type: String, required: true},
-      customerOrderId: {type: String, required: true}
+      order_source: {type: String, required: true},
+      customer_orderId: {type: String}
     },
-    pickupDetails: {
+    pickup_details: {
       name: {type: String, required: true},
-      contactNumber: {type: String, required: true},
+      contact_number: {type: String, required: true},
       latitude: {type: Number, required: true},
       longitude: {type: Number, required: true},
       address: {type: String, required: true},
       city: {type: String, required: true}
     },
-    dropDetails: {
+    drop_details: {
       name: {type: String, required: true},
-      contactNumber: {type: String, required: true},
+      contact_number: {type: String, required: true},
       latitude: {type: Number, required: true},
       longitude: {type: Number, required: true},
       address: {type: String, required: true},
       city: {type: String, required: true}
     },
-    orderItems: [
+    order_items: [
       {
         id: String,
         name: {type: String, required: true},
         quantity: {type: Number, required: true},
         price: {type: Number, required: true},
       }
-    ]
+    ],
+  },
+  {
+    timestamps:true
   }
 )
 
 const trackOrderStatus = new mongoose.Schema(
   {
-    accessToken: {
+    access_token: {
       type: String,
       required: true
     },
-    vendorOrderId: {
+    vendor_order_id: {
       type: String,
       required: true
     }
+  },
+  {
+    timestamps:true
   }
 )
 
 const cancelTask = new mongoose.Schema(
   {
-    accessToken: {
+    access_token: {
       type: String,
       required: true
     },
-    vendorOrderId: {
+    vendor_order_id: {
       type: String,
       required: true
     }
+  },
+  {
+    timestamps:true
   }
 )
 

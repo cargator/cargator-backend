@@ -4,3 +4,4 @@ node_modules
 .env
 testScripts
 sampleCargator.env
+sampleCargatorDelta.env

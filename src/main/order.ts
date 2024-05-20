@@ -10,7 +10,7 @@ export async function placeOrder(req: Request, res: Response) {
         session.startTransaction();
         const orderData = req.body;
         // const {order_details, pickup_details, drop_details, order_items} = req.body;
-        console.log("----------------",orderData.dropDetails.city)
+        console.log("----------------",orderData.drop_details.city)
 
         const saveOrder = await PlaceOrder.create(orderData);
 
