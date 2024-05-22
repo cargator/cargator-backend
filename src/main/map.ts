@@ -28,37 +28,37 @@ export async function addressFromCoordinates(req: Request, res: Response) {
     const utilsdata = getUtils();
     const nearbyDriversDistanceInKm: any = utilsdata.nearbyDriversDistanceInKm;
     const nearbylocationDistanceInRadians = nearbyDriversDistanceInKm / 111.12;
-    const addressDoc: any = await addressLatlong.findOne({
-      latlong: {
-        $near: [long, lat],
-        $maxDistance: nearbylocationDistanceInRadians,
-      },
-    });
-    if (addressDoc) {
-      console.log('returned data caches from mongo db', addressDoc);
-      res.status(200).send({
-        message: 'Address fetched successfully.',
-        data: { address: addressDoc.address },
-      });
-    } else {
+    // const addressDoc: any = await addressLatlong.findOne({
+    //   latlong: {
+    //     $near: [long, lat],
+    //     $maxDistance: nearbylocationDistanceInRadians,
+    //   },
+    // });
+    // if (addressDoc) {
+    //   console.log('returned data caches from mongo db', addressDoc);
+    //   res.status(200).send({
+    //     message: 'Address fetched successfully.',
+    //     data: { address: addressDoc.address },
+    //   });
+    // } else {
       console.log('Calling Google Places API.');
       console.log('location ---> ', body);
 
       const address = await getAddressFromCoords(body);
 
-      // console.log(`get-address-from-coordinates >> address :>> `, address);
+      console.log(`get-address-from-coordinates2 >> address :>> `, address);
       if (address == 'undefined') {
         return res.status(400).send({ error: 'Coordinates are invalid' });
       }
-      const addressDoc = await addressLatlong.create({
-        address,
-        latlong: [long, lat],
-      });
+      // const addressDoc = await addressLatlong.create({
+      //   address,
+      //   latlong: [long, lat],
+      // });
       return res.status(200).send({
         message: 'Fetched address successfully.',
         data: { address },
       });
-    }
+    // }
   } catch (error: any) {
     console.log('get-address-from-coordinates error: ', error);
     res.status(400).send({ error: error.message });

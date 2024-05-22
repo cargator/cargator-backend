@@ -518,6 +518,7 @@ app.use(authorize);
 app.post('/add-profile-details', addProfileDetails);
 
 if (environmentVars.MAP_MY_INDIA == 'false') {
+
   // Route for fetching address predictions from Google Places Autocomplete API
   app.post('/get-address-from-autocomplete', getAddressFromAutocomplete);
 
@@ -533,8 +534,9 @@ if (environmentVars.MAP_MY_INDIA == 'false') {
     getAddressFromAutocompletemapmyindia,
   );
 
-  // app.post('/get-address-from-coordinates', addressFromCoordinatesmapmyindia);
   app.post('/get-address-from-coordinates', addressFromCoordinates);
+// app.post('/get-address-from-coordinates', addressFromCoordinatesmapmyindia);
+  
 
   app.post('/get-directions', getDirectionmapmyindia);
 

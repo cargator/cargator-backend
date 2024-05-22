@@ -91,12 +91,12 @@ const getAddressFromCoords = async (location: any) => {
     if (isEmpty(location)) {
       return console.log('getAddressFromCoords() Error: location is empty.');
     }
-    // console.log('getAddressFromCoords API:', location);
+    console.log('getAddressFromCoords API:', location);
     const response = await axios.get(
       `https://maps.googleapis.com/maps/api/geocode/json?address=${location.latitude},${location.longitude}&key=${constants.GOOGLE_API_KEY}`,
     );
     // console.log('responseeeeeeeeeee->', response.data?.results[0]);
-    // console.log('responseeeeeeeeeee->', JSON.stringify(response.data?.results));
+    // console.log('responseeeeeeeeeee1->', JSON.stringify(response.data?.results));
     return response.data?.results[0]?.formatted_address;
   } catch (error) {
     console.log('getAddressFromCoords error:', error);
