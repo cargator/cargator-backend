@@ -151,6 +151,8 @@ export async function createDriver(req: Request, res: Response) {
       profileImageKey,
       documentsKey,
     } = req.body;
+
+    console.log("1234567890", vehicleNumber,vehicleType,vehicleName)
     session.startTransaction();
 
     const checkStatus = await Vehicles.findOne(
@@ -180,43 +182,70 @@ export async function createDriver(req: Request, res: Response) {
     // console.log(random);
 
     // console.log('object 2:>> ', existingDriver);
+    if(vehicleNumber === "none"){
+      const driver = await Driver.create(
+        [
+          {
+            driverId: random,
+            firstName,
+            lastName,
+            vehicleNumber: "",
+            vehicleType : "",
+            vehicleName: "",
+            mobileNumber:`91${mobileNumber}`,
+            profileImageKey,
+            documentsKey,
+          },
+        ],
+        { session: session },
+      );
 
-    const driver = await Driver.create(
-      [
+      console.log('driver data :>> ', driver);
+      // throw new Error('Error while creating driver');
+  
+      if (driver.length == 0) {
+        throw new Error('Error while creating driver');
+      }
+    }else{
+      const driver = await Driver.create(
+        [
+          {
+            driverId: random,
+            firstName,
+            lastName,
+            vehicleNumber: vehicleNumber.toUpperCase(),
+            vehicleType,
+            vehicleName,
+            mobileNumber:`91${mobileNumber}`,
+            profileImageKey,
+            documentsKey,
+          },
+        ],
+        { session: session },
+      );
+      console.log('driver data :>> ', driver);
+      // throw new Error('Error while creating driver');
+  
+      if (driver.length == 0) {
+        throw new Error('Error while creating driver');
+      }
+
+      const vehicle = await Vehicles.findOneAndUpdate(
         {
-          driverId: random,
-          firstName,
-          lastName,
           vehicleNumber: vehicleNumber.toUpperCase(),
-          vehicleType,
-          vehicleName,
-          mobileNumber:`91${mobileNumber}`,
-          profileImageKey,
-          documentsKey,
+          vehicleStatus: 'available',
         },
-      ],
-      { session: session },
-    );
-    console.log('driver data :>> ', driver);
-
-    if (driver.length == 0) {
-      throw new Error('Error while creating driver');
+        { vehicleStatus: 'unavailable', vehicleAssignedToId: driver[0]._id },
+        { session: session, new: true },
+      );
+  
+      console.log('object vehicle :>> ', vehicle);
+  
+      if (!vehicle) {
+        throw new Error('Error while updating vehicle');
+      }
     }
-
-    const vehicle = await Vehicles.findOneAndUpdate(
-      {
-        vehicleNumber: vehicleNumber.toUpperCase(),
-        vehicleStatus: 'available',
-      },
-      { vehicleStatus: 'unavailable', vehicleAssignedToId: driver[0]._id },
-      { session: session, new: true },
-    );
-
-    console.log('object vehicle :>> ', vehicle);
-
-    if (!vehicle) {
-      throw new Error('Error while updating vehicle');
-    }
+    
 
     await session.commitTransaction();
     res.status(200).send({
@@ -353,55 +382,101 @@ export async function updateDriver(req: Request, res: Response) {
     const id = req.params.uid;
     session.startTransaction();
 
-    const vehicle = await Vehicles.findOneAndUpdate(
-      { vehicleNumber: vehicleNumber.toUpperCase() },
-      { vehicleStatus: 'unavailable', vehicleAssignedToId: id },
-      { session: session },
-    );
-
-    if (!vehicle) {
-      throw new Error('Vehicle not found');
-    }
-
-    const driver = await Driver.findOneAndUpdate(
-      {
-        _id: id,
-        status: 'active',
-        rideStatus: { $ne: 'on-ride' },
-      },
-      {
-        firstName: firstName,
-        lastName: lastName,
-        vehicleType: vehicleType,
-        vehicleNumber: vehicleNumber.toUpperCase(),
-        vehicleName: vehicleName,
-        mobileNumber: `91${mobileNumber}`,
-        profileImageKey: profileImageKey,
-        documentsKey: documentsKey,
-      },
-      { session: session },
-    );
-
-    if (!driver) {
-      console.log(
-        'driver data not found, invalid id or driver status is inactive :>> ',
-      );
-      throw new Error(
-        'Mobile number invalid or driver status is inactive or driver is on-ride',
-      );
-    }
-
-    // console.log('driver.vehicleNumber :>> ', driver.vehicleNumber);
-    if (driver.vehicleNumber !== vehicleNumber.toUpperCase()) {
-      await Vehicles.findOneAndUpdate(
-        {
-          vehicleNumber: driver.vehicleNumber,
-          vehicleStatus: 'unavailable',
-        },
-        { vehicleStatus: 'available', vehicleAssignedToId: '' },
+    if(vehicleNumber !== "none"){
+      const vehicle = await Vehicles.findOneAndUpdate(
+        { vehicleNumber: vehicleNumber.toUpperCase() },
+        { vehicleStatus: 'unavailable', vehicleAssignedToId: id },
         { session: session },
       );
+  
+      if (!vehicle) {
+        throw new Error('Vehicle not found');
+      }
     }
+  
+    if(vehicleNumber === "none"){
+      const driver = await Driver.findOneAndUpdate(
+        {
+          _id: id,
+          status: 'active',
+          rideStatus: { $ne: 'on-ride' },
+        },
+        {
+          firstName: firstName,
+          lastName: lastName,
+          vehicleType: "",
+          vehicleNumber: "",
+          vehicleName: "",
+          mobileNumber: `91${mobileNumber}`,
+          profileImageKey: profileImageKey,
+          documentsKey: documentsKey,
+        },
+        { session: session },
+      );
+  
+      if (!driver) {
+        console.log(
+          'driver data not found, invalid id or driver status is inactive :>> ',
+        );
+        throw new Error(
+          'Mobile number invalid or driver status is inactive or driver is on-ride',
+        );
+      }
+
+      if (driver.vehicleNumber !== vehicleNumber.toUpperCase() && driver.vehicleNumber !== "") {
+        await Vehicles.findOneAndUpdate(
+          {
+            vehicleNumber: driver.vehicleNumber,
+            vehicleStatus: 'unavailable',
+          },
+          { vehicleStatus: 'available', vehicleAssignedToId: '' },
+          { session: session },
+        );
+      }
+
+    }else{
+      const driver = await Driver.findOneAndUpdate(
+        {
+          _id: id,
+          status: 'active',
+          rideStatus: { $ne: 'on-ride' },
+        },
+        {
+          firstName: firstName,
+          lastName: lastName,
+          vehicleType: vehicleType,
+          vehicleNumber: vehicleNumber.toUpperCase(),
+          vehicleName: vehicleName,
+          mobileNumber: `91${mobileNumber}`,
+          profileImageKey: profileImageKey,
+          documentsKey: documentsKey,
+        },
+        { session: session },
+      );
+  
+      if (!driver) {
+        console.log(
+          'driver data not found, invalid id or driver status is inactive :>> ',
+        );
+        throw new Error(
+          'Mobile number invalid or driver status is inactive or driver is on-ride',
+        );
+      }
+  
+      // console.log('driver.vehicleNumber :>> ', driver.vehicleNumber);
+        if (driver.vehicleNumber !== vehicleNumber.toUpperCase()) {
+          await Vehicles.findOneAndUpdate(
+            {
+              vehicleNumber: driver.vehicleNumber,
+              vehicleStatus: 'unavailable',
+            },
+            { vehicleStatus: 'available', vehicleAssignedToId: '' },
+            { session: session },
+          );
+        }
+    }
+   
+    
 
     await session.commitTransaction();
 

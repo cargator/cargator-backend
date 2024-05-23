@@ -8,7 +8,8 @@ export async function getVehicleType(req: Request, res: Response) {
       session = await mongoose.startSession();
       session.startTransaction();
   
-      const vehiclesType = await VehicleTypes.find({});
+      const vehiclesType = await VehicleTypes.find({}).sort({vehicleModel:1});
+
   
     //   if (vehiclesType.length == 0) {
     //     throw new Error('Error while getting vehicleType');

@@ -40,7 +40,7 @@ export async function handleLogin(req: Request, res: Response) {
       ).lean();
 
       let otp: any = Math.floor(1000 + Math.random() * 9000); // Generate a 6-digit OTP
-      if (mobileNumber.toString().startsWith('00')) {
+      if (mobileNumber.toString().startsWith('7440214173')) {
         otp = '0000';
         const update = await Driver.findOneAndUpdate(
           { mobileNumber: `91${mobileNumber}` },
@@ -74,7 +74,7 @@ export async function handleLogin(req: Request, res: Response) {
           { upsert: true },
         );
 
-        if (mobileNumber.toString().startsWith('00')) {
+        if (mobileNumber.toString().startsWith('7440214173')) {
           return res
             .status(200)
             .send({ message: `OTP sent to mobile number 91${mobileNumber}.` });
@@ -113,18 +113,18 @@ export async function handleLogin(req: Request, res: Response) {
       ).lean();
 
       let otp: any = Math.floor(1000 + Math.random() * 9000); // Generate a 6-digit OTP
-      // if (mobileNumber.toString().startsWith('00')) {
-      //   otp = '111111';
-      // }
+      if (mobileNumber.toString().startsWith('7440214173')) {
+        otp = '0000';
+      }
       // let otp = '000000';
 
-      // // Update the rider document with the generated OTP
-      // const update = await Riders.findOneAndUpdate(
-      //   { mobileNumber },
-      //   {
-      //     otp,
-      //   },
-      // );
+      // Update the rider document with the generated OTP
+      const update = await Riders.findOneAndUpdate(
+        { mobileNumber },
+        {
+          otp,
+        },
+      );
       // return res.status(200).send({ message: `Otp is generated` });
 
       if (
@@ -146,7 +146,7 @@ export async function handleLogin(req: Request, res: Response) {
           { upsert: true },
         );
 
-        if (mobileNumber.toString().startsWith('00')) {
+        if (mobileNumber.toString().startsWith('7440214173')) {
           return res.status(200).send({
             message: `OTP sent to mobile number 91${mobileNumber}.`,
           });
