@@ -10,14 +10,14 @@ export async function placeOrder(req: Request, res: Response) {
         session.startTransaction();
         const orderData = req.body;
         // const {order_details, pickup_details, drop_details, order_items} = req.body;
-        console.log("----------------",orderData.drop_details.city)
+        console.log("placeOrder Data: ==>",orderData)
 
         const saveOrder = await PlaceOrder.create(orderData);
 
         // const newOrder:any = new PlaceOrder(orderData);
 
         // const saveOrder =await newOrder.save()
-        console.log("saveOrder--------", saveOrder)
+        // console.log("saveOrder--------", saveOrder)
 
         if(!saveOrder){
             throw new Error("error while placing oredr");
@@ -52,6 +52,7 @@ export async function trackOrderStatus(req: Request, res: Response){
         session = await mongoose.startSession();
         session.startTransaction();
         const trackOrderStatus = req.body;
+        console.log("trackOrderStatus Data: ==>",trackOrderStatus)
         // const {order_details, pickup_details, drop_details, order_items} = req.body;
 
         const trackOrder = await TrackOrderStatus.create(trackOrderStatus);
@@ -86,6 +87,7 @@ export async function cancelTask(req: Request, res: Response){
         session = await mongoose.startSession();
         session.startTransaction();
         const cancelTask = req.body;
+        console.log("cancelTask Data: ==>",cancelTask)
         // const {order_details, pickup_details, drop_details, order_items} = req.body;
 
         const cancel_task = await CancelTask.create(cancelTask);
