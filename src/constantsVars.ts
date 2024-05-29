@@ -5,6 +5,7 @@ const environmentVars = {
   PORT: process.env.PORT || 8080,
   MONGO_URL: process.env.MONGO_URL,
   GOOGLE_API_KEY: process.env.GOOGLE_API_KEY,
+  OLA_MAPS_API_KEY: process.env.OLA_MAPS_API_KEY,
   REDIS_URL: process.env.REDIS_URL,
   NODE_ENV: process.env.NODE_ENV,
   PUBLIC_KEY: process.env.PUBLIC_KEY,

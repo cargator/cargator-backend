@@ -7,7 +7,7 @@ import {
 import { Request, Response } from 'express';
 import {
   getAddressFromAutoComplete,
-  getAddressFromAutoCompletemapmyindia,
+  // getAddressFromAutoCompletemapmyindia,
   getAddressFromCoords,
   getAddressFromCoordsmapmyindia,
   getCoordsFromAddress,
@@ -357,73 +357,75 @@ export async function getAddressFromAutocomplete(req: Request, res: Response) {
       throw new Error('text is missing.');
     }
     // Check if the requested location predictions are cached in MongoDB
-    const locationsDoc = await locationList
-      .findOne({
-        text,
-      })
-      .lean();
-    if (locationsDoc) {
-      console.log('Returned google places cached from MongoDB.');
-      return res.status(200).send({
-        message: 'Fetched places from mongodb successfully.',
-        data: { predictions: locationsDoc.predictions },
-      });
-    } else {
+    // const locationsDoc = await locationList
+    //   .findOne({
+    //     text,
+    //   })
+    //   .lean();
+    // if (locationsDoc) {
+    //   console.log('Returned google places cached from MongoDB.');
+    //   return res.status(200).send({
+    //     message: 'Fetched places from mongodb successfully.',
+    //     data: { predictions: locationsDoc.predictions },
+    //   });
+    // } else {
       console.log('Calling Google Places API.');
       // Fetch predictions from Google Places API
       const response: any = await getAddressFromAutoComplete(text);
+      console.log("getAddressFromAutoComplete from Google API", JSON.stringify(response.data,null,2))
       res.status(200).send({
         message: 'Gooogle Places fetched successfully.',
         data: { predictions: response.data.predictions },
       });
       // Cache the fetched predictions in MongoDB
-      let createdDoc = await locationList.create({
-        text,
-        predictions: response.data.predictions,
-      });
-    }
+    //   let createdDoc = await locationList.create({
+    //     text,
+    //     predictions: response.data.predictions,
+    //   });
+    // }
   } catch (error: any) {
     console.log('get-address-from-autocomplete error: ', error);
     res.status(400).send({ error: error.message });
   }
 }
-export async function getAddressFromAutocompletemapmyindia(
+export async function getAddressFromAutocompleteOlaMaps(
   req: Request,
   res: Response,
 ) {
   try {
     const body = req.body;
+    const location = body.location;
     const text = body.text.toLowerCase();
     if (!text) {
       throw new Error('text is missing.');
     }
     // // Check if the requested location predictions are cached in MongoDB
-    const locationsDoc: any = await locationListmapmyindia
-      .findOne({
-        text,
-      })
-      .lean();
-    if (locationsDoc) {
-      console.log('Returned MapMyIndia places cached from MongoDB.');
-      return res.status(200).send({
-        message: 'Fetched places from mongodb successfully.',
-        data: { predictions: locationsDoc.predictions },
-      });
-    } else {
-      console.log('Calling MapMyIndia Places API.');
+    // const locationsDoc: any = await locationListmapmyindia
+    //   .findOne({
+    //     text,
+    //   })
+    //   .lean();
+    // if (locationsDoc) {
+    //   console.log('Returned MapMyIndia places cached from MongoDB.');
+    //   return res.status(200).send({
+    //     message: 'Fetched places from mongodb successfully.',
+    //     data: { predictions: locationsDoc.predictions },
+    //   });
+    // } else {
+      console.log('Calling OlaMaps Places API.');
       // Fetch predictions from Google Places API
-      const response: any = await getAddressFromAutoCompletemapmyindia(text);
-      // console.log('response---->', response)
+      const response: any = await getAddressFromAutocompleteOlaMaps(text,location);
+      // console.log('Ola Map API response---->', JSON.stringify(response.data,null,2))
       res.status(200).send({
         message: 'MapMyIndia Places fetched successfully.',
-        data: { predictions: response.data.suggestedLocations },
+        data: { predictions: response.data.predictions },
       });
       // Cache the fetched predictions in MongoDB
-      let createdDoc = await locationListmapmyindia.create({
-        text,
-        predictions: response.data.suggestedLocations,
-      });
-    }
+      // let createdDoc = await locationListmapmyindia.create({
+      //   text,
+      //   predictions: response.data.suggestedLocations,
+      // });
+    // }
   } catch (error: any) {
     console.log('get-address-from-autocomplete error: ', error);
     res.status(400).send({ error: error.message });
