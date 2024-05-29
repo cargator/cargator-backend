@@ -42,7 +42,8 @@ import {
   addressFromCoordinatesmapmyindia,
   coordinatesFromAddress,
   getAddressFromAutocomplete,
-  getAddressFromAutocompletemapmyindia,
+  getAddressFromAutocompleteOlaMaps,
+  // getAddressFromAutocompletemapmyindia,
   getDirection,
   getDirectionmapmyindia,
 } from './main/map';
@@ -200,14 +201,14 @@ const razorpay = new Razorpay({
 let access_token = '';
 const refreshToken = async () => {
   try {
-        // Make a request to obtain a new token (assuming you have the necessary API endpoint)
+    // Make a request to obtain a new token (assuming you have the necessary API endpoint)
     const data = {
       grant_type: 'client_credentials',
       client_id: `${environmentVars.REFRESH_TOKEN_CLIENT_ID}`,
       client_secret: `${environmentVars.REFRESH_TOKEN_CLIENT_SECRET}`,
     };
 
-        const token: any = await axios.post(
+    const token: any = await axios.post(
       `${environmentVars.REFRESH_TOKEN_URL}`,
       data,
       {
@@ -529,14 +530,21 @@ if (environmentVars.MAP_MY_INDIA == 'false') {
   // Route for fetching coordinates from address using Google Geocoding API
   app.post('/get-coordinates-from-address', coordinatesFromAddress);
 } else {
+
   app.post(
     '/get-address-from-autocomplete',
-    getAddressFromAutocompletemapmyindia,
+    getAddressFromAutocompleteOlaMaps,
   );
 
+  // app.post(
+  //   '/get-address-from-autocomplete',
+  //   getAddressFromAutocompletemapmyindia,
+  // );
+  // app.post('/get-address-from-autocomplete', getAddressFromAutocomplete);
+
   app.post('/get-address-from-coordinates', addressFromCoordinates);
-// app.post('/get-address-from-coordinates', addressFromCoordinatesmapmyindia);
-  
+  // app.post('/get-address-from-coordinates', addressFromCoordinatesmapmyindia);
+
 
   app.post('/get-directions', getDirectionmapmyindia);
 
@@ -787,23 +795,23 @@ app.get('/get-vehicle-data', getVehicleData);
 
 // vehicleType
 
-app.post('/create-vehicle-type',createVehicleType)
+app.post('/create-vehicle-type', createVehicleType)
 
-app.get('/get-vehicle-type',getVehicleType)
+app.get('/get-vehicle-type', getVehicleType)
 
-app.delete('/delete-vehicle-type/:id',deleteVehicleType)
+app.delete('/delete-vehicle-type/:id', deleteVehicleType)
 
-app.get('/get-vehicle-type-id/:id',getVehicleOne)
+app.get('/get-vehicle-type-id/:id', getVehicleOne)
 
 app.patch('/updateVehicleType/:uid', updateVehicleType);
 
 // fare
 
-app.post('/add-fare',createFare)
+app.post('/add-fare', createFare)
 
-app.get('/get-fare',getFareValue)
+app.get('/get-fare', getFareValue)
 
-app.patch('/update-fare/:uid',upDateFareValue)
+app.patch('/update-fare/:uid', upDateFareValue)
 
 // spots crud
 app.post("/create-spot", createSpot);
@@ -813,15 +821,15 @@ app.get("/get-spot-list", getSpotList);
 app.delete("/delete-spot/:id", deleteSpot);
 
 app.get('/get-active-spot', getActiveSpot);
-app.get('/get-spot-list-vehicle',getSpotListVehicle)
+app.get('/get-spot-list-vehicle', getSpotListVehicle)
 
 // appName and Image
 
-app.post('/create-app',createApp)
+app.post('/create-app', createApp)
 
-app.get('/get-app',getAppValue)
+app.get('/get-app', getAppValue)
 
-app.patch('/update-app/:uid',upDateAppValue)
+app.patch('/update-app/:uid', upDateAppValue)
 
 // flows crud
 app.post('/create-break-points', createBreakPoints);
@@ -832,7 +840,7 @@ app.get('/get-breaking-points-mobile', getBreakingPointsMobile);
 
 app.delete('/delete-breakingPoints/:id', deleteBreakingPoints);
 
-app.patch('/update-break-points/:id',updateBreakPoints);
+app.patch('/update-break-points/:id', updateBreakPoints);
 
 app.get('/get-break-point-id/:id', getBreakPointOne);
 
@@ -842,13 +850,13 @@ app.post("/create-app-flow", createDriverAppFlow);
 
 app.get("/get-app-flow", getAppFlow);
 
-app.patch('/update-app-flow/:id' ,updateAppFlow)
+app.patch('/update-app-flow/:id', updateAppFlow)
 
 // custom rides crud -----------------------------
 
 app.post("/createRide", createCustomRides);
 
-app.patch("/updateRide" ,updateRides);
+app.patch("/updateRide", updateRides);
 
 
 // vehicle crud
@@ -883,13 +891,13 @@ app.post('/chat-gpt-api', chatGptApi);
 app.post("/create-country-code", createCountryCode);
 app.get("/get-country-code", getCountryCodes);
 // app.get("/get-country-code/:id", getCountryCodeOne);
-app.delete("/delete-country-code/:id",  deleteCountryCode);
+app.delete("/delete-country-code/:id", deleteCountryCode);
 
 // redis clients
 // Redis pub/sub setup
 export const pubClient = createClient({
   url:
-  environmentVars.REDIS_URL ||
+    environmentVars.REDIS_URL ||
     'redis://default:Titandevil@12@redis-19288.c212.ap-south-1-1.ec2.cloud.redislabs.com:19288',
 });
 export const subClient = pubClient.duplicate();

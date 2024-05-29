@@ -26,7 +26,7 @@ const getAddressFromAutoComplete = async (text: string | undefined) => {
     let googlePlacesRes = await axios.get(
       `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${text}&key=${constants.GOOGLE_API_KEY}`,
     );
-    // console.log("googlePlacesRes:", googlePlacesRes);
+    // console.log("googlePlacesRes:>>>>>>>>>>>>>", googlePlacesRes.data);
     // const extractedData = [];
     // for (const prediction of googlePlacesRes?.data?.predictions) {
     //   extractedData.push(prediction.description);
@@ -39,8 +39,8 @@ const getAddressFromAutoComplete = async (text: string | undefined) => {
 };
 
 
-const getAddressFromAutoCompletemapmyindia = async (
-  text: string | undefined,
+const getAddressFromAutoCompleteOlaMaps = async (
+  text: string | undefined, location:any
 ) => {
   try {
     if (isEmpty(text)) {
@@ -49,17 +49,21 @@ const getAddressFromAutoCompletemapmyindia = async (
       );
     }
 
-    let mapmyindiaPlacesRes = await axios.get(
-      `https://atlas.mappls.com/api/places/search/json?query=${text}`,
-      {
-        headers: {
-          accept: 'application/json',
-          Authorization: `${token_type} ${access_token}`,
-        },
-      },
+    let olaMapsResponse = await axios.get(
+      `https://api.olamaps.io/places/v1/autocomplete?location=${location.latitude},${location.longitude}&input=${text}&api_key=${constants.OLA_MAPS_API_KEY}`
     );
 
-    return mapmyindiaPlacesRes;
+    // let mapmyindiaPlacesRes = await axios.get(
+    //   `https://atlas.mappls.com/api/places/search/json?query=${text}`,
+    //   {
+    //     headers: {
+    //       accept: 'application/json',
+    //       Authorization: `${token_type} ${access_token}`,
+    //     },
+    //   },
+    // );
+
+    return olaMapsResponse;
   } catch (error) {
     console.log('getAddressFromAutoComplete error', error);
   }
@@ -191,7 +195,8 @@ const getDirectionsmapmyindia = async (location1: any, location2: any) => {
 
 export {
   getAddressFromAutoComplete,
-  getAddressFromAutoCompletemapmyindia,
+  getAddressFromAutoCompleteOlaMaps,
+  // getAddressFromAutoCompletemapmyindia,
   formatSocketResponse,
   getCoordsFromAddress,
   getAddressFromCoords,
