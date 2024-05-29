@@ -29,6 +29,7 @@ jobs:
           envkey_PORT: ${{ secrets.PORT }}
           envkey_MONGO_URL: ${{ secrets.MONGO_URL_DELTA }}
           envkey_GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          envkey_OLA_MAPS_API_KEY: ${{secrets.OLA_MAPS_API_KEY}}
           envkey_REDIS_URL: ${{secrets.REDIS_URL}}
           envkey_PUBLIC_KEY: ${{secrets.PUBLIC_KEY}}
           envkey_DEV_RAZORPAY_KEY_ID: ${{secrets.DEV_RAZORPAY_KEY_ID}}
