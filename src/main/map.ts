@@ -7,6 +7,7 @@ import {
 import { Request, Response } from 'express';
 import {
   getAddressFromAutoComplete,
+  getAddressFromAutoCompleteOlaMaps,
   // getAddressFromAutoCompletemapmyindia,
   getAddressFromCoords,
   getAddressFromCoordsmapmyindia,
@@ -414,7 +415,7 @@ export async function getAddressFromAutocompleteOlaMaps(
     // } else {
       console.log('Calling OlaMaps Places API.');
       // Fetch predictions from Google Places API
-      const response: any = await getAddressFromAutocompleteOlaMaps(text,location);
+      const response: any = await getAddressFromAutoCompleteOlaMaps(text,location);
       // console.log('Ola Map API response---->', JSON.stringify(response.data,null,2))
       res.status(200).send({
         message: 'MapMyIndia Places fetched successfully.',
