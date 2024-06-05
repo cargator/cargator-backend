@@ -93,7 +93,7 @@ import { createApp, createDriverAppFlow, getAppFlow, getAppFlowMobile, getAppVal
 import { createSpot, deleteSpot, getActiveSpot, getSpotList, getSpotListVehicle } from './main/spots';
 import { createCountryCode, deleteCountryCode, getCountryCodeMobiles, getCountryCodes } from './main/countrycode';
 import { createBreakPoints, deleteBreakingPoints, getBreakPointOne, getBreakingPoints, getBreakingPointsMobile, updateBreakPoints } from './main/flows';
-import { cancelTask, placeOrder, trackOrderStatus } from './main/order';
+import { cancelTask, getNewOrders, orderAccept, orderUpdate, placeOrder, trackOrderStatus } from './main/order';
 
 let utilsData: any;
 
@@ -512,6 +512,12 @@ app.post("/track-order-status", trackOrderStatus)
 app.post("/cancel-task", cancelTask)
 
 app.get("/getAppFlowMobile", getAppFlowMobile);
+
+app.get("/get-new-orders", getNewOrders)
+
+app.post('/order-accept', orderAccept)
+
+app.post('/order-update', orderUpdate)
 
 
 app.use(authorize);

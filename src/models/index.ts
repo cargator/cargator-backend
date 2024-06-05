@@ -399,6 +399,18 @@ const placeOrder = new mongoose.Schema(
       order_source: {type: String, required: true},
       customer_orderId: {type: String}
     },
+    status: {type: String},
+    bookingTime:Date,
+    statusUpdates: [
+      {
+        status: String,
+        time: {
+          type: Date,
+          default: Date.now
+        }
+      }
+    ],
+    rideType: String,
     pickup_details: {
       name: {type: String, required: true},
       contact_number: {type: String, required: true},
@@ -422,8 +434,9 @@ const placeOrder = new mongoose.Schema(
         quantity: {type: Number, required: true},
         price: {type: Number, required: true},
       }
-    ],
+    ],  
   },
+  
   {
     timestamps:true
   }

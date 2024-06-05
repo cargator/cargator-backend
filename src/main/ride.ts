@@ -613,7 +613,6 @@ export async function updateRides(req: Request, res: Response) {
       // console.log("updatedRide",updatedRide);
     } else {
       // Push new status update to statusUpdates array
-      console.log("22222222222222222")
       const newStatusUpdate = { status: status, time: new Date() };
       const updateS = await Rides.findByIdAndUpdate(rideId, {
         $push: { statusUpdates: newStatusUpdate },
