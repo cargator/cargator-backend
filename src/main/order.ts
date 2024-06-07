@@ -130,7 +130,6 @@ export async function getNewOrders(req: Request, res: Response) {
             bookingTime: {
                 $gte: endDate,
             },
-
         })
 
         await session.commitTransaction();
@@ -158,32 +157,34 @@ export async function orderAccept(req: Request, res: Response) {
         session = await mongoose.startSession();
         session.startTransaction();
 
-        const order = req.body;
+        const {driverLocation, pickUpDetails, id} = req.body;
 
+        console.log(">>>>>>>>>>>>>>", driverLocation)
         //* Fetching Data of Driver using getDirections() Google API & storing in Rides-Collection.
-        const driverLocation = {
-            latitude: 19.172141,
-            longitude: 72.956832
+        // const driverLocation = {
+        //     latitude: 19.172141,
+        //     longitude: 72.956832
+        // };
+        const pickUpLocation = {
+            latitude: pickUpDetails.latitude,
+            longitude: pickUpDetails.longitude,
         };
-        const pickupLocation = {
-            latitude: order.pickup_details.latitude,
-            longitude: order.pickup_details.longitude,
-        };
+
+        
 
         const driverDataFromCurrLocationToPickup = await getDirections(
             driverLocation,
-            pickupLocation,
+            pickUpLocation,
         );
 
         const newStatusUpdate = { status: 'pending-arival-restaurant', time: new Date() }
 
         const response = await PlaceOrder.findOneAndUpdate(
-            { _id: order._id },
+            { _id: id },
             { status: 'pending-arival-restaurant', statusUpdates: [newStatusUpdate] },
             { new: true },
         )
 
-        console.log(">>>>>>>>>>>>>>>>>", response)
 
         await session.commitTransaction();
 
@@ -229,7 +230,7 @@ export async function orderUpdate(req: Request, res: Response) {
             { new: true },
         )
 
-        console.log(">>>>>>>>>>>>>>>>>", response, driverDataFromCurrLocationToPickup)
+        // console.log(">>>>>>>>>>>>>>>>>", response, driverDataFromCurrLocationToPickup)
 
         await session.commitTransaction();
 
