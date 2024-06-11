@@ -56,15 +56,20 @@ export async function trackOrderStatus(req: Request, res: Response) {
         // const {order_details, pickup_details, drop_details, order_items} = req.body;
 
         const trackOrder = await TrackOrderStatus.create(trackOrderStatus);
-
-
         if (!trackOrder) {
             throw new Error("error while tracking order");
         }
 
         await session.commitTransaction();
         res.status(200).send({
-            message: ' Order tracked.',
+            status: true,// true/false 
+            message: "Ok",
+            status_code: "ALLOTTED",
+            data: {
+                vendor_order_id: "123XXXX4567",
+                rider_name: "xyz",
+                rider_contact: "76XXXXXX34"
+            }
         });
 
 
