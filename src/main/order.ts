@@ -181,7 +181,7 @@ export async function orderUpdate(req: Request, res: Response) {
 export async function trackOrderStatus (req: Request, res: Response) {
     try {
         const { vendor_order_id, access_token } = req.body;
-        const checkOrder = await PlaceOrder.findOne({ vendor_order_id }).lean()
+        const checkOrder = await PlaceOrder.findOne({ 'order_details.vendor_order_id': vendor_order_id }).lean()
         if( !checkOrder ) {
             res.status(404).send({
                 status: true,
