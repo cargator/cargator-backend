@@ -1,90 +1,147 @@
 import mongoose from "mongoose";
-import { CancelTask, PlaceOrder, TrackOrderStatus } from "../models";
+import { CancelTask, Driver, PlaceOrder, TrackOrderStatus } from "../models";
 import { Request, Response } from "express";
 import { error } from "console";
 import { getDirections } from "../helpers/common";
+import { OrderStatusEnum } from "../shared/enums/status.enum";
 
 export async function placeOrder(req: Request, res: Response) {
-    let session: any;
     try {
-        session = await mongoose.startSession();
-        session.startTransaction();
-        const orderData = req.body;
-        // const {order_details, pickup_details, drop_details, order_items} = req.body;
-        // console.log("placeOrder Data: ==>", orderData)
+        const { order_details } = req.body;
+
+        console.log(JSON.stringify({ method: "placeOrder", message: "fetch body from Request.", data: req.body }));
 
         const saveOrder = await PlaceOrder.create({
-            ...orderData,
-            status: 'pending-accept',
-            bookingTime: new Date()
+            ...req.body,
+            status: OrderStatusEnum.ORDER_ACCEPTED,
         });
 
         if (!saveOrder) {
-            throw new Error("error while placing oredr");
+            throw new Error("error while placing order");
         }
 
-        await session.commitTransaction();
+        console.log(JSON.stringify({ method: "placeOrder", message: "Order saved Response", data: saveOrder }));
+
         res.status(200).send({
-            "status": true,
-            "vendor_order_id": orderData.order_details.vendor_order_id,
-            "message": "Order created",
-            "Status_code": "ACCEPTED"
+            status: true,
+            vendor_order_id: order_details.vendor_order_id,
+            message: "Order created succcessfully.",
+            Status_code: OrderStatusEnum.ORDER_ACCEPTED
         });
 
-        console.log('res sent');
-
     } catch (error: any) {
-        console.log(error);
+        console.log(
+            JSON.stringify({
+                method: "placeOrder",
+                message: error.message
+            })
+        )
 
-        res.status(400).send({ success: false, message: error.message });
-        if (session) {
-            await session.abortTransaction();
-        }
-    } finally {
-        await session.endSession();
+        res.status(400)
+            .send({ success: false, message: error.message });
     }
 }
 
-
-export async function trackOrderStatus(req: Request, res: Response) {
-    let session: any;
+export async function orderAccept(req: Request, res: Response) {
     try {
-        session = await mongoose.startSession();
-        session.startTransaction();
-        const trackOrderStatus = req.body;
-        console.log("trackOrderStatus Data: ==>", trackOrderStatus)
-        // const {order_details, pickup_details, drop_details, order_items} = req.body;
+        const driverId = "123456"//req.decoded._id;
+        const { driverLocation, pickUpDetails, id } = req.body;
 
-        const trackOrder = await TrackOrderStatus.create(trackOrderStatus);
-        if (!trackOrder) {
-            throw new Error("error while tracking order");
+        const driverData = await Driver.findOne({ _id: driverId }).lean();
+        if (!driverData) {
+            console.log("unauth");
         }
 
-        await session.commitTransaction();
+        const pickUpLocation = {
+            latitude: pickUpDetails.latitude,//latitude: 19.172141,
+            longitude: pickUpDetails.longitude,//longitude: 72.956832
+        };
+
+        const driverDataFromCurrLocationToPickup = await getDirections(
+            driverLocation,
+            pickUpLocation,
+        );
+
+        const newStatusUpdate = { status: OrderStatusEnum.ORDER_ACCEPTED, time: new Date() };
+        const driverDetails = {
+            driver_id: driverData?._id,
+            name: driverData?.firstName,
+            contact: driverData?.mobileNumber
+        }
+
+        const response = await PlaceOrder.findOneAndUpdate(
+            { _id: id },
+            {
+                status: OrderStatusEnum.ORDER_ACCEPTED,
+                statusUpdates: [newStatusUpdate],
+                driverDetails
+            },
+            { new: true },
+        ).lean()
+
+        if (response) {
+            await Driver.findOneAndUpdate(
+                { _id: driverId, rideStatus: 'online' },
+                {
+                    rideStatus: 'on-ride',
+                },
+                { new: true },
+            ).lean();
+        }
+
         res.status(200).send({
-            status: true,// true/false 
-            message: "Ok",
-            status_code: "ALLOTTED",
-            data: {
-                vendor_order_id: "123XXXX4567",
-                rider_name: "xyz",
-                rider_contact: "76XXXXXX34"
-            }
+            message: 'Order accepted successfully.',
+            data: { response, driverDataFromCurrLocationToPickup },
         });
 
-
     } catch (error: any) {
-        console.log(error);
+        console.log(
+            JSON.stringify({
+                method: "orderAccept",
+                message: error.message
+            })
+        )
 
-        res.status(400).send({ success: false, message: error.message });
-        if (session) {
-            await session.abortTransaction();
-        }
-    } finally {
-        await session.endSession();
+        res.status(400)
+            .send({ success: false, message: error.message });
     }
 }
 
+export async function trackOrderStatus (req: Request, res: Response) {
+    try {
+        const { vendor_order_id, access_token } = req.body;
+        const checkOrder = await PlaceOrder.findOne({ vendor_order_id }).lean()
+        if( !checkOrder ) {
+            res.status(404).send({
+                status: true,
+                vendor_order_id,
+                message: "Order is not Found!"
+            })
+        }
+
+        res.send({
+            status: true, 
+            message: "Ok",
+            status_code: checkOrder?.status,
+            data: {
+                vendor_order_id: vendor_order_id,
+                rider_name: checkOrder?.driver_details?.name,
+                rider_contact: checkOrder?.driver_details?.contact
+            },
+        })
+
+    } catch (error: any) {
+        console.log(
+            JSON.stringify({
+                method: "trackOrderStatus",
+                message: error.message
+            })
+        )
+
+        res.status(400)
+            .send({ success: false, message: error.message });
+    }
+}
 
 export async function cancelTask(req: Request, res: Response) {
     let session: any;
@@ -156,71 +213,10 @@ export async function getNewOrders(req: Request, res: Response) {
     }
 }
 
-export async function orderAccept(req: Request, res: Response) {
-    let session: any;
-    try {
-        session = await mongoose.startSession();
-        session.startTransaction();
-
-        const {driverLocation, pickUpDetails, id} = req.body;
-
-        console.log(">>>>>>>>>>>>>>", driverLocation)
-        //* Fetching Data of Driver using getDirections() Google API & storing in Rides-Collection.
-        // const driverLocation = {
-        //     latitude: 19.172141,
-        //     longitude: 72.956832
-        // };
-        const pickUpLocation = {
-            latitude: pickUpDetails.latitude,
-            longitude: pickUpDetails.longitude,
-        };
-
-        
-
-        const driverDataFromCurrLocationToPickup = await getDirections(
-            driverLocation,
-            pickUpLocation,
-        );
-
-        const newStatusUpdate = { status: 'pending-arival-restaurant', time: new Date() }
-
-        const response = await PlaceOrder.findOneAndUpdate(
-            { _id: id },
-            { status: 'pending-arival-restaurant', statusUpdates: [newStatusUpdate] },
-            { new: true },
-        )
-
-
-        await session.commitTransaction();
-
-        res.status(200).send({
-            message: ' orders accepted successfully.',
-            data: { response, driverDataFromCurrLocationToPickup },
-        });
-    } catch (error: any) {
-        res.status(400).json({ success: false, message: error.message });
-        if (session) {
-            await session.abortTransaction();
-        }
-        console.log('err :>> ', error);
-    } finally {
-        if (session) {
-            await session.endSession();
-        }
-    }
-}
-
-
 export async function orderUpdate(req: Request, res: Response) {
-    let session: any;
     try {
-        session = await mongoose.startSession();
-        session.startTransaction();
-
-        const{pickUpLocation, destination, orderId, status}= req.body;
-
-        //* Fetching Data of Driver using getDirections() Google API & storing in Rides-Collection.
-       
+        const { pickUpLocation, destination, orderId } = req.body;
+        let status: OrderStatusEnum = req.body.status;
 
         const driverDataFromCurrLocationToPickup = await getDirections(
             pickUpLocation,
@@ -228,30 +224,25 @@ export async function orderUpdate(req: Request, res: Response) {
         );
 
         const newStatusUpdate = { status: status, time: new Date() }
-
         const response = await PlaceOrder.findOneAndUpdate(
-            { _id: orderId },
+            { _id: orderId, status: !OrderStatusEnum.ORDER_CANCELLED },
             { status: status, statusUpdates: [newStatusUpdate] },
             { new: true },
         )
-
-        // console.log(">>>>>>>>>>>>>>>>>", response, driverDataFromCurrLocationToPickup)
-
-        await session.commitTransaction();
 
         res.status(200).send({
             message: ' orders updated successfully.',
             data: { response, driverDataFromCurrLocationToPickup },
         });
     } catch (error: any) {
-        res.status(400).json({ success: false, message: error.message });
-        if (session) {
-            await session.abortTransaction();
-        }
-        console.log('err :>> ', error);
-    } finally {
-        if (session) {
-            await session.endSession();
-        }
+        console.log(
+            JSON.stringify({
+                method: "orderUpdate",
+                message: error.message
+            })
+        )
+
+        res.status(400)
+            .send({ success: false, message: error.message });
     }
 }

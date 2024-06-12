@@ -375,7 +375,6 @@ const breakingPointSchema = new mongoose.Schema(
   },
 );
 
-
 // Application flow driver
 
 const driverApplicationFlow = new mongoose.Schema(
@@ -393,14 +392,18 @@ const driverApplicationFlow = new mongoose.Schema(
 const placeOrder = new mongoose.Schema(
   {
     order_details: {
-      vendor_order_id: {type: String, required: true},
-      order_total: {type: Number, default: 0},
-      paid: {type: Boolean, required: true},
-      order_source: {type: String, required: true},
-      customer_orderId: {type: String}
+      vendor_order_id: { type: String, required: true, unique: true },
+      order_total: { type: Number, default: 0 },
+      paid: { type: Boolean, required: true },
+      order_source: { type: String, required: true },
+      customer_orderId: { type: String }
     },
-    status: {type: String},
-    bookingTime:Date,
+    status: { type: String },
+    driver_details: {
+      driver_id: String,
+      name: String,
+      contact: String
+    },
     statusUpdates: [
       {
         status: String,
@@ -412,33 +415,33 @@ const placeOrder = new mongoose.Schema(
     ],
     rideType: String,
     pickup_details: {
-      name: {type: String, required: true},
-      contact_number: {type: String, required: true},
-      latitude: {type: Number, required: true},
-      longitude: {type: Number, required: true},
-      address: {type: String, required: true},
-      city: {type: String, required: true}
+      name: { type: String, required: true },
+      contact_number: { type: String, required: true },
+      latitude: { type: Number, required: true },
+      longitude: { type: Number, required: true },
+      address: { type: String, required: true },
+      city: { type: String, required: true }
     },
     drop_details: {
-      name: {type: String, required: true},
-      contact_number: {type: String, required: true},
-      latitude: {type: Number, required: true},
-      longitude: {type: Number, required: true},
-      address: {type: String, required: true},
-      city: {type: String, required: true}
+      name: { type: String, required: true },
+      contact_number: { type: String, required: true },
+      latitude: { type: Number, required: true },
+      longitude: { type: Number, required: true },
+      address: { type: String, required: true },
+      city: { type: String, required: true }
     },
     order_items: [
       {
         id: String,
-        name: {type: String, required: true},
-        quantity: {type: Number, required: true},
-        price: {type: Number, required: true},
+        name: { type: String, required: true },
+        quantity: { type: Number, required: true },
+        price: { type: Number, required: true },
       }
-    ],  
+    ],
   },
-  
+
   {
-    timestamps:true
+    timestamps: true
   }
 )
 
@@ -454,7 +457,7 @@ const trackOrderStatus = new mongoose.Schema(
     }
   },
   {
-    timestamps:true
+    timestamps: true
   }
 )
 
@@ -464,19 +467,15 @@ const cancelTask = new mongoose.Schema(
       type: String,
       required: true
     },
-    vendor_order_id: {
+    vendor_oarder_id: {
       type: String,
       required: true
     }
   },
   {
-    timestamps:true
+    timestamps: true
   }
 )
-
-
-
-
 
 export const Admin = mongoose.model('Admin', adminSchema);
 export const VehicleTypes = mongoose.model('vehicleTypes', vehicleTypeSchema);
@@ -507,8 +506,6 @@ export const addressLatlongmapyindia = mongoose.model(
   'addressLatlongmapyindia',
   addresslatlongSchemamapmy,
 );
-
-
 
 export const CountryCode = mongoose.model("CountryCode", countryCodeSchema);
 export const Flows = mongoose.model('Flows', breakingPointSchema);

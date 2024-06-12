@@ -399,6 +399,7 @@ app.get('/', (req: Request, res: Response) => {
 app.get('/webhook', handleWebhookVerification)
 
 app.post('/webhook', handleWebhookPost);
+
 // Middleware function to authorize requests with a JWT token
 const authorize = async (req: any, res: Response, next: any) => {
   try {
@@ -513,14 +514,13 @@ app.post("/cancel-task", cancelTask)
 
 app.get("/getAppFlowMobile", getAppFlowMobile);
 
+app.use(authorize);
+
 app.get("/get-new-orders", getNewOrders)
 
 app.post('/order-accept', orderAccept)
 
 app.post('/order-update', orderUpdate)
-
-
-app.use(authorize);
 
 app.post('/add-profile-details', addProfileDetails);
 
