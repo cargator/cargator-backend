@@ -79,9 +79,9 @@ export async function placeOrder(req: Request, res: Response) {
     }
 }
 
-export async function orderAccept(req: Request, res: Response) {
+export async function orderAccept(req: any, res: Response) {
     try {
-        const driverId = req.decoded._id;
+        const driverId = req.decoded.user._id;
         const { driverLocation, pickUpDetails, id } = req.body;
 
         const driverData = await Driver.findOne({ _id: driverId }).lean();
@@ -99,7 +99,7 @@ export async function orderAccept(req: Request, res: Response) {
             pickUpLocation,
         );
 
-        const newStatusUpdate = { status: OrderStatusEnum.ORDER_ACCEPTED, time: new Date() };
+        const newStatusUpdate = { status: OrderStatusEnum.ORDER_ALLOTTED, time: new Date() };
         const driverDetails = {
             driver_id: driverData?._id,
             name: driverData?.firstName,
@@ -109,7 +109,7 @@ export async function orderAccept(req: Request, res: Response) {
         const response = await PlaceOrder.findOneAndUpdate(
             { _id: id },
             {
-                status: OrderStatusEnum.ORDER_ACCEPTED,
+                status: OrderStatusEnum.ORDER_ALLOTTED,
                 statusUpdates: [newStatusUpdate],
                 driverDetails
             },
@@ -156,7 +156,7 @@ export async function orderUpdate(req: Request, res: Response) {
 
         const newStatusUpdate = { status: status, time: new Date() }
         const response = await PlaceOrder.findOneAndUpdate(
-            { _id: orderId, status: !OrderStatusEnum.ORDER_CANCELLED },
+            { _id: orderId },
             { status: status, statusUpdates: [newStatusUpdate] },
             { new: true },
         )
