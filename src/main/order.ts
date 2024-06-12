@@ -5,6 +5,43 @@ import { error } from "console";
 import { getDirections } from "../helpers/common";
 import { OrderStatusEnum } from "../shared/enums/status.enum";
 
+export async function getNewOrders(req: Request, res: Response) {
+    let session: any;
+    try {
+        session = await mongoose.startSession();
+        session.startTransaction();
+
+        let startDate: any = new Date();
+        let endDate: any = new Date();
+        //! confirm if this below statement is changing hour in corner cases.
+        endDate.setMinutes(endDate.getMinutes() - 10);
+
+        const newOrder = await PlaceOrder.find({
+            status: 'pending-accept',
+            bookingTime: {
+                $gte: endDate,
+            },
+        })
+
+        await session.commitTransaction();
+
+        res.status(200).send({
+            message: 'new orders get successfully.',
+            data: newOrder,
+        });
+    } catch (error: any) {
+        res.status(400).json({ success: false, message: error.message });
+        if (session) {
+            await session.abortTransaction();
+        }
+        console.log('err :>> ', error);
+    } finally {
+        if (session) {
+            await session.endSession();
+        }
+    }
+}
+
 export async function placeOrder(req: Request, res: Response) {
     try {
         const { order_details } = req.body;
@@ -44,7 +81,7 @@ export async function placeOrder(req: Request, res: Response) {
 
 export async function orderAccept(req: Request, res: Response) {
     try {
-        const driverId = "123456"//req.decoded._id;
+        const driverId = req.decoded._id;
         const { driverLocation, pickUpDetails, id } = req.body;
 
         const driverData = await Driver.findOne({ _id: driverId }).lean();
@@ -107,6 +144,40 @@ export async function orderAccept(req: Request, res: Response) {
     }
 }
 
+export async function orderUpdate(req: Request, res: Response) {
+    try {
+        const { pickUpLocation, destination, orderId } = req.body;
+        let status: OrderStatusEnum = req.body.status;
+
+        const driverDataFromCurrLocationToPickup = await getDirections(
+            pickUpLocation,
+            destination
+        );
+
+        const newStatusUpdate = { status: status, time: new Date() }
+        const response = await PlaceOrder.findOneAndUpdate(
+            { _id: orderId, status: !OrderStatusEnum.ORDER_CANCELLED },
+            { status: status, statusUpdates: [newStatusUpdate] },
+            { new: true },
+        )
+
+        res.status(200).send({
+            message: ' orders updated successfully.',
+            data: { response, driverDataFromCurrLocationToPickup },
+        });
+    } catch (error: any) {
+        console.log(
+            JSON.stringify({
+                method: "orderUpdate",
+                message: error.message
+            })
+        )
+
+        res.status(400)
+            .send({ success: false, message: error.message });
+    }
+}
+
 export async function trackOrderStatus (req: Request, res: Response) {
     try {
         const { vendor_order_id, access_token } = req.body;
@@ -144,100 +215,37 @@ export async function trackOrderStatus (req: Request, res: Response) {
 }
 
 export async function cancelTask(req: Request, res: Response) {
-    let session: any;
-    try {
-        session = await mongoose.startSession();
-        session.startTransaction();
-        const cancelTask = req.body;
-        console.log("cancelTask Data: ==>", cancelTask)
-        // const {order_details, pickup_details, drop_details, order_items} = req.body;
 
-        const cancel_task = await CancelTask.create(cancelTask);
+    try {
+
+        const {access_token, vendor_order_id} = req.body;
+
+        const newStatusUpdate = { status: OrderStatusEnum.ORDER_CANCELLED, time: new Date() }
+        
+        const cancel_task = await PlaceOrder.findOneAndUpdate(
+            {
+                vendor_order_id : vendor_order_id
+            },
+            {
+                status : OrderStatusEnum.ORDER_CANCELLED ,statusUpdates :[newStatusUpdate]
+            }
+        ).lean();
 
 
         if (!cancel_task) {
             throw new Error("error while canceling  order");
         }
 
-        await session.commitTransaction();
         res.status(200).send({
-            message: ' Order cancelled.',
+            "status": true,// true/false 
+            "status_code": cancel_task.status,
+            "message": "Order has been canceled",
         });
 
-    } catch (error: any) {
-        console.log(error);
-
-        res.status(400).send({ success: false, message: error.message });
-        if (session) {
-            await session.abortTransaction();
-        }
-    } finally {
-        await session.endSession();
-    }
-}
-
-export async function getNewOrders(req: Request, res: Response) {
-    let session: any;
-    try {
-        session = await mongoose.startSession();
-        session.startTransaction();
-
-        let startDate: any = new Date();
-        let endDate: any = new Date();
-        //! confirm if this below statement is changing hour in corner cases.
-        endDate.setMinutes(endDate.getMinutes() - 10);
-
-        const newOrder = await PlaceOrder.find({
-            status: 'pending-accept',
-            bookingTime: {
-                $gte: endDate,
-            },
-        })
-
-        await session.commitTransaction();
-
-        res.status(200).send({
-            message: 'new orders get successfully.',
-            data: newOrder,
-        });
-    } catch (error: any) {
-        res.status(400).json({ success: false, message: error.message });
-        if (session) {
-            await session.abortTransaction();
-        }
-        console.log('err :>> ', error);
-    } finally {
-        if (session) {
-            await session.endSession();
-        }
-    }
-}
-
-export async function orderUpdate(req: Request, res: Response) {
-    try {
-        const { pickUpLocation, destination, orderId } = req.body;
-        let status: OrderStatusEnum = req.body.status;
-
-        const driverDataFromCurrLocationToPickup = await getDirections(
-            pickUpLocation,
-            destination
-        );
-
-        const newStatusUpdate = { status: status, time: new Date() }
-        const response = await PlaceOrder.findOneAndUpdate(
-            { _id: orderId, status: !OrderStatusEnum.ORDER_CANCELLED },
-            { status: status, statusUpdates: [newStatusUpdate] },
-            { new: true },
-        )
-
-        res.status(200).send({
-            message: ' orders updated successfully.',
-            data: { response, driverDataFromCurrLocationToPickup },
-        });
     } catch (error: any) {
         console.log(
             JSON.stringify({
-                method: "orderUpdate",
+                method: "cancelTask",
                 message: error.message
             })
         )
@@ -246,3 +254,5 @@ export async function orderUpdate(req: Request, res: Response) {
             .send({ success: false, message: error.message });
     }
 }
+
+
