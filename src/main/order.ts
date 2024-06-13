@@ -104,7 +104,11 @@ export async function orderAccept(req: any, res: Response) {
         const driverData = await Driver.findOne({ _id: driverId }).lean();
         
         if (!driverData) {
-            console.log("unauth");
+            res.status(404).send({
+                status: true,
+                driverId,
+                message: "Driver is not Found!"
+            })
         }
 
         const pickUpLocation = {
@@ -125,15 +129,13 @@ export async function orderAccept(req: any, res: Response) {
             contact: driverData?.mobileNumber
         }
 
-
         const response = await PlaceOrder.findOneAndUpdate(
             { _id: id },
             {
                 status: OrderStatusEnum.ORDER_ALLOTTED,
-                statusUpdates: [newStatusUpdate],
+                statusUpdates: newStatusUpdate,
                 driver_details: driverDetails
             },
-            { new: true },
         ).lean()
 
         if (response) {
@@ -164,15 +166,25 @@ export async function orderAccept(req: any, res: Response) {
     }
 }
 
-export async function orderUpdate(req: Request, res: Response) {
+export async function orderUpdate(req: any, res: Response) {
     try {
         const { pickUpLocation, destination, orderId } = req.body;
+        const driverId = req.decoded.user._id;
         let status = req.body.status;
+
+        const driverData = await Driver.findOne({ _id: driverId }).lean();
+        if (!driverData) {
+            res.status(404).send({
+                status: true,
+                driverId,
+                message: "Driver is not Found!"
+            })
+        }
 
         if (!Object.values(OrderStatusEnum).includes(status)) {
             return res.status(400).send({ error: 'Invalid order status' });
         }
-    
+
         status = status as OrderStatusEnum;
 
         const driverDataFromCurrLocationToPickup = await getDirections(
@@ -185,26 +197,14 @@ export async function orderUpdate(req: Request, res: Response) {
             { _id: orderId },
             { status: status, statusUpdates: [newStatusUpdate] },
             { new: true },
-        ).lean()
+        )
 
-        const obj = {
-            status: true,
-            data: {
-                "api_key": environmentVars.PETPUJA_API_KEY,
-                "api_secret_key": environmentVars.PETPUJA_SECRET_KEY,
-                "vendor_order_id": response?.order_details?.vendor_order_id,
-                "rider_name": response?.driver_details?.name,
-                "rider_contact": response?.driver_details?.contact
-            },
-            message: "Ok",
-            status_code: response?.status
+        if (status == OrderStatusEnum.DELIVERED && response && driverData?.rideStatus == 'on-ride') {
+            await Driver.findOneAndUpdate(
+                { _id: driverId },
+                { rideStatus: 'online' }
+            )
         }
-          
-        const resFromPetPuja = await petPujaApiFUnction(obj);
-
-        console.log(">>>>>>>>>>>>>>>.",resFromPetPuja);
-        
-
 
         res.status(200).send({
             message: ' orders updated successfully.',
@@ -265,34 +265,39 @@ export async function trackOrderStatus (req: Request, res: Response) {
 }
 
 export async function cancelTask(req: Request, res: Response) {
-
     try {
         const { vendor_order_id } = req.body;
         const access_token = req.headers.access_token;
 
-        if(access_token != environmentVars.PETPOOJA_ACCESS_TOKEN) {
+        if (access_token != environmentVars.PETPOOJA_ACCESS_TOKEN) {
             throw new Error("Invalid Access Token!");
         }
+
         const newStatusUpdate = { status: OrderStatusEnum.ORDER_CANCELLED, time: new Date() }
-        
         const cancel_task = await PlaceOrder.findOneAndUpdate(
             {
                 'order_details.vendor_order_id': vendor_order_id
             },
             {
-                status : OrderStatusEnum.ORDER_CANCELLED ,statusUpdates :[newStatusUpdate]
+                status: OrderStatusEnum.ORDER_CANCELLED, statusUpdates: [newStatusUpdate]
             }
         ).lean();
 
+        if (cancel_task?.driver_details) {
+            await Driver.findOneAndUpdate(
+                { _id: cancel_task?.driver_details?.driver_id, rideStatus: 'on-ride' },
+                { rideStatus: 'online' }
+            )
+        }
 
         if (!cancel_task) {
             throw new Error("error while canceling  order");
         }
 
         res.status(200).send({
-            "status": true,// true/false 
-            "status_code": OrderStatusEnum.ORDER_CANCELLED,
-            "message": "Order has been canceled",
+            status: true,// true/false 
+            status_code: OrderStatusEnum.ORDER_CANCELLED,
+            message: "Order has been canceled",
         });
 
     } catch (error: any) {
