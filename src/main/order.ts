@@ -239,25 +239,32 @@ export async function trackOrderStatus (req: Request, res: Response) {
 }
 
 export async function cancelTask(req: Request, res: Response) {
-
     try {
         const { vendor_order_id } = req.body;
         const access_token = req.headers.access_token;
 
-        if(access_token != environmentVars.PETPOOJA_ACCESS_TOKEN) {
+        if (access_token != environmentVars.PETPOOJA_ACCESS_TOKEN) {
             throw new Error("Invalid Access Token!");
         }
+
         const newStatusUpdate = { status: OrderStatusEnum.ORDER_CANCELLED, time: new Date() }
-        
         const cancel_task = await PlaceOrder.findOneAndUpdate(
             {
                 'order_details.vendor_order_id': vendor_order_id
             },
             {
-                status : OrderStatusEnum.ORDER_CANCELLED ,statusUpdates :[newStatusUpdate]
+                status: OrderStatusEnum.ORDER_CANCELLED, statusUpdates: [newStatusUpdate]
             }
         ).lean();
 
+        if (cancel_task?.driver_details) {
+            await Driver.findOneAndUpdate(
+                { _id: cancel_task?.driver_details?.driver_id },
+                { rideStatus: 'online' }
+            )
+        }
+
+        console.log(cancel_task);
 
         if (!cancel_task) {
             throw new Error("error while canceling  order");
