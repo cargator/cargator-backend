@@ -1,7 +1,7 @@
 import { config } from 'dotenv';
 config();
 
-const environmentVars = {
+const environmentVars: any = {
   PORT: process.env.PORT || 8080,
   MONGO_URL: process.env.MONGO_URL,
   GOOGLE_API_KEY: process.env.GOOGLE_API_KEY,

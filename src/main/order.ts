@@ -7,13 +7,13 @@ import { getDirections } from "../helpers/common";
 import { OrderStatusEnum } from "../shared/enums/status.enum";
 import environmentVars from "../constantsVars";
 
-const petPujaApiFUnction = async (data: any) => {
-    return  axios.post('environmentVars.PETPUJA_API_URL',
-         data
-     )
- 
- }
-
+const petpoojaAcknowledge = async (data: any) => {
+    try {
+        return axios.post(environmentVars.PETPUJA_API_URL, data);
+    } catch (error: any) {
+        throw new Error(error);
+    }
+}
 
 export async function getNewOrders(req: Request, res: Response) {
     let session: any;
@@ -58,7 +58,7 @@ export async function placeOrder(req: Request, res: Response) {
 
         const access_token = req.headers.access_token;
 
-        if(access_token != environmentVars.PETPOOJA_ACCESS_TOKEN) {
+        if (access_token != environmentVars.PETPOOJA_ACCESS_TOKEN) {
             throw new Error("Invalid Access Token!");
         }
 
@@ -99,10 +99,10 @@ export async function orderAccept(req: any, res: Response) {
     try {
         const driverId = req.decoded.user._id;
         const { driverLocation, pickUpDetails, id } = req.body;
-        
+
 
         const driverData = await Driver.findOne({ _id: driverId }).lean();
-        
+
         if (!driverData) {
             res.status(404).send({
                 status: true,
@@ -186,7 +186,6 @@ export async function orderUpdate(req: any, res: Response) {
         }
 
         status = status as OrderStatusEnum;
-
         const driverDataFromCurrLocationToPickup = await getDirections(
             pickUpLocation,
             destination
@@ -199,23 +198,20 @@ export async function orderUpdate(req: any, res: Response) {
             { new: true },
         )
 
-
         const obj = {
             status: true,
             data: {
-                "api_key": environmentVars.PETPUJA_API_KEY,
-                "api_secret_key": environmentVars.PETPUJA_SECRET_KEY,
-                "vendor_order_id": response?.order_details?.vendor_order_id,
-                "rider_name": response?.driver_details?.name,
-                "rider_contact": response?.driver_details?.contact
+                api_key: environmentVars.PETPUJA_API_KEY,
+                api_secret_key: environmentVars.PETPUJA_SECRET_KEY,
+                vendor_order_id: response?.order_details?.vendor_order_id,
+                rider_name: response?.driver_details?.name,
+                rider_contact: response?.driver_details?.contact
             },
             message: "Ok",
             status_code: response?.status
         }
 
-        const resFromPetPuja = await petPujaApiFUnction(obj);
-
-
+        await petpoojaAcknowledge(obj);
 
         if (status == OrderStatusEnum.DELIVERED && response && driverData?.rideStatus == 'on-ride') {
             await Driver.findOneAndUpdate(
@@ -241,16 +237,16 @@ export async function orderUpdate(req: any, res: Response) {
     }
 }
 
-export async function trackOrderStatus (req: Request, res: Response) {
+export async function trackOrderStatus(req: Request, res: Response) {
     try {
         const { vendor_order_id } = req.body;
         const access_token = req.headers.access_token;
 
-        if(access_token != environmentVars.PETPOOJA_ACCESS_TOKEN) {
+        if (access_token != environmentVars.PETPOOJA_ACCESS_TOKEN) {
             throw new Error("Invalid Access Token!");
         }
         const checkOrder = await PlaceOrder.findOne({ 'order_details.vendor_order_id': vendor_order_id }).lean()
-        if( !checkOrder ) {
+        if (!checkOrder) {
             res.status(404).send({
                 status: true,
                 vendor_order_id,
@@ -259,7 +255,7 @@ export async function trackOrderStatus (req: Request, res: Response) {
         }
 
         res.send({
-            status: true, 
+            status: true,
             message: "Ok",
             status_code: checkOrder?.status,
             data: {
