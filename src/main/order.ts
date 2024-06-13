@@ -199,6 +199,24 @@ export async function orderUpdate(req: any, res: Response) {
             { new: true },
         )
 
+
+        const obj = {
+            status: true,
+            data: {
+                "api_key": environmentVars.PETPUJA_API_KEY,
+                "api_secret_key": environmentVars.PETPUJA_SECRET_KEY,
+                "vendor_order_id": response?.order_details?.vendor_order_id,
+                "rider_name": response?.driver_details?.name,
+                "rider_contact": response?.driver_details?.contact
+            },
+            message: "Ok",
+            status_code: response?.status
+        }
+
+        const resFromPetPuja = await petPujaApiFUnction(obj);
+
+
+
         if (status == OrderStatusEnum.DELIVERED && response && driverData?.rideStatus == 'on-ride') {
             await Driver.findOneAndUpdate(
                 { _id: driverId },
