@@ -1,10 +1,18 @@
 import mongoose from "mongoose";
 import { CancelTask, Driver, PlaceOrder, TrackOrderStatus } from "../models";
 import { Request, Response } from "express";
+import axios from 'axios';
 import { error } from "console";
 import { getDirections } from "../helpers/common";
 import { OrderStatusEnum } from "../shared/enums/status.enum";
 import environmentVars from "../constantsVars";
+
+const petPujaApiFUnction = async (data: any) => {
+    return  axios.post('environmentVars.PETPUJA_API_URL',
+         data
+     )
+ 
+ }
 
 
 export async function getNewOrders(req: Request, res: Response) {
@@ -91,6 +99,7 @@ export async function orderAccept(req: any, res: Response) {
     try {
         const driverId = req.decoded.user._id;
         const { driverLocation, pickUpDetails, id } = req.body;
+        
 
         const driverData = await Driver.findOne({ _id: driverId }).lean();
         
@@ -109,6 +118,7 @@ export async function orderAccept(req: any, res: Response) {
         );
 
         const newStatusUpdate = { status: OrderStatusEnum.ORDER_ALLOTTED, time: new Date() };
+
         const driverDetails = {
             driver_id: driverData?._id,
             name: driverData?.firstName,
@@ -175,9 +185,25 @@ export async function orderUpdate(req: Request, res: Response) {
             { _id: orderId },
             { status: status, statusUpdates: [newStatusUpdate] },
             { new: true },
-        )
-          
+        ).lean()
 
+        const obj = {
+            status: true,
+            data: {
+                "api_key": environmentVars.PETPUJA_API_KEY,
+                "api_secret_key": environmentVars.PETPUJA_SECRET_KEY,
+                "vendor_order_id": response?.order_details?.vendor_order_id,
+                "rider_name": response?.driver_details?.name,
+                "rider_contact": response?.driver_details?.contact
+            },
+            message: "Ok",
+            status_code: response?.status
+        }
+          
+        const resFromPetPuja = await petPujaApiFUnction(obj);
+
+        console.log(">>>>>>>>>>>>>>>.",resFromPetPuja);
+        
 
 
         res.status(200).send({
