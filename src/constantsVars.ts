@@ -24,7 +24,10 @@ const environmentVars = {
   OTP_SID: process.env.OTP_SID,
   WHATSAPP_AUTH_TOKEN: process.env.WHATSAPP_AUTH_TOKEN,
   AUTHKEY_OTP:process.env.AUTHKEY_OTP,
-  EMAIL_AUTHKEY:process.env.EMAIL_AUTHKEY
+  EMAIL_AUTHKEY:process.env.EMAIL_AUTHKEY,
+  PETPUJA_API_KEY:process.env.PETPUJA_API_KEY,
+  PETPUJA_SECRET_KEY: process.env.PETPUJA_SECRET_KEY,
+  PETPUJA_API_URL: process.env.PETPUJA_API_URL
 };
 
 (() => {

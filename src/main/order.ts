@@ -5,6 +5,7 @@ import { error } from "console";
 import { getDirections } from "../helpers/common";
 import { OrderStatusEnum } from "../shared/enums/status.enum";
 
+
 export async function getNewOrders(req: Request, res: Response) {
     let session: any;
     try {
@@ -85,6 +86,7 @@ export async function orderAccept(req: any, res: Response) {
         const { driverLocation, pickUpDetails, id } = req.body;
 
         const driverData = await Driver.findOne({ _id: driverId }).lean();
+        
         if (!driverData) {
             console.log("unauth");
         }
@@ -106,12 +108,13 @@ export async function orderAccept(req: any, res: Response) {
             contact: driverData?.mobileNumber
         }
 
+
         const response = await PlaceOrder.findOneAndUpdate(
             { _id: id },
             {
                 status: OrderStatusEnum.ORDER_ALLOTTED,
                 statusUpdates: [newStatusUpdate],
-                driverDetails
+                driver_details: driverDetails
             },
             { new: true },
         ).lean()
@@ -147,7 +150,13 @@ export async function orderAccept(req: any, res: Response) {
 export async function orderUpdate(req: Request, res: Response) {
     try {
         const { pickUpLocation, destination, orderId } = req.body;
-        let status: OrderStatusEnum = req.body.status;
+        let status = req.body.status;
+
+        if (!Object.values(OrderStatusEnum).includes(status)) {
+            return res.status(400).send({ error: 'Invalid order status' });
+        }
+    
+        status = status as OrderStatusEnum;
 
         const driverDataFromCurrLocationToPickup = await getDirections(
             pickUpLocation,
@@ -160,6 +169,9 @@ export async function orderUpdate(req: Request, res: Response) {
             { status: status, statusUpdates: [newStatusUpdate] },
             { new: true },
         )
+          
+
+
 
         res.status(200).send({
             message: ' orders updated successfully.',
@@ -224,7 +236,7 @@ export async function cancelTask(req: Request, res: Response) {
         
         const cancel_task = await PlaceOrder.findOneAndUpdate(
             {
-                vendor_order_id : vendor_order_id
+                'order_details.vendor_order_id': vendor_order_id
             },
             {
                 status : OrderStatusEnum.ORDER_CANCELLED ,statusUpdates :[newStatusUpdate]
@@ -238,7 +250,7 @@ export async function cancelTask(req: Request, res: Response) {
 
         res.status(200).send({
             "status": true,// true/false 
-            "status_code": cancel_task.status,
+            "status_code": OrderStatusEnum.ORDER_CANCELLED,
             "message": "Order has been canceled",
         });
 

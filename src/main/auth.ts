@@ -2,6 +2,7 @@ import axios from 'axios';
 import { Driver, Riders } from '../models';
 import environmentVars from '../constantsVars'
 import { Request, Response } from 'express';
+import { CloudWatchLogs } from 'aws-sdk';
 const jwt = require('jsonwebtoken');
 const _ = require('lodash');
 
@@ -184,6 +185,7 @@ export async function verifyOtp(req: Request, res: Response) {
       // Handle driver OTP verification
       const otp = req.body.otp;
       const mobileNumber = req.body.mobileNumber;
+      
 
       // Check if OTP and mobile number are provided
       if (!otp) {
@@ -227,6 +229,7 @@ export async function verifyOtp(req: Request, res: Response) {
         // res.status(400).send({ message: 'Invalid OTP' });
         throw new Error(`Invalid otp Driver`);
       }
+      
     } else {
       // Handle rider OTP verification (similar logic as driver)
       const otp = req.body.otp;
