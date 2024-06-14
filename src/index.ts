@@ -84,7 +84,7 @@ import {
   searchVehicles,
   updateVehicle,
 } from './main/vehiclesDetails';
-import { Driver, Orders, Payments, Rides, TrackOrderStatus, Utils, Vehicles } from './models';
+import { Driver, Orders, Payments, PlaceOrder, Rides, TrackOrderStatus, Utils, Vehicles } from './models';
 import axios from 'axios';
 import { handleWebhookPost, handleWebhookVerification } from './main/whatsAppChat';
 import { createVehicleType, deleteVehicleType, getVehicleOne, getVehicleType, updateVehicleType } from './main/vehicleType';
@@ -94,6 +94,7 @@ import { createSpot, deleteSpot, getActiveSpot, getSpotList, getSpotListVehicle 
 import { createCountryCode, deleteCountryCode, getCountryCodeMobiles, getCountryCodes } from './main/countrycode';
 import { createBreakPoints, deleteBreakingPoints, getBreakPointOne, getBreakingPoints, getBreakingPointsMobile, updateBreakPoints } from './main/flows';
 import { cancelTask, getNewOrders, orderAccept, orderUpdate, placeOrder, trackOrderStatus } from './main/order';
+import { OrderStatusEnum } from './shared/enums/status.enum';
 
 let utilsData: any;
 
@@ -127,6 +128,23 @@ const addDriversToRoom: any = (data: any) => {
   });
   console.log('all drivers added to room');
 };
+
+const sendOrderToDriverRoom: any = (data: any) => {
+  try {
+    const { newOrder, drivers } = JSON.parse(data);
+  drivers.forEach((driver: any) => {
+    let tempDriverId = driver._id.toString();
+    const driversSocket = getDriverSocket(tempDriverId);
+    if (driversSocket) {
+      driversSocket.join(`${newOrder._id.toString()}-ride-room-pre`);
+      driversSocket.emit('order-request', [newOrder]);
+    }
+  });
+  console.log('all drivers added to room');
+  } catch (error: any) {
+    console.log("error :", error);
+  }
+}
 
 // Function to add the rider to a ride room and update their ride status
 const addRiderToRoom: any = (data: any) => {
@@ -281,6 +299,7 @@ async function setUpCronJobs() {
       console.log('Checking pre-book rides every minute !');
       // console.log('Checking pre-book rides every 15 seconds !');
       checkPreBookRides();
+      checkOrders(undefined);
     });
   } catch (err) {
     console.log('err', err);
@@ -388,6 +407,56 @@ const checkPreBookRides = async () => {
     console.log('checkPreBookRides error', error?.message);
   }
 };
+
+export const checkOrders = async (newOrder: any) => {
+  try {
+    let endDate: any = new Date();
+    endDate.setMinutes(endDate.getMinutes() - 10);
+
+    if (newOrder === undefined) {
+      let orders: any = await PlaceOrder.find({
+        createdAt: {
+          $gte: endDate
+        },
+        status: OrderStatusEnum.ORDER_ACCEPTED
+      });
+
+      for (const newOrder of orders) {
+
+        // find drivers available to accept new ride
+        const availableDrivers = await Driver.find({
+          rideStatus: 'online',
+          status: 'active',
+        }).limit(20).lean();
+
+        // console.log(`checkPreBookRides availableDrivers :>> `, availableDrivers);
+        const data = { newOrder, drivers: availableDrivers };
+
+        pubClient.publish(
+          'join-drivers-to-orders',
+          formatSocketResponse(data),
+        );
+      }
+    }
+    else {
+      const availableDrivers = await Driver.find({
+        rideStatus: 'online',
+        status: 'active',
+      }).limit(20).lean();
+
+      // console.log(`checkPreBookRides availableDrivers :>> `, availableDrivers);
+      const data = { newOrder, drivers: availableDrivers };
+
+      pubClient.publish(
+        'join-drivers-to-orders',
+        formatSocketResponse(data),
+      );
+    }
+
+  } catch (error: any) {
+    console.log("Error while check orders", error.message);
+  }
+}
 
 // container health check endpoint
 app.get('/', (req: Request, res: Response) => {
@@ -928,6 +997,10 @@ subClient.subscribe(
   addRiderToRoomForScheduled,
 );
 subClient.subscribe('cancel-scheduled-ride-cron', cancelScheduledRideCron);
+
+//orders
+subClient.subscribe('join-drivers-to-orders', sendOrderToDriverRoom);
+
 
 // Log errors for publisher and subscriber clients
 pubClient.on('error', () => console.log(`Publisher Client Error`));

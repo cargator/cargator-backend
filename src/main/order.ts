@@ -6,6 +6,7 @@ import { error } from "console";
 import { getDirections } from "../helpers/common";
 import { OrderStatusEnum } from "../shared/enums/status.enum";
 import environmentVars from "../constantsVars";
+import { checkOrders } from "..";
 
 const petPujaApiFUnction = async (data: any) => {
     return  axios.post('environmentVars.PETPUJA_API_URL',
@@ -72,6 +73,8 @@ export async function placeOrder(req: Request, res: Response) {
         if (!saveOrder) {
             throw new Error("error while placing order");
         }
+
+        await checkOrders(saveOrder);
 
         console.log(JSON.stringify({ method: "placeOrder", message: "Order saved Response", data: saveOrder }));
 
