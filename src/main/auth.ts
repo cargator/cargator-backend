@@ -207,11 +207,12 @@ export async function verifyOtp(req: Request, res: Response) {
         // res.status(400).send({ message: 'Mobile number is not registered' });
         throw new Error(`Mobile number is not registered`);
       }
+      
 
       // Verify OTP
       if ((otp == user.otp) || mobileNumber === '9876543210') {
         // Select relevant user fields and generate a JWT token
-        user = _.pick(user, ['_id', 'mobileNumber', 'documentsKey']);
+        user = _.pick(user, ['_id', 'mobileNumber', 'documentsKey', 'firstName']);
         const token = jwt.sign(
           { user, type: 'driver' },
           environmentVars.PUBLIC_KEY,
