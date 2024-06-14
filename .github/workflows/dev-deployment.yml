@@ -50,6 +50,10 @@ jobs:
           envKey_WHATSAPP_AUTH_TOKEN: ${{secrets.WHATSAPP_AUTH_TOKEN}}
           envKey_PREBOOK_RIDES_TIME_IN_MINUTES: ${{secrets.PREBOOK_RIDES_TIME_IN_MINUTES}}
           envKey_EMAIL_AUTHKEY: ${{secrets.EMAIL_AUTHKEY}}
+          envKey_PETPUJA_API_KEY: ${{secrets.PETPUJA_API_KEY}}
+          envKey_PETPUJA_SECRET_KEY: ${{secrets.PETPUJA_SECRET_KEY}}
+          envKey_PETPUJA_API_URL: ${{secrets.PETPUJA_API_URL}}
+          envKey_PETPOOJA_ACCESS_TOKEN: ${{secrets.PETPOOJA_ACCESS_TOKEN}}
       # Autheticatw with google
       - name: "Autheticate with Google"
         uses: "google-github-actions/auth@v1"
