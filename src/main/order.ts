@@ -57,13 +57,13 @@ export async function placeOrder(req: Request, res: Response) {
     try {
         const { order_details } = req.body;
 
-        const access_token = req.headers.access_token;
+        // const access_token = req.headers.access_token;
 
-        if (access_token != environmentVars.PETPOOJA_ACCESS_TOKEN) {
-            throw new Error("Invalid Access Token!");
-        }
+        // if (access_token != environmentVars.PETPOOJA_ACCESS_TOKEN) {
+        //     throw new Error("Invalid Access Token!");
+        // }
 
-        console.log(JSON.stringify({ method: "placeOrder", message: "fetch body from Request.", data: req.body }));
+        // console.log(JSON.stringify({ method: "placeOrder", message: "fetch body from Request.", data: req.body }));
 
         const saveOrder = await PlaceOrder.create({
             ...req.body,
@@ -243,11 +243,11 @@ export async function orderUpdate(req: any, res: Response) {
 export async function trackOrderStatus(req: Request, res: Response) {
     try {
         const { vendor_order_id } = req.body;
-        const access_token = req.headers.access_token;
+        // const access_token = req.headers.access_token;
 
-        if (access_token != environmentVars.PETPOOJA_ACCESS_TOKEN) {
-            throw new Error("Invalid Access Token!");
-        }
+        // if (access_token != environmentVars.PETPOOJA_ACCESS_TOKEN) {
+        //     throw new Error("Invalid Access Token!");
+        // }
         const checkOrder = await PlaceOrder.findOne({ 'order_details.vendor_order_id': vendor_order_id }).lean()
         if (!checkOrder) {
             res.status(404).send({
@@ -284,11 +284,11 @@ export async function trackOrderStatus(req: Request, res: Response) {
 export async function cancelTask(req: Request, res: Response) {
     try {
         const { vendor_order_id } = req.body;
-        const access_token = req.headers.access_token;
+        // const access_token = req.headers.access_token;
 
-        if (access_token != environmentVars.PETPOOJA_ACCESS_TOKEN) {
-            throw new Error("Invalid Access Token!");
-        }
+        // if (access_token != environmentVars.PETPOOJA_ACCESS_TOKEN) {
+        //     throw new Error("Invalid Access Token!");
+        // }
 
         const newStatusUpdate = { status: OrderStatusEnum.ORDER_CANCELLED, time: new Date() }
         const cancel_task = await PlaceOrder.findOneAndUpdate(
