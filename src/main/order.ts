@@ -103,7 +103,6 @@ export async function orderAccept(req: any, res: Response) {
         const driverId = req.decoded.user._id;
         const { driverLocation, pickUpDetails, id } = req.body;
 
-
         const driverData = await Driver.findOne({ _id: driverId }).lean();
 
         if (!driverData) {
@@ -150,6 +149,21 @@ export async function orderAccept(req: any, res: Response) {
                 { new: true },
             ).lean();
         }
+
+        const obj = {
+            status: true,
+            data: {
+                api_key: environmentVars.PETPUJA_API_KEY,
+                api_secret_key: environmentVars.PETPUJA_SECRET_KEY,
+                vendor_order_id: response?.order_details?.vendor_order_id,
+                rider_name: response?.driver_details?.name,
+                rider_contact: response?.driver_details?.contact
+            },
+            message: "Ok",
+            status_code: OrderStatusEnum.ORDER_ALLOTTED
+        }
+
+        await petpoojaAcknowledge(obj);
 
         res.status(200).send({
             message: 'Order accepted successfully.',
@@ -311,12 +325,26 @@ export async function cancelTask(req: Request, res: Response) {
             throw new Error("error while canceling  order");
         }
 
+        const obj = {
+            status: true,
+            data: {
+                api_key: environmentVars.PETPUJA_API_KEY,
+                api_secret_key: environmentVars.PETPUJA_SECRET_KEY,
+                vendor_order_id: cancel_task?.order_details?.vendor_order_id,
+                rider_name: cancel_task?.driver_details?.name,
+                rider_contact: cancel_task?.driver_details?.contact
+            },
+            message: "Ok",
+            status_code: OrderStatusEnum.ORDER_CANCELLED
+        }
+
+        await petpoojaAcknowledge(obj);
+
         res.status(200).send({
-            status: true,// true/false 
+            status: true,
             status_code: OrderStatusEnum.ORDER_CANCELLED,
             message: "Order has been canceled",
         });
-
     } catch (error: any) {
         console.log(
             JSON.stringify({
@@ -329,5 +357,3 @@ export async function cancelTask(req: Request, res: Response) {
             .send({ success: false, message: error.message });
     }
 }
-
-
