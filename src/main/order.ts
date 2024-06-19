@@ -102,10 +102,13 @@ export async function orderAccept(req: any, res: Response) {
     try {
         const driverId = req.decoded.user._id;
         const { driverLocation, pickUpDetails, id } = req.body;
+        console.log(JSON.stringify({ method: "orderAccept", message: "Order saved Response", data: req.body }));
 
         const driverData = await Driver.findOne({ _id: driverId }).lean();
 
         if (!driverData) {
+        console.log(JSON.stringify({ method: "orderAccept", message: "Driver is not Found!", data: driverId }));
+
             res.status(404).send({
                 status: true,
                 driverId,
@@ -165,6 +168,7 @@ export async function orderAccept(req: any, res: Response) {
 
         await petpoojaAcknowledge(obj);
 
+        console.log(JSON.stringify({ method: "orderAccept", message: "order Accept Response", data: { response, driverDataFromCurrLocationToPickup } }));
         res.status(200).send({
             message: 'Order accepted successfully.',
             data: { response, driverDataFromCurrLocationToPickup },
@@ -189,8 +193,11 @@ export async function orderUpdate(req: any, res: Response) {
         const driverId = req.decoded.user._id;
         let status = req.body.status;
 
+        console.log(JSON.stringify({ method: "orderUpdate", message: "order Update body", data: req.body }));
+
         const driverData = await Driver.findOne({ _id: driverId }).lean();
         if (!driverData) {
+            console.log(JSON.stringify({ method: "orderUpdate", message: "order Update body", data: req.body }));
             res.status(404).send({
                 status: true,
                 driverId,
@@ -230,6 +237,11 @@ export async function orderUpdate(req: any, res: Response) {
 
         await petpoojaAcknowledge(obj);
 
+        console.log(JSON.stringify({ method: "orderUpdate", message: "order Update response", data: {
+            status: response?.status,
+            vendor_order_id: response?.order_details?.vendor_order_id,
+        } }));
+
         if (status == OrderStatusEnum.DELIVERED && response && driverData?.rideStatus == 'on-ride') {
             await Driver.findOneAndUpdate(
                 { _id: driverId },
@@ -262,14 +274,18 @@ export async function trackOrderStatus(req: Request, res: Response) {
         // if (access_token != environmentVars.PETPOOJA_ACCESS_TOKEN) {
         //     throw new Error("Invalid Access Token!");
         // }
+        console.log(JSON.stringify({ method: "trackOrderStatus", message: "track order status", data: vendor_order_id }));
         const checkOrder = await PlaceOrder.findOne({ 'order_details.vendor_order_id': vendor_order_id }).lean()
         if (!checkOrder) {
+            console.log(JSON.stringify({ method: "trackOrderStatus", message: "Order is not Found!", data: checkOrder }));
             res.status(404).send({
                 status: true,
                 vendor_order_id,
                 message: "Order is not Found!"
             })
         }
+
+        console.log(JSON.stringify({ method: "trackOrderStatus", message: "track order status response", data: vendor_order_id }));
 
         res.send({
             status: true,
@@ -303,6 +319,7 @@ export async function cancelTask(req: Request, res: Response) {
         // if (access_token != environmentVars.PETPOOJA_ACCESS_TOKEN) {
         //     throw new Error("Invalid Access Token!");
         // }
+        console.log(JSON.stringify({ method: "cancelTask", message: "cancel order", data: vendor_order_id }));
 
         const newStatusUpdate = { status: OrderStatusEnum.ORDER_CANCELLED, time: new Date() }
         const cancel_task = await PlaceOrder.findOneAndUpdate(
@@ -339,6 +356,8 @@ export async function cancelTask(req: Request, res: Response) {
         }
 
         await petpoojaAcknowledge(obj);
+
+        console.log(JSON.stringify({ method: "cancelTask", message: "cancel order response", data: cancel_task?.order_details }));
 
         res.status(200).send({
             status: true,
