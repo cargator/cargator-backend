@@ -1,9 +1,9 @@
 import { Types } from 'mongoose';
 import { Server, Socket } from 'socket.io';
 import { getUtils, pubClient } from '..';
-import { Driver, Riders, Rides } from '../models';
+import { Driver, PlaceOrder, Riders, Rides } from '../models';
 import { formatSocketResponse, getDirections } from './common';
-import { error } from 'console';
+import { OrderStatusEnum } from '../shared/enums/status.enum';
 
 // const { utilsData } = require('../index.ts');
 
@@ -722,7 +722,7 @@ const driverSocketConnected = async (
 
   socket.on('chat-message', async (body: any) => {
     try {
-      if (body.message == 'New message from driver') {
+            if (body.message == 'New message from driver') {
         // console.log('New message from driver :>> ', body.chatMessage.text);
         // console.log('chat-message event body :>> ', body);
 
@@ -784,6 +784,66 @@ const driverSocketConnected = async (
       }
     }
   });
+
+  socket.on('accept-order', async(body: any) => {
+    try {
+      const { driverLocation, pickUpDetails, driverId } = body;
+      const driverData = await Driver.findOne({ _id: driverId }).lean();
+
+      if (!driverData) {
+        socket.emit(
+          'error',
+          formatSocketResponse({
+            message: "Driver is not Found!",
+          }),
+        );
+      }
+
+      const pickUpLocation = {
+        latitude: pickUpDetails.latitude,//latitude: 19.172141,
+        longitude: pickUpDetails.longitude,//longitude: 72.956832
+      };
+
+      const driverDataFromCurrLocationToPickup = await getDirections(
+        driverLocation,
+        pickUpLocation,
+      );
+
+      const newStatusUpdate = { status: OrderStatusEnum.ORDER_ALLOTTED, time: new Date() };
+
+      const driverDetails = {
+          driver_id: driverData?._id,
+          name: driverData?.firstName,
+          contact: driverData?.mobileNumber
+      }
+
+      const response = await PlaceOrder.findOneAndUpdate(
+          { _id: driverId },
+          {
+              status: OrderStatusEnum.ORDER_ALLOTTED,
+              statusUpdates: newStatusUpdate,
+              driver_details: driverDetails
+          },
+      ).lean()
+
+      if (response) {
+          await Driver.findOneAndUpdate(
+              { _id: driverId, rideStatus: 'online' },
+              {
+                  rideStatus: 'on-ride',
+              },
+              { new: true },
+          ).lean();
+      }
+
+      socket.emit('accept-order-response', {
+        message: '',
+        orderData: { response, driverDataFromCurrLocationToPickup }
+      })
+    } catch (error) {
+
+    }
+  })
 
   // Event listener for socket disconnection
   socket.on('disconnect', async () => {
