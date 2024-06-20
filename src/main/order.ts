@@ -322,12 +322,14 @@ export async function trackOrderStatus(req: Request, res: Response) {
         JSON.stringify({
           method: 'trackOrderStatus',
           message: 'track order status',
-          data: vendor_order_id,
+          data: { vendor_order_id },
         }),
       );
+
       const checkOrder = await PlaceOrder.findOne({
         'order_details.vendor_order_id': vendor_order_id,
       }).lean();
+
       if (!checkOrder) {
         console.log(
           JSON.stringify({
@@ -336,6 +338,7 @@ export async function trackOrderStatus(req: Request, res: Response) {
             data: checkOrder,
           }),
         );
+
         res.status(404).send({
           status: true,
           vendor_order_id,
@@ -353,13 +356,19 @@ export async function trackOrderStatus(req: Request, res: Response) {
           rider_contact: checkOrder?.driver_details?.contact,
         },
       });
+
       console.log(
         JSON.stringify({
           method: 'trackOrderStatus',
           message: 'track order status response',
-          data: vendor_order_id,
+          data: {
+            vendor_order_id: vendor_order_id,
+            rider_name: checkOrder?.driver_details?.name,
+            rider_contact: checkOrder?.driver_details?.contact,
+          },
         }),
       );
+
     } catch (error: any) {
       console.log(
         JSON.stringify({
@@ -384,7 +393,7 @@ export async function cancelTask(req: Request, res: Response) {
         JSON.stringify({
           method: 'cancelTask',
           message: 'cancel order',
-          data: vendor_order_id,
+          data: { vendor_order_id },
         }),
       );
 
@@ -392,6 +401,7 @@ export async function cancelTask(req: Request, res: Response) {
         status: OrderStatusEnum.ORDER_CANCELLED,
         time: new Date(),
       };
+      
       const cancel_task = await PlaceOrder.findOneAndUpdate(
         {
           'order_details.vendor_order_id': vendor_order_id,
