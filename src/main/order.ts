@@ -63,7 +63,7 @@ export async function placeOrder(req: Request, res: Response) {
       //     throw new Error("Invalid Access Token!");
       // }
 
-      // console.log(JSON.stringify({ method: "placeOrder", message: "fetch body from Request.", data: req.body }));
+      console.log(JSON.stringify({ method: "placeOrder", message: "place Order body.", data: req.body }));
 
       const saveOrder = await PlaceOrder.create({
         ...req.body,
@@ -75,21 +75,20 @@ export async function placeOrder(req: Request, res: Response) {
       }
 
       await checkOrders(saveOrder);
-
-      console.log(
-        JSON.stringify({
-          method: 'placeOrder',
-          message: 'Order saved Response',
-          data: saveOrder,
-        }),
-      );
-
       res.status(200).send({
-        status: true,
-        vendor_order_id: order_details.vendor_order_id,
-        message: 'Order created succcessfully.',
-        Status_code: OrderStatusEnum.ORDER_ACCEPTED,
-      });
+          status: true,
+          vendor_order_id: order_details.vendor_order_id,
+          message: 'Order created succcessfully.',
+          Status_code: OrderStatusEnum.ORDER_ACCEPTED,
+        });
+
+        console.log(
+          JSON.stringify({
+            method: 'placeOrder',
+            message: 'Order saved Response',
+            data: saveOrder,
+          }),
+        );
     } catch (error: any) {
       console.log(
         JSON.stringify({
@@ -106,10 +105,11 @@ export async function orderAccept(req: any, res: Response) {
     try {
       const driverId = req.decoded.user._id;
       const { driverLocation, pickUpDetails, id } = req.body;
+
       console.log(
         JSON.stringify({
           method: 'orderAccept',
-          message: 'order Accept Response',
+          message: 'Order Accept Body',
           data: req.body,
         }),
       );
@@ -229,8 +229,10 @@ export async function orderUpdate(req: any, res: Response) {
         console.log(
           JSON.stringify({
             method: 'orderUpdate',
-            message: 'order Update body',
-            data: req.body,
+            message: 'Driver is not Found!',
+            data: {
+                driverId
+            },
           }),
         );
         res.status(404).send({
@@ -272,17 +274,6 @@ export async function orderUpdate(req: any, res: Response) {
 
       await petpoojaAcknowledge(obj);
 
-      console.log(
-        JSON.stringify({
-          method: 'orderUpdate',
-          message: 'order Update response',
-          data: {
-            status: response?.status,
-            vendor_order_id: response?.order_details?.vendor_order_id,
-          },
-        }),
-      );
-
       if (
         status == OrderStatusEnum.DELIVERED &&
         response &&
@@ -294,10 +285,22 @@ export async function orderUpdate(req: any, res: Response) {
         );
       }
 
+      console.log(
+        JSON.stringify({
+          method: 'orderUpdate',
+          message: 'order Update response',
+          data: {
+            status: response?.status,
+            vendor_order_id: response?.order_details?.vendor_order_id,
+          },
+        }),
+      );
+
       res.status(200).send({
         message: ' orders updated successfully.',
         data: { response, driverDataFromCurrLocationToPickup },
       });
+      
     } catch (error: any) {
       console.log(
         JSON.stringify({
@@ -321,7 +324,7 @@ export async function trackOrderStatus(req: Request, res: Response) {
       console.log(
         JSON.stringify({
           method: 'trackOrderStatus',
-          message: 'track order status',
+          message: 'track order body',
           data: { vendor_order_id },
         }),
       );
@@ -335,7 +338,9 @@ export async function trackOrderStatus(req: Request, res: Response) {
           JSON.stringify({
             method: 'trackOrderStatus',
             message: 'Order is not Found!',
-            data: checkOrder,
+            data: {
+                vendor_order_id
+            },
           }),
         );
 
@@ -392,7 +397,7 @@ export async function cancelTask(req: Request, res: Response) {
       console.log(
         JSON.stringify({
           method: 'cancelTask',
-          message: 'cancel order',
+          message: 'cancel order body',
           data: { vendor_order_id },
         }),
       );
@@ -401,7 +406,7 @@ export async function cancelTask(req: Request, res: Response) {
         status: OrderStatusEnum.ORDER_CANCELLED,
         time: new Date(),
       };
-      
+
       const cancel_task = await PlaceOrder.findOneAndUpdate(
         {
           'order_details.vendor_order_id': vendor_order_id,
