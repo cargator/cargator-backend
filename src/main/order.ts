@@ -19,360 +19,454 @@ const petpoojaAcknowledge = async (data: any) => {
 export async function getNewOrders(req: Request, res: Response) {
     let session: any;
     try {
-        session = await mongoose.startSession();
-        session.startTransaction();
+      session = await mongoose.startSession();
+      session.startTransaction();
 
-        let startDate: any = new Date();
-        let endDate: any = new Date();
-        //! confirm if this below statement is changing hour in corner cases.
-        endDate.setMinutes(endDate.getMinutes() - 10);
+      let startDate: any = new Date();
+      let endDate: any = new Date();
+      //! confirm if this below statement is changing hour in corner cases.
+      endDate.setMinutes(endDate.getMinutes() - 10);
 
-        const newOrder = await PlaceOrder.find({
-            status: 'pending-accept',
-            bookingTime: {
-                $gte: endDate,
-            },
-        })
+      const newOrder = await PlaceOrder.find({
+        status: 'pending-accept',
+        bookingTime: {
+          $gte: endDate,
+        },
+      });
 
-        await session.commitTransaction();
+      await session.commitTransaction();
 
-        res.status(200).send({
-            message: 'new orders get successfully.',
-            data: newOrder,
-        });
+      res.status(200).send({
+        message: 'new orders get successfully.',
+        data: newOrder,
+      });
     } catch (error: any) {
-        res.status(400).json({ success: false, message: error.message });
-        if (session) {
-            await session.abortTransaction();
-        }
-        console.log('err :>> ', error);
+      res.status(400).json({ success: false, message: error.message });
+      if (session) {
+        await session.abortTransaction();
+      }
+      console.log('err :>> ', error);
     } finally {
-        if (session) {
-            await session.endSession();
-        }
+      if (session) {
+        await session.endSession();
+      }
     }
 }
 
 export async function placeOrder(req: Request, res: Response) {
     try {
-        const { order_details } = req.body;
+      const { order_details } = req.body;
 
-        // const access_token = req.headers.access_token;
+      // const access_token = req.headers.access_token;
 
-        // if (access_token != environmentVars.PETPOOJA_ACCESS_TOKEN) {
-        //     throw new Error("Invalid Access Token!");
-        // }
+      // if (access_token != environmentVars.PETPOOJA_ACCESS_TOKEN) {
+      //     throw new Error("Invalid Access Token!");
+      // }
 
-        // console.log(JSON.stringify({ method: "placeOrder", message: "fetch body from Request.", data: req.body }));
+      console.log(JSON.stringify({ method: "placeOrder", message: "place Order body.", data: req.body }));
 
-        const saveOrder = await PlaceOrder.create({
-            ...req.body,
-            status: OrderStatusEnum.ORDER_ACCEPTED,
+      const saveOrder = await PlaceOrder.create({
+        ...req.body,
+        status: OrderStatusEnum.ORDER_ACCEPTED,
+      });
+
+      if (!saveOrder) {
+        throw new Error('error while placing order');
+      }
+
+      await checkOrders(saveOrder);
+      res.status(200).send({
+          status: true,
+          vendor_order_id: order_details.vendor_order_id,
+          message: 'Order created succcessfully.',
+          Status_code: OrderStatusEnum.ORDER_ACCEPTED,
         });
 
-        if (!saveOrder) {
-            throw new Error("error while placing order");
-        }
-
-        await checkOrders(saveOrder);
-
-        console.log(JSON.stringify({ method: "placeOrder", message: "Order saved Response", data: saveOrder }));
-
-        res.status(200).send({
-            status: true,
-            vendor_order_id: order_details.vendor_order_id,
-            message: "Order created succcessfully.",
-            Status_code: OrderStatusEnum.ORDER_ACCEPTED
-        });
-
-    } catch (error: any) {
         console.log(
-            JSON.stringify({
-                method: "placeOrder",
-                message: error.message
-            })
-        )
+          JSON.stringify({
+            method: 'placeOrder',
+            message: 'Order saved Response',
+            data: saveOrder,
+          }),
+        );
+    } catch (error: any) {
+      console.log(
+        JSON.stringify({
+          method: 'placeOrder',
+          message: error.message,
+        }),
+      );
 
-        res.status(400)
-            .send({ success: false, message: error.message });
+      res.status(400).send({ success: false, message: error.message });
     }
 }
 
 export async function orderAccept(req: any, res: Response) {
     try {
-        const driverId = req.decoded.user._id;
-        const { driverLocation, pickUpDetails, id } = req.body;
-        console.log(JSON.stringify({ method: "orderAccept", message: "Order saved Response", data: req.body }));
+      const driverId = req.decoded.user._id;
+      const { driverLocation, pickUpDetails, id } = req.body;
 
-        const driverData = await Driver.findOne({ _id: driverId }).lean();
+      console.log(
+        JSON.stringify({
+          method: 'orderAccept',
+          message: 'Order Accept Body',
+          data: req.body,
+        }),
+      );
 
-        if (!driverData) {
-        console.log(JSON.stringify({ method: "orderAccept", message: "Driver is not Found!", data: driverId }));
+      const driverData = await Driver.findOne({ _id: driverId }).lean();
 
-            res.status(404).send({
-                status: true,
-                driverId,
-                message: "Driver is not Found!"
-            })
-        }
-
-        const pickUpLocation = {
-            latitude: pickUpDetails.latitude,//latitude: 19.172141,
-            longitude: pickUpDetails.longitude,//longitude: 72.956832
-        };
-
-        const driverDataFromCurrLocationToPickup = await getDirections(
-            driverLocation,
-            pickUpLocation,
+      if (!driverData) {
+        console.log(
+          JSON.stringify({
+            method: 'orderAccept',
+            message: 'Driver is not Found!',
+            data: driverId,
+          }),
         );
 
-        const newStatusUpdate = { status: OrderStatusEnum.ORDER_ALLOTTED, time: new Date() };
-
-        const driverDetails = {
-            driver_id: driverData?._id,
-            name: driverData?.firstName,
-            contact: driverData?.mobileNumber
-        }
-
-        const response = await PlaceOrder.findOneAndUpdate(
-            { _id: id },
-            {
-                status: OrderStatusEnum.ORDER_ALLOTTED,
-                statusUpdates: newStatusUpdate,
-                driver_details: driverDetails
-            },
-        ).lean()
-
-        if (response) {
-            await Driver.findOneAndUpdate(
-                { _id: driverId, rideStatus: 'online' },
-                {
-                    rideStatus: 'on-ride',
-                },
-                { new: true },
-            ).lean();
-        }
-
-        const obj = {
-            status: true,
-            data: {
-                api_key: environmentVars.PETPUJA_API_KEY,
-                api_secret_key: environmentVars.PETPUJA_SECRET_KEY,
-                vendor_order_id: response?.order_details?.vendor_order_id,
-                rider_name: response?.driver_details?.name,
-                rider_contact: response?.driver_details?.contact
-            },
-            message: "Ok",
-            status_code: OrderStatusEnum.ORDER_ALLOTTED
-        }
-
-        await petpoojaAcknowledge(obj);
-
-        console.log(JSON.stringify({ method: "orderAccept", message: "order Accept Response", data: { response, driverDataFromCurrLocationToPickup } }));
-        res.status(200).send({
-            message: 'Order accepted successfully.',
-            data: { response, driverDataFromCurrLocationToPickup },
+        res.status(404).send({
+          status: true,
+          driverId,
+          message: 'Driver is not Found!',
         });
+      }
 
+      const pickUpLocation = {
+        latitude: pickUpDetails.latitude, //latitude: 19.172141,
+        longitude: pickUpDetails.longitude, //longitude: 72.956832
+      };
+
+      const driverDataFromCurrLocationToPickup = await getDirections(
+        driverLocation,
+        pickUpLocation,
+      );
+
+      const newStatusUpdate = {
+        status: OrderStatusEnum.ORDER_ALLOTTED,
+        time: new Date(),
+      };
+
+      const driverDetails = {
+        driver_id: driverData?._id,
+        name: driverData?.firstName,
+        contact: driverData?.mobileNumber,
+      };
+
+      const response = await PlaceOrder.findOneAndUpdate(
+        { _id: id },
+        {
+          status: OrderStatusEnum.ORDER_ALLOTTED,
+          statusUpdates: newStatusUpdate,
+          driver_details: driverDetails,
+        },
+      ).lean();
+
+      if (response) {
+        await Driver.findOneAndUpdate(
+          { _id: driverId, rideStatus: 'online' },
+          {
+            rideStatus: 'on-ride',
+          },
+          { new: true },
+        ).lean();
+      }
+
+      const obj = {
+        status: true,
+        data: {
+          api_key: environmentVars.PETPUJA_API_KEY,
+          api_secret_key: environmentVars.PETPUJA_SECRET_KEY,
+          vendor_order_id: response?.order_details?.vendor_order_id,
+          rider_name: response?.driver_details?.name,
+          rider_contact: response?.driver_details?.contact,
+        },
+        message: 'Ok',
+        status_code: OrderStatusEnum.ORDER_ALLOTTED,
+      };
+
+      await petpoojaAcknowledge(obj);
+
+      console.log(
+        JSON.stringify({
+          method: 'orderAccept',
+          message: 'order Accept Response',
+          data: { response, driverDataFromCurrLocationToPickup },
+        }),
+      );
+      res.status(200).send({
+        message: 'Order accepted successfully.',
+        data: { response, driverDataFromCurrLocationToPickup },
+      });
     } catch (error: any) {
-        console.log(
-            JSON.stringify({
-                method: "orderAccept",
-                message: error.message
-            })
-        )
+      console.log(
+        JSON.stringify({
+          method: 'orderAccept',
+          message: error.message,
+        }),
+      );
 
-        res.status(400)
-            .send({ success: false, message: error.message });
+      res.status(400).send({ success: false, message: error.message });
     }
 }
 
 export async function orderUpdate(req: any, res: Response) {
     try {
-        const { pickUpLocation, destination, orderId } = req.body;
-        const driverId = req.decoded.user._id;
-        let status = req.body.status;
+      const { pickUpLocation, destination, orderId } = req.body;
+      const driverId = req.decoded.user._id;
+      let status = req.body.status;
 
-        console.log(JSON.stringify({ method: "orderUpdate", message: "order Update body", data: req.body }));
+      console.log(
+        JSON.stringify({
+          method: 'orderUpdate',
+          message: 'order Update body',
+          data: req.body,
+        }),
+      );
 
-        const driverData = await Driver.findOne({ _id: driverId }).lean();
-        if (!driverData) {
-            console.log(JSON.stringify({ method: "orderUpdate", message: "order Update body", data: req.body }));
-            res.status(404).send({
-                status: true,
-                driverId,
-                message: "Driver is not Found!"
-            })
-        }
-
-        if (!Object.values(OrderStatusEnum).includes(status)) {
-            return res.status(400).send({ error: 'Invalid order status' });
-        }
-
-        status = status as OrderStatusEnum;
-        const driverDataFromCurrLocationToPickup = await getDirections(
-            pickUpLocation,
-            destination
-        );
-
-        const newStatusUpdate = { status: status, time: new Date() }
-        const response = await PlaceOrder.findOneAndUpdate(
-            { _id: orderId },
-            { status: status, statusUpdates: [newStatusUpdate] },
-            { new: true },
-        )
-
-        const obj = {
-            status: true,
+      const driverData = await Driver.findOne({ _id: driverId }).lean();
+      if (!driverData) {
+        console.log(
+          JSON.stringify({
+            method: 'orderUpdate',
+            message: 'Driver is not Found!',
             data: {
-                api_key: environmentVars.PETPUJA_API_KEY,
-                api_secret_key: environmentVars.PETPUJA_SECRET_KEY,
-                vendor_order_id: response?.order_details?.vendor_order_id,
-                rider_name: response?.driver_details?.name,
-                rider_contact: response?.driver_details?.contact
+                driverId
             },
-            message: "Ok",
-            status_code: response?.status
-        }
+          }),
+        );
+        res.status(404).send({
+          status: true,
+          driverId,
+          message: 'Driver is not Found!',
+        });
+      }
 
-        await petpoojaAcknowledge(obj);
+      if (!Object.values(OrderStatusEnum).includes(status)) {
+        return res.status(400).send({ error: 'Invalid order status' });
+      }
 
-        console.log(JSON.stringify({ method: "orderUpdate", message: "order Update response", data: {
+      status = status as OrderStatusEnum;
+      const driverDataFromCurrLocationToPickup = await getDirections(
+        pickUpLocation,
+        destination,
+      );
+
+      const newStatusUpdate = { status: status, time: new Date() };
+      const response = await PlaceOrder.findOneAndUpdate(
+        { _id: orderId },
+        { status: status, statusUpdates: [newStatusUpdate] },
+        { new: true },
+      );
+
+      const obj = {
+        status: true,
+        data: {
+          api_key: environmentVars.PETPUJA_API_KEY,
+          api_secret_key: environmentVars.PETPUJA_SECRET_KEY,
+          vendor_order_id: response?.order_details?.vendor_order_id,
+          rider_name: response?.driver_details?.name,
+          rider_contact: response?.driver_details?.contact,
+        },
+        message: 'Ok',
+        status_code: response?.status,
+      };
+
+      await petpoojaAcknowledge(obj);
+
+      if (
+        status == OrderStatusEnum.DELIVERED &&
+        response &&
+        driverData?.rideStatus == 'on-ride'
+      ) {
+        await Driver.findOneAndUpdate(
+          { _id: driverId },
+          { rideStatus: 'online' },
+        );
+      }
+
+      console.log(
+        JSON.stringify({
+          method: 'orderUpdate',
+          message: 'order Update response',
+          data: {
             status: response?.status,
             vendor_order_id: response?.order_details?.vendor_order_id,
-        } }));
+          },
+        }),
+      );
 
-        if (status == OrderStatusEnum.DELIVERED && response && driverData?.rideStatus == 'on-ride') {
-            await Driver.findOneAndUpdate(
-                { _id: driverId },
-                { rideStatus: 'online' }
-            )
-        }
-
-        res.status(200).send({
-            message: ' orders updated successfully.',
-            data: { response, driverDataFromCurrLocationToPickup },
-        });
+      res.status(200).send({
+        message: ' orders updated successfully.',
+        data: { response, driverDataFromCurrLocationToPickup },
+      });
+      
     } catch (error: any) {
-        console.log(
-            JSON.stringify({
-                method: "orderUpdate",
-                message: error.message
-            })
-        )
+      console.log(
+        JSON.stringify({
+          method: 'orderUpdate',
+          message: error.message,
+        }),
+      );
 
-        res.status(400)
-            .send({ success: false, message: error.message });
+      res.status(400).send({ success: false, message: error.message });
     }
 }
 
 export async function trackOrderStatus(req: Request, res: Response) {
     try {
-        const { vendor_order_id } = req.body;
-        // const access_token = req.headers.access_token;
+      const { vendor_order_id } = req.body;
+      // const access_token = req.headers.access_token;
 
-        // if (access_token != environmentVars.PETPOOJA_ACCESS_TOKEN) {
-        //     throw new Error("Invalid Access Token!");
-        // }
-        console.log(JSON.stringify({ method: "trackOrderStatus", message: "track order status", data: vendor_order_id }));
-        const checkOrder = await PlaceOrder.findOne({ 'order_details.vendor_order_id': vendor_order_id }).lean()
-        if (!checkOrder) {
-            console.log(JSON.stringify({ method: "trackOrderStatus", message: "Order is not Found!", data: checkOrder }));
-            res.status(404).send({
-                status: true,
-                vendor_order_id,
-                message: "Order is not Found!"
-            })
-        }
+      // if (access_token != environmentVars.PETPOOJA_ACCESS_TOKEN) {
+      //     throw new Error("Invalid Access Token!");
+      // }
+      console.log(
+        JSON.stringify({
+          method: 'trackOrderStatus',
+          message: 'track order body',
+          data: { vendor_order_id },
+        }),
+      );
 
-        console.log(JSON.stringify({ method: "trackOrderStatus", message: "track order status response", data: vendor_order_id }));
+      const checkOrder = await PlaceOrder.findOne({
+        'order_details.vendor_order_id': vendor_order_id,
+      }).lean();
 
-        res.send({
-            status: true,
-            message: "Ok",
-            status_code: checkOrder?.status,
+      if (!checkOrder) {
+        console.log(
+          JSON.stringify({
+            method: 'trackOrderStatus',
+            message: 'Order is not Found!',
             data: {
-                vendor_order_id: vendor_order_id,
-                rider_name: checkOrder?.driver_details?.name,
-                rider_contact: checkOrder?.driver_details?.contact
+                vendor_order_id
             },
-        })
+          }),
+        );
+
+        res.status(404).send({
+          status: true,
+          vendor_order_id,
+          message: 'Order is not Found!',
+        });
+      }
+
+      res.send({
+        status: true,
+        message: 'Ok',
+        status_code: checkOrder?.status,
+        data: {
+          vendor_order_id: vendor_order_id,
+          rider_name: checkOrder?.driver_details?.name,
+          rider_contact: checkOrder?.driver_details?.contact,
+        },
+      });
+
+      console.log(
+        JSON.stringify({
+          method: 'trackOrderStatus',
+          message: 'track order status response',
+          data: {
+            vendor_order_id: vendor_order_id,
+            rider_name: checkOrder?.driver_details?.name,
+            rider_contact: checkOrder?.driver_details?.contact,
+          },
+        }),
+      );
 
     } catch (error: any) {
-        console.log(
-            JSON.stringify({
-                method: "trackOrderStatus",
-                message: error.message
-            })
-        )
+      console.log(
+        JSON.stringify({
+          method: 'trackOrderStatus',
+          message: error.message,
+        }),
+      );
 
-        res.status(400)
-            .send({ success: false, message: error.message });
+      res.status(400).send({ success: false, message: error.message });
     }
 }
 
 export async function cancelTask(req: Request, res: Response) {
     try {
-        const { vendor_order_id } = req.body;
-        // const access_token = req.headers.access_token;
+      const { vendor_order_id } = req.body;
+      // const access_token = req.headers.access_token;
 
-        // if (access_token != environmentVars.PETPOOJA_ACCESS_TOKEN) {
-        //     throw new Error("Invalid Access Token!");
-        // }
-        console.log(JSON.stringify({ method: "cancelTask", message: "cancel order", data: vendor_order_id }));
+      // if (access_token != environmentVars.PETPOOJA_ACCESS_TOKEN) {
+      //     throw new Error("Invalid Access Token!");
+      // }
+      console.log(
+        JSON.stringify({
+          method: 'cancelTask',
+          message: 'cancel order body',
+          data: { vendor_order_id },
+        }),
+      );
 
-        const newStatusUpdate = { status: OrderStatusEnum.ORDER_CANCELLED, time: new Date() }
-        const cancel_task = await PlaceOrder.findOneAndUpdate(
-            {
-                'order_details.vendor_order_id': vendor_order_id
-            },
-            {
-                status: OrderStatusEnum.ORDER_CANCELLED, statusUpdates: [newStatusUpdate]
-            }
-        ).lean();
+      const newStatusUpdate = {
+        status: OrderStatusEnum.ORDER_CANCELLED,
+        time: new Date(),
+      };
 
-        if (cancel_task?.driver_details) {
-            await Driver.findOneAndUpdate(
-                { _id: cancel_task?.driver_details?.driver_id, rideStatus: 'on-ride' },
-                { rideStatus: 'online' }
-            )
-        }
+      const cancel_task = await PlaceOrder.findOneAndUpdate(
+        {
+          'order_details.vendor_order_id': vendor_order_id,
+        },
+        {
+          status: OrderStatusEnum.ORDER_CANCELLED,
+          statusUpdates: [newStatusUpdate],
+        },
+      ).lean();
 
-        if (!cancel_task) {
-            throw new Error("error while canceling  order");
-        }
+      if (cancel_task?.driver_details) {
+        await Driver.findOneAndUpdate(
+          {
+            _id: cancel_task?.driver_details?.driver_id,
+            rideStatus: 'on-ride',
+          },
+          { rideStatus: 'online' },
+        );
+      }
 
-        const obj = {
-            status: true,
-            data: {
-                api_key: environmentVars.PETPUJA_API_KEY,
-                api_secret_key: environmentVars.PETPUJA_SECRET_KEY,
-                vendor_order_id: cancel_task?.order_details?.vendor_order_id,
-                rider_name: cancel_task?.driver_details?.name,
-                rider_contact: cancel_task?.driver_details?.contact
-            },
-            message: "Ok",
-            status_code: OrderStatusEnum.ORDER_CANCELLED
-        }
+      if (!cancel_task) {
+        throw new Error('error while canceling  order');
+      }
 
-        await petpoojaAcknowledge(obj);
+      const obj = {
+        status: true,
+        data: {
+          api_key: environmentVars.PETPUJA_API_KEY,
+          api_secret_key: environmentVars.PETPUJA_SECRET_KEY,
+          vendor_order_id: cancel_task?.order_details?.vendor_order_id,
+          rider_name: cancel_task?.driver_details?.name,
+          rider_contact: cancel_task?.driver_details?.contact,
+        },
+        message: 'Ok',
+        status_code: OrderStatusEnum.ORDER_CANCELLED,
+      };
 
-        console.log(JSON.stringify({ method: "cancelTask", message: "cancel order response", data: cancel_task?.order_details }));
+      await petpoojaAcknowledge(obj);
 
-        res.status(200).send({
-            status: true,
-            status_code: OrderStatusEnum.ORDER_CANCELLED,
-            message: "Order has been canceled",
-        });
+      console.log(
+        JSON.stringify({
+          method: 'cancelTask',
+          message: 'cancel order response',
+          data: cancel_task?.order_details,
+        }),
+      );
+
+      res.status(200).send({
+        status: true,
+        status_code: OrderStatusEnum.ORDER_CANCELLED,
+        message: 'Order has been canceled',
+      });
     } catch (error: any) {
-        console.log(
-            JSON.stringify({
-                method: "cancelTask",
-                message: error.message
-            })
-        )
+      console.log(
+        JSON.stringify({
+          method: 'cancelTask',
+          message: error.message,
+        }),
+      );
 
-        res.status(400)
-            .send({ success: false, message: error.message });
+      res.status(400).send({ success: false, message: error.message });
     }
 }
