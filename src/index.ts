@@ -577,9 +577,9 @@ app.post('/admin-register', adminRegister);
 
 app.post("/place-order", placeOrder);
 
-app.post("/track-order-status", trackOrderStatus)
+app.put("/track-order-status", trackOrderStatus)
 
-app.post("/cancel-task", cancelTask)
+app.put("/cancel-task", cancelTask)
 
 app.get("/getAppFlowMobile", getAppFlowMobile);
 
