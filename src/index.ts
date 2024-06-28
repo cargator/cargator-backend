@@ -93,7 +93,7 @@ import { createApp, createDriverAppFlow, getAppFlow, getAppFlowMobile, getAppVal
 import { createSpot, deleteSpot, getActiveSpot, getSpotList, getSpotListVehicle } from './main/spots';
 import { createCountryCode, deleteCountryCode, getCountryCodeMobiles, getCountryCodes } from './main/countrycode';
 import { createBreakPoints, deleteBreakingPoints, getBreakPointOne, getBreakingPoints, getBreakingPointsMobile, updateBreakPoints } from './main/flows';
-import { cancelTask, placeOrder, trackOrderStatus } from './main/order';
+import { cancelTask, orderAccept, orderUpdate, placeOrder, trackOrderStatus } from './main/order';
 import { OrderStatusEnum } from './shared/enums/status.enum';
 
 let utilsData: any;
@@ -587,9 +587,9 @@ app.use(authorize);
 
 // app.get("/get-new-orders", getNewOrders)
 
-// app.post('/order-accept', orderAccept)
+app.post('/order-accept', orderAccept)
 
-// app.post('/order-update', orderUpdate)
+app.post('/order-update', orderUpdate)
 
 app.post('/add-profile-details', addProfileDetails);
 
