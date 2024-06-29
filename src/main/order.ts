@@ -16,43 +16,6 @@ const petpoojaAcknowledge = async (data: any) => {
     }
 }
 
-// export async function getNewOrders(req: Request, res: Response) {
-//     let session: any;
-//     try {
-//       session = await mongoose.startSession();
-//       session.startTransaction();
-
-//       let startDate: any = new Date();
-//       let endDate: any = new Date();
-//       //! confirm if this below statement is changing hour in corner cases.
-//       endDate.setMinutes(endDate.getMinutes() - 10);
-
-//       const newOrder = await PlaceOrder.find({
-//         status: 'pending-accept',
-//         bookingTime: {
-//           $gte: endDate,
-//         },
-//       });
-
-//       await session.commitTransaction();
-
-//       res.status(200).send({
-//         message: 'new orders get successfully.',
-//         data: newOrder,
-//       });
-//     } catch (error: any) {
-//       res.status(400).json({ success: false, message: error.message });
-//       if (session) {
-//         await session.abortTransaction();
-//       }
-//       console.log('err :>> ', error);
-//     } finally {
-//       if (session) {
-//         await session.endSession();
-//       }
-//     }
-// }
-
 export async function placeOrder(req: Request, res: Response) {
     try {
       const { order_details } = req.body;
