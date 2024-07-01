@@ -284,14 +284,17 @@ export async function getHistory(req: any, res: Response) {
     };
 
     if (filter) {
-
       if (filter.startDate && filter.endDate) {
         query.createdAt = {
           $gte: new Date(filter.startDate),
           $lte: new Date(filter.endDate),
         };
       } else if (filter.startDate) {
-      console.log("filter is availble", filter.startDate, new Date(filter.startDate));
+        console.log(
+          'filter is availble',
+          filter.startDate,
+          new Date(filter.startDate),
+        );
         const startDate = new Date(filter.startDate);
         const nextDay = new Date(startDate);
         nextDay.setDate(startDate.getDate() + 1);
@@ -346,24 +349,25 @@ export async function getHistory(req: any, res: Response) {
 export async function getProgress(req: any, res: Response) {
   const userId = req.decoded.user._id;
   try {
-    console.log('userId ===> ', userId);
+    const getOrderCount = await getOrderCounts(userId);
+
     const response = {
       message: 'Fetched all Order History!',
       data: {
         today: {
-          earning: 456,
-          loginHours: 50,
-          orders: 10,
+          earning: 0,
+          loginHours: 0,
+          orders: getOrderCount.todayCount,
         },
         week: {
-          earning: 4564,
-          loginHours: 300,
-          orders: 67,
+          earning: 0,
+          loginHours: 0,
+          orders: getOrderCount.weekCount,
         },
         month: {
-          earning: 25766,
-          loginHours: 4379,
-          orders: 222,
+          earning: 0,
+          loginHours: 0,
+          orders: getOrderCount.monthCount,
         },
       },
     };
@@ -388,9 +392,89 @@ async function saveEarning(data: any) {
   }
 }
 
-function earingCalculate(data: any) {
+async function getOrderCounts(userId: string) {
   try {
+    // Get today's date range
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    // Get this week's date range (Monday to Sunday)
+    const currentDate = new Date();
+    const currentDay = currentDate.getDay();
+    const weekStart = new Date(currentDate);
+    const weekEnd = new Date(currentDate);
+
+    if (currentDay === 0) {
+      // if today is Sunday
+      weekStart.setDate(currentDate.getDate() - 6); // last Monday
+      weekEnd.setDate(currentDate.getDate()); // today
+    } else {
+      weekStart.setDate(currentDate.getDate() - currentDay + 1); // this Monday
+      weekEnd.setDate(currentDate.getDate() + (7 - currentDay)); // this Sunday
+    }
+
+    weekStart.setHours(0, 0, 0, 0);
+    weekEnd.setHours(23, 59, 59, 999);
+
+    // Get this month's date range
+    const monthStart = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth(),
+      1,
+    );
+    monthStart.setHours(0, 0, 0, 0);
+    const monthEnd = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth() + 1,
+      0,
+    );
+    monthEnd.setHours(23, 59, 59, 999);
+    // Aggregate query
+    const result = await PlaceOrder.aggregate([
+      {
+        $match: {
+          'driver_details.driver_id': userId,
+          status: OrderStatusEnum.DELIVERED,
+        },
+      },
+      {
+        $facet: {
+          today: [
+            { $match: { createdAt: { $gte: todayStart, $lte: todayEnd } } },
+            { $count: 'count' },
+          ],
+          week: [
+            { $match: { createdAt: { $gte: weekStart, $lte: weekEnd } } },
+            { $count: 'count' },
+          ],
+          month: [
+            { $match: { createdAt: { $gte: monthStart, $lte: monthEnd } } },
+            { $count: 'count' },
+          ],
+        },
+      },
+    ]);
+
+    const todayCount = result[0].today[0]?.count || 0;
+    const weekCount = result[0].week[0]?.count || 0;
+    const monthCount = result[0].month[0]?.count || 0;
+
+    return {
+      todayCount,
+      weekCount,
+      monthCount,
+    };
   } catch (error: any) {
-    console.log(error);
+    console.log(
+      JSON.stringify({
+        method: 'getOrderCounts',
+        message: error.message,
+      }),
+    );
+
+    throw new Error(error);
   }
 }
