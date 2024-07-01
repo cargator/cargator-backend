@@ -85,9 +85,8 @@ const driverSocketConnected = async (
       const updatedDriver = await Driver.findOneAndUpdate(
         { _id: _userId, rideStatus: { $ne: 'on-ride' } },
         { rideStatus: 'online' },
-        { new: true }
+        { new: true },
       );
-      
 
       // Check if the driver is eligible for any pending rides
       // todo: Implement a geo query to find nearby pending rides
@@ -793,9 +792,10 @@ const driverSocketConnected = async (
     let session: any;
     // todo: take driverId from token/ socket
     try {
-
       session = await PlaceOrder.startSession();
       session.startTransaction();
+
+      const driver_location = body.driverLoc;
 
       if (!body.id) {
         // If order ID is missing in the request, handle the error
@@ -828,7 +828,6 @@ const driverSocketConnected = async (
         name: driverData?.firstName,
         contact: driverData?.mobileNumber,
       };
-      
 
       const newStatusUpdate = {
         status: OrderStatusEnum.ORDER_ALLOTTED,
@@ -879,8 +878,8 @@ const driverSocketConnected = async (
       }
       //* Fetching Data of Driver using getDirections() Google API & storing in Rides-Collection.
       const driverLocation = {
-        latitude: updateDriver.liveLocation[1],
-        longitude: updateDriver.liveLocation[0],
+        latitude: driver_location.latitude,
+        longitude: driver_location.longitude,
       };
       const pickupLocation = {
         latitude: updatedOrder.pickup_details.latitude,
@@ -969,8 +968,8 @@ const driverSocketConnected = async (
   // update order --------
   socket.on('update-order-status', async (body: any) => {
     let session: any;
+    let driverDataFromCurrLocationToPickup;
     try {
-
       const { id, status } = body;
 
       session = await PlaceOrder.startSession();
@@ -985,10 +984,11 @@ const driverSocketConnected = async (
         throw new Error('Invalid order status');
       }
 
-      const checkCancelledOrder: any = await PlaceOrder.findById(new Types.ObjectId(body.id));
+      const checkCancelledOrder: any = await PlaceOrder.findById(
+        new Types.ObjectId(body.id),
+      );
 
       // console.log("checkCancelledOrder>>>>",checkCancelledOrder);
-      
 
       if (checkCancelledOrder.status === OrderStatusEnum.ORDER_CANCELLED) {
         let updateDriver = await Driver.findOneAndUpdate(
@@ -1046,7 +1046,7 @@ const driverSocketConnected = async (
 
       if (status === OrderStatusEnum.DELIVERED) {
         // Update the driver's order status to 'online'
-        
+
         let updateDriver = await Driver.findOneAndUpdate(
           { _id: _userId, rideStatus: 'on-ride' },
           {
@@ -1062,22 +1062,23 @@ const driverSocketConnected = async (
         }
       }
 
-      const pickupLocation = {
-        latitude: updateOrder.pickup_details.latitude,
-        longitude: updateOrder.pickup_details.longitude,
-      };
-      const dropLocation = {
-        latitude: updateOrder.drop_details.latitude,
-        longitude: updateOrder.drop_details.longitude,
-      };
+      if (status === OrderStatusEnum.DISPATCHED) {
+        const pickupLocation = {
+          latitude: updateOrder.pickup_details.latitude,
+          longitude: updateOrder.pickup_details.longitude,
+        };
+        const dropLocation = {
+          latitude: updateOrder.drop_details.latitude,
+          longitude: updateOrder.drop_details.longitude,
+        };
 
-      const driverDataFromCurrLocationToPickup = await getDirections(
-        pickupLocation,
-        dropLocation,
-      );
+        driverDataFromCurrLocationToPickup = await getDirections(
+          pickupLocation,
+          dropLocation,
+        );
+      }
 
       // console.log("driverDataFromCurrLocationToPickup",driverDataFromCurrLocationToPickup);
-      
 
       socket.emit(
         'order-update-response',
