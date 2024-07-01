@@ -7,7 +7,7 @@
     "format": "prettier --write src/",
     "build": "rimraf ./build  && prettier --write src/ && tsc",
     "start:dev": "npx nodemon",
-    "start": "node build/index.js"
+    "start": "node build/index.ts"
   },
   "author": "code-b",
   "license": "ISC",
