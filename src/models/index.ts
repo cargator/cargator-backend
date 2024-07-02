@@ -396,7 +396,11 @@ const placeOrder = new mongoose.Schema(
       order_total: { type: Number, default: 0 },
       paid: { type: Boolean, required: true },
       order_source: { type: String, required: true },
-      customer_orderId: { type: String }
+      customer_orderId: { type: String },
+      payment_status:{
+        type:Boolean,
+        required:true
+      },
     },
     status: { type: String },
     driver_details: {

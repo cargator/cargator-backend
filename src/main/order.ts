@@ -69,6 +69,10 @@ export async function placeOrder(req: Request, res: Response) {
     const saveOrder = await PlaceOrder.create({
       ...req.body,
       status: OrderStatusEnum.ORDER_ACCEPTED,
+      order_details: {
+        ...req.body.order_details,
+        payment_status: req.body.order_details.paid
+      }
     });
 
     if (!saveOrder) {
