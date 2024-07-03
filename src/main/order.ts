@@ -283,8 +283,8 @@ export async function getHistory(req: any, res: Response) {
     let query: any = {
       'driver_details.driver_id': userId,
       status: {
-        $in: [OrderStatusEnum.ORDER_CANCELLED, OrderStatusEnum.DELIVERED],
-      },
+        // $in: [OrderStatusEnum.ORDER_CANCELLED, OrderStatusEnum.DELIVERED],
+        $nin: [OrderStatusEnum.ORDER_CANCELLED],},
     };
 
     if (filter) {
