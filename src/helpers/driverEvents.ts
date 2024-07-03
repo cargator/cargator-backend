@@ -797,6 +797,9 @@ const driverSocketConnected = async (
 
       const driver_location = body.driverLoc;
 
+      console.log("accept order request", body);
+      
+
       if (!body.id) {
         // If order ID is missing in the request, handle the error
         throw new Error('OrderId is not found.');
@@ -967,14 +970,14 @@ const driverSocketConnected = async (
 
 
   socket.on('payment-status',async (body: any)=>{
-    console.log("payment-status");
+    // console.log("payment-status");
     console.log("Paymont done");
     const order = await PlaceOrder.findByIdAndUpdate(
       body._id,
       { 'order_details.payment_status': true },
       { new: true } // This option returns the modified document
     );
-    console.log(order);
+    // console.log(order);
     
   })
 

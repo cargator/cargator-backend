@@ -294,7 +294,7 @@ async function setUpCronJobs() {
       refreshToken();
     });
 
-    cron.schedule('*/1 * * * *', function () {
+    cron.schedule('*/105 * * * * *', function () {
       // cron.schedule('*/15 * * * * *', function () {
       console.log('Checking pre-book rides every minute !');
       // console.log('Checking pre-book rides every 15 seconds !');
@@ -929,6 +929,10 @@ app.post("/create-app-flow", createDriverAppFlow);
 app.get("/get-app-flow", getAppFlow);
 
 app.patch('/update-app-flow/:id', updateAppFlow)
+
+// app.post('/login-time', loginTime);
+
+// app.post('/logout-time', logoutTime)
 
 // custom rides crud -----------------------------
 

@@ -17,6 +17,14 @@ const adminSchema = new mongoose.Schema(
   },
 );
 
+
+// Login Session Schema
+
+const loginSessionSchema = new mongoose.Schema({
+  loginTime: Date,
+  logoutTime: Date,
+});
+
 const driverSchema = new mongoose.Schema(
   {
     // todo: geolocation index
@@ -45,6 +53,7 @@ const driverSchema = new mongoose.Schema(
       enum: ['active', 'inactive'],
       default: 'active',
     },
+    loginSessions: [loginSessionSchema],
     otp: String,
     otpExpirationTime: Date,
     totalRidesCompleted: { type: Number, default: 0 },
@@ -480,6 +489,7 @@ const cancelTask = new mongoose.Schema(
     timestamps: true
   }
 )
+
 
 export const Admin = mongoose.model('Admin', adminSchema);
 export const VehicleTypes = mongoose.model('vehicleTypes', vehicleTypeSchema);
