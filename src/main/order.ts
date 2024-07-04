@@ -694,3 +694,38 @@ async function getOrderCounts(userId: string) {
     throw new Error(error);
   }
 }
+
+
+export async function getOrderHistory(req: Request, res: Response){
+  try {
+    const page: any = req?.query?.page;
+    const limit: any = req.query.limit;
+    const dataLimit = parseInt(limit);
+    const skip = (page - 1) * limit;
+    const orderHistory = await PlaceOrder.aggregate([
+      {
+        $facet: {
+          data: [
+            {
+              $sort: { sequenceNo: -1 }, 
+            },
+            {
+              $skip: skip,
+            },
+            {
+              $limit: dataLimit,
+            },
+          ],
+          count: [{ $count: "totalcount" }],
+        },
+      },
+    ]);
+    return res.status(200).json({
+      message: "Fetched all Orders",
+      data: orderHistory,
+    });
+  } catch (error: any) {
+    console.log("get all orderHistory error: ", error);
+    res.status(400).send({ error: error.message });
+  }
+}
