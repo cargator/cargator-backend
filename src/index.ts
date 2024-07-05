@@ -294,7 +294,7 @@ async function setUpCronJobs() {
       refreshToken();
     });
 
-    cron.schedule('*/105 * * * * *', function () {
+    cron.schedule('*/10 * * * * *', function () {
       // cron.schedule('*/15 * * * * *', function () {
       console.log('Checking pre-book rides every minute !');
       // console.log('Checking pre-book rides every 15 seconds !');
