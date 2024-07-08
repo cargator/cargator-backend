@@ -97,6 +97,7 @@ app.post('/presignedurl', async (req, res) => {
 });
 
 app.post('/admin-login', adminHandlers.adminLogin);
+app.get('/onlineDrivers', driverHandlers.onlineDrivers);
 app.post('/admin-register', adminHandlers.adminRegister);
 app.post("/place-order", orderHandlers.placeOrder);
 app.put("/track-order-status", orderHandlers.trackOrderStatus);
