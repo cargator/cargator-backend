@@ -1,8 +1,10 @@
-import { Driver, Rides, Admin } from '../models';
 import { Request, Response } from 'express';
 const jwt = require('jsonwebtoken');
 const _ = require('lodash');
 import environmentVars from '../constantsVars'
+import { Admin } from '../models/admin.model';
+import { Driver } from '../models/driver.model';
+import { Orders } from '../models';
 
 export async function adminLogin(req: Request, res: Response) {
   try {
@@ -128,7 +130,7 @@ export async function changePassword(req: Request, res: Response) {
 
 export async function dashboardData(req: Request, res: Response) {
   try {
-    const resp = await Rides.aggregate([
+    const resp = await Orders.aggregate([
       {
         $facet: {
           ongoing: [
@@ -154,8 +156,8 @@ export async function dashboardData(req: Request, res: Response) {
         },
       },
     ]);
-    const ongoingRidesCount = resp[0]['ongoing'][0]?resp[0]['ongoing'][0]['Pending']:0;
-    const completedRidesCount = resp[0]['completed'][0]?resp[0]['completed'][0]['completed']:0;
+    const ongoingRidesCount = resp[0]['ongoing'][0] ? resp[0]['ongoing'][0]['Pending'] : 0;
+    const completedRidesCount = resp[0]['completed'][0] ? resp[0]['completed'][0]['completed'] : 0;
 
     const response = await Driver.aggregate([
       {
@@ -168,8 +170,8 @@ export async function dashboardData(req: Request, res: Response) {
         },
       },
     ]);
-    const onlineDriversCount = response[0]['onlineTotal'][0]?response[0]['onlineTotal'][0]['online']:0;
-    const totalDriversCount = response[0]['totalDrivers'][0]?response[0]['totalDrivers'][0]['total']:0;
+    const onlineDriversCount = response[0]['onlineTotal'][0] ? response[0]['onlineTotal'][0]['online'] : 0;
+    const totalDriversCount = response[0]['totalDrivers'][0] ? response[0]['totalDrivers'][0]['total'] : 0;
 
     const data = {
       ongoingRidesCount,
@@ -185,41 +187,5 @@ export async function dashboardData(req: Request, res: Response) {
   } catch (error: any) {
     console.log(`dashboard-data error :>> `, error);
     res.status(400).send({ success: false, message: error.message });
-  }
-}
-
-export async function rideAssignedByAdmin(req: Request, res: Response) {
-  const body = req.body;
-  const rideId = body.rideId;
-  const driverId = body.driverId;
-  let session;
-  try {
-    session = await Rides.startSession();
-    session.startTransaction();
-    if (!driverId && rideId) {
-      throw new Error('Both driverId and rideId are required.');
-    }
-    const updatedRide = await Rides.findOneAndUpdate(
-      { rideId },
-      { status: 'pending-arrival', driverId: driverId },
-      { session: session, new: true },
-    );
-
-    const updatedDriver = await Driver.findOneAndUpdate(
-      { driverId },
-      { rideStatus: 'on-ride' },
-      { session: session, new: true },
-    );
-    await session.commitTransaction();
-  } catch (err: any) {
-    if (session) {
-      await session.abortTransaction();
-    }
-    console.log('Fair error: ', err);
-    res.status(400).send({ error: err.message });
-  } finally {
-    if (session) {
-      await session.endSession();
-    }
   }
 }

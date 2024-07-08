@@ -1,69 +1,10 @@
 // import { Vehicles } from './index';
 import mongoose, { Types } from 'mongoose';
-import customers from 'razorpay/dist/types/customers';
-
-const adminSchema = new mongoose.Schema(
-  {
-    name: String,
-    email: {
-      type: String,
-      unique: true,
-    },
-    password: String,
-  },
-  {
-    timestamps: true,
-    collection: 'admins',
-  },
-);
-
-
-// Login Session Schema
 
 const loginSessionSchema = new mongoose.Schema({
   loginTime: Date,
   logoutTime: Date,
 });
-
-const driverSchema = new mongoose.Schema(
-  {
-    // todo: geolocation index
-    liveLocation: Array,
-    mobileNumber: {
-      type: String,
-      unique: true,
-    },
-    driverId: String,
-    firstName: String,
-    lastName: String,
-    email: String,
-    profileImageKey: String,
-    documentsKey: Array,
-    vehicleName: String,
-    vehicleNumber: String,
-    vehicleType: String,
-    rideStatus: {
-      type: String,
-      enum: ['offline', 'online', 'on-ride'],
-      default: 'offline',
-    },
-    // admin can make driver active or inactive
-    status: {
-      type: String,
-      enum: ['active', 'inactive'],
-      default: 'active',
-    },
-    loginSessions: [loginSessionSchema],
-    otp: String,
-    otpExpirationTime: Date,
-    totalRidesCompleted: { type: Number, default: 0 },
-  },
-  {
-    timestamps: true,
-    collection: 'drivers',
-  },
-);
-driverSchema.index({ liveLocation: '2d' });
 
 const locations = new mongoose.Schema(
   {
@@ -128,21 +69,8 @@ const ridesSchema = new mongoose.Schema(
     duration: String,
     status: {
       type: String,
-      // enum: [
-      //   'pending-accept',
-      //   'pending-arrival',
-      //   'pending-otp',
-      //   'ride-started',
-      //   'pending-payment',
-      //   'payment-failed',
-      //   'completed',
-      //   'cancelled',
-      //   'Failed'
-      // ],
     },
     otp: String,
-    // message: String,
-    // driverLocation: Array,
     driverId: { type: mongoose.Schema.Types.ObjectId, index: true },
     driverMobileNumber: String,
     vehicleNumber: String,
@@ -292,26 +220,6 @@ const paymentSchema = new mongoose.Schema(
 );
 paymentSchema.index({ 'payload.status': 1, 'payload.id': 1 }, { unique: true });
 
-const whatsappChatSchema = new mongoose.Schema(
-  {
-    riderId: { type: Types.ObjectId, index: true },
-    mobileNumber: String,
-    pickUpLocation: Array,
-    dropLocation: Array,
-    pickAddress: String,
-    dropAddress: String,
-    flowType: String,
-    make: String,
-    model: String,
-    oxygenCylinder: String,
-  },
-  {
-    timestamps: true,
-    collection: 'whatsappChats',
-  },
-);
-whatsappChatSchema.index({ pickUpLocation: '2d' });
-
 const vehicleTypeSchema = new mongoose.Schema(
   {
     vehicleType: String,
@@ -406,9 +314,9 @@ const placeOrder = new mongoose.Schema(
       paid: { type: Boolean, required: true },
       order_source: { type: String, required: true },
       customer_orderId: { type: String },
-      payment_status:{
-        type:Boolean,
-        required:true
+      payment_status: {
+        type: Boolean,
+        required: true
       },
     },
     status: { type: String },
@@ -458,59 +366,18 @@ const placeOrder = new mongoose.Schema(
   }
 )
 
-const trackOrderStatus = new mongoose.Schema(
-  {
-    access_token: {
-      type: String,
-      required: true
-    },
-    vendor_order_id: {
-      type: String,
-      required: true
-    }
-  },
-  {
-    timestamps: true
-  }
-)
-
-const cancelTask = new mongoose.Schema(
-  {
-    access_token: {
-      type: String,
-      required: true
-    },
-    vendor_oarder_id: {
-      type: String,
-      required: true
-    }
-  },
-  {
-    timestamps: true
-  }
-)
-
-
-export const Admin = mongoose.model('Admin', adminSchema);
 export const VehicleTypes = mongoose.model('vehicleTypes', vehicleTypeSchema);
 export const fares = mongoose.model('fares', faresSchema);
 export const apps = mongoose.model('apps', appsSchema);
-export const Driver = mongoose.model('Driver', driverSchema);
 export const Spots = mongoose.model('Spots', spots);
-export const Riders = mongoose.model('Riders', ridersSchema);
 export const Utils = mongoose.model('Utils', utilsSchema);
-export const Rides = mongoose.model('Rides', ridesSchema);
 export const locationList = mongoose.model('locations', locations);
 export const locationListmapmyindia = mongoose.model(
-  'locationsmapmy',
+  'locationsmapmyenv',
   locationsmapmy,
 );
 export const Orders = mongoose.model('orders', orderSchema);
 export const Payments = mongoose.model('payments', paymentSchema);
-export const whatsappChats = mongoose.model(
-  'whatsappChats',
-  whatsappChatSchema,
-);
 export const Vehicles = mongoose.model('vehicles', vehicleSchema);
 export const addressLatlong = mongoose.model(
   'addresslatlong',
@@ -520,11 +387,7 @@ export const addressLatlongmapyindia = mongoose.model(
   'addressLatlongmapyindia',
   addresslatlongSchemamapmy,
 );
-
 export const CountryCode = mongoose.model("CountryCode", countryCodeSchema);
 export const Flows = mongoose.model('Flows', breakingPointSchema);
 export const DriverAppFlow = mongoose.model("DriverAppFlow", driverApplicationFlow);
 export const PlaceOrder = mongoose.model("PlaceOrder", placeOrder);
-export const TrackOrderStatus = mongoose.model("TrackOrderStatus", trackOrderStatus);
-export const CancelTask = mongoose.model("CancelTask", cancelTask);
-

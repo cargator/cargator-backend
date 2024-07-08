@@ -1,29 +1,10 @@
-import { Driver, Riders, Rides, Orders, Payments } from '../models';
-import express, { Request, Response, json } from 'express';
+import { Orders, Payments } from '../models';
+import express, { Request, Response } from 'express';
 import mongoose, { Types } from 'mongoose';
 import { formatSocketResponse } from '../helpers/common';
-import { getUtils } from '..';
-import environmentVars from '../constantsVars'
-
-const Razorpay = require('razorpay');
-const _ = require('lodash');
-const crypto = require('crypto');
-const razorpay = new Razorpay({
-  key_id: environmentVars.DEV_RAZORPAY_KEY_ID
-    ? environmentVars.DEV_RAZORPAY_KEY_ID
-    : '',
-  key_secret: environmentVars.DEV_RAZORPAY_KEY_SECRET
-    ? environmentVars.DEV_RAZORPAY_KEY_SECRET
-    : '',
-});
-
-async function verifyRazorpayData(body: any, razorpaySignature: string) {
-  const secretKey: any = environmentVars.DEV_RAZORPAY_KEY_SECRET;
-  const hmac = crypto.createHmac('sha256', secretKey);
-  hmac.update(JSON.stringify(body));
-  const digest = hmac.digest('hex');
-  return digest !== razorpaySignature ? false : true;
-}
+import { getUtilsData } from '../services/utilsService';
+import razorpay, { verifyRazorpayData } from '../config/razorpayService';
+import { Driver } from '../models/driver.model';
 
 export async function createOrder(req: Request, res: Response) {
   let session;
@@ -68,7 +49,7 @@ export async function createOrder(req: Request, res: Response) {
   }
 }
 
-export async function razorPayCallback(req: Request, res: Response, io: any) {
+export async function razorPayCallback(req: Request, res: Response) {
   let session;
   try {
     console.log(
@@ -119,7 +100,7 @@ export async function razorPayCallback(req: Request, res: Response, io: any) {
         },
         { session },
       );
-      const updatedRide: any = await Rides.findOneAndUpdate(
+      const updatedRide: any = await Orders.findOneAndUpdate(
         {
           _id: new Types.ObjectId(rideId),
           status: { $in: ['pending-payment', 'payment-failed'] },
@@ -137,7 +118,7 @@ export async function razorPayCallback(req: Request, res: Response, io: any) {
         },
         { session: session, new: true },
       ).lean();
-      const updateRider = await Riders.findByIdAndUpdate(
+      const updateRider = await Orders.findByIdAndUpdate(
         updatedRide.riderId,
         {
           $inc: { totalRidesCompleted: 1 },
@@ -147,13 +128,6 @@ export async function razorPayCallback(req: Request, res: Response, io: any) {
       if (!updateRider) {
         throw new Error('Rider not found while payment-completion.');
       }
-      io.to(`${updatedRide._id.toString()}-ride-room`).emit(
-        'ride-status',
-        formatSocketResponse({
-          message: `payment-${status}`,
-          data: updatedRide,
-        }),
-      );
     } else if (status == 'failed') {
       response = await Orders.findOneAndUpdate(
         { order_id },
@@ -166,7 +140,7 @@ export async function razorPayCallback(req: Request, res: Response, io: any) {
         },
         { session },
       );
-      let updatedRide: any = await Rides.findOneAndUpdate(
+      let updatedRide: any = await Orders.findOneAndUpdate(
         {
           _id: new Types.ObjectId(rideId),
           status: { $in: ['pending-payment', 'payment-failed'] },
@@ -180,18 +154,7 @@ export async function razorPayCallback(req: Request, res: Response, io: any) {
         //! throw error on socket.
         throw new Error('Document not found while completing payment.');
       }
-      io.to(`${updatedRide._id.toString()}-ride-room`).emit(
-        'ride-status',
-        formatSocketResponse({
-          message: `payment-${status}`,
-          data: updatedRide,
-          status:200
-        }),
-      );
     }
-    // if (!response) {
-    //   throw new Error('No Payment found with given Id');
-    // }
     const record = {
       // order_id,
       user_id: response['user_id'],
@@ -200,11 +163,6 @@ export async function razorPayCallback(req: Request, res: Response, io: any) {
       payload: req.body.payload.payment.entity,
     };
     await Payments.create([record], { session });
-    // if (!updateDriver) {
-    //   throw new Error('Driver not found while payment-completion.');
-    // }
-
-    // Emit a ride-status event to the ride room to indicate completed payment and ride
     await session.commitTransaction();
     res.json({ status: 'ok' });
   } catch (error: any) {
@@ -235,7 +193,7 @@ export async function cancelOrder(req: Request, res: Response) {
 
 export async function getFare(req: Request, res: Response) {
   try {
-    const fare: any = getUtils();
+    const fare: any = getUtilsData();
     const body = req.body;
     const distance = body.distance;
     const baseFare = fare.baseFare;
@@ -263,3 +221,115 @@ export async function getFare(req: Request, res: Response) {
     res.status(400).send({ error: err.message });
   }
 }
+
+const FetchPayments = async () => {
+  let session: any;
+  try {
+    const response: any = await Orders.find({ status: 'created' });
+    if (response.length == 0) {
+      throw new Error('No pending records');
+    }
+    session = await Orders.startSession();
+    await session.startTransaction();
+
+    await Promise.all(
+      response.map(async (resp: any) => {
+        const checkPayment: any = await Payments.find({
+          'payload.order_id': resp['order_id'],
+        });
+        if (checkPayment.length > 0) {
+          let existingStatus: any = [];
+          await Promise.all(
+            checkPayment.map((data: any) => {
+              existingStatus.push(data.payload.status);
+            }),
+          );
+          let addPayments = false;
+          if (checkPayment?.status == 'refunded') {
+            addPayments = true;
+          }
+          if (!addPayments) {
+            //Payments can be fetched through OrderId and PaymentId
+
+            const PaymentsData: any = await razorpay.orders.fetchPayments(
+              resp['order_id'],
+            );
+            //Below are the status of payments
+            await Promise.all(
+              PaymentsData.items.map(async (data: any) => {
+                console.log('data.status', data.status);
+                if (!existingStatus.includes(data.status)) {
+                  // console.log('first', resp['order_id'], ' ', resp['user_id']);
+                  const modifiedData = {
+                    event: `payment.${data.status}`,
+                    event_id: null,
+                    contains: [],
+                    user_id: resp['user_id'],
+                    payload: data,
+                  };
+                  await Payments.create([modifiedData], { session });
+                  const status = data.status == 'failed' ? 'failed' : 'paid'; //The order continues to be in the paid state even if the payment associated with the order is refunded.
+
+                  const test = await Orders.findOneAndUpdate(
+                    { order_id: resp.order_id, status: 'created' },
+                    // { status:status,razorpay_payment_id:modifiedData.payload.id},           //The order continues to be in the paid state even if the payment associated with the order is refunded.
+                    {
+                      status,
+                      $addToSet: {
+                        razorpay_payment_id: modifiedData.payload.id,
+                      },
+                    },
+                    { new: true, session },
+                  );
+                }
+              }),
+            );
+          }
+          existingStatus = [];
+          addPayments = false;
+        } else {
+          const PaymentsData: any = await razorpay.orders.fetchPayments(
+            resp['order_id'],
+          );
+          if (PaymentsData) {
+            await Promise.all(
+              PaymentsData.items.map(async (data: any) => {
+                const modifiedData = {
+                  event: `payment.${data.status}`,
+                  event_id: null,
+                  contains: [],
+                  user_id: resp['user_id'],
+                  payload: data,
+                };
+                await Payments.create([modifiedData], { session });
+                const status = data.status == 'failed' ? 'failed' : 'paid'; //The order continues to be in the paid state even if the payment associated with the order is refunded.
+
+                const test = await Orders.findOneAndUpdate(
+                  { order_id: resp.order_id, status: 'created' },
+                  // { status:status,razorpay_payment_id:modifiedData.payload.id},   //The order continues to be in the paid state even if the payment associated with the order is refunded.
+                  {
+                    status,
+                    $addToSet: {
+                      razorpay_payment_id: modifiedData.payload.id,
+                    },
+                  },
+                  { new: true, session },
+                );
+              }),
+            );
+          }
+        }
+      }),
+    );
+    await session.commitTransaction();
+  } catch (error: any) {
+    console.log('error in FetchPayments', error);
+    if (session) {
+      await session.abortTransaction();
+    }
+  } finally {
+    if (session) {
+      await session.endSession();
+    }
+  }
+};

@@ -1,8 +1,9 @@
-import { Driver, Vehicles } from '../models';
+import { Vehicles } from '../models';
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import { getUtils } from '..';
+import { getUtilsData } from '../services/utilsService';
 import environmentVars from '../constantsVars'
+import { Driver } from '../models/driver.model';
 const AWS = require('aws-sdk');
 AWS.config.update({
   region: environmentVars.AWS_REGION,
@@ -152,7 +153,7 @@ export async function createDriver(req: Request, res: Response) {
       documentsKey,
     } = req.body;
 
-    console.log("1234567890", vehicleNumber,vehicleType,vehicleName)
+    console.log("1234567890", vehicleNumber, vehicleType, vehicleName)
     session.startTransaction();
 
     const checkStatus = await Vehicles.findOne(
@@ -182,7 +183,7 @@ export async function createDriver(req: Request, res: Response) {
     // console.log(random);
 
     // console.log('object 2:>> ', existingDriver);
-    if(vehicleNumber === "none"){
+    if (vehicleNumber === "none") {
       const driver = await Driver.create(
         [
           {
@@ -190,9 +191,9 @@ export async function createDriver(req: Request, res: Response) {
             firstName,
             lastName,
             vehicleNumber: "",
-            vehicleType : "",
+            vehicleType: "",
             vehicleName: "",
-            mobileNumber:`91${mobileNumber}`,
+            mobileNumber: `91${mobileNumber}`,
             profileImageKey,
             documentsKey,
           },
@@ -202,11 +203,11 @@ export async function createDriver(req: Request, res: Response) {
 
       console.log('driver data :>> ', driver);
       // throw new Error('Error while creating driver');
-  
+
       if (driver.length == 0) {
         throw new Error('Error while creating driver');
       }
-    }else{
+    } else {
       const driver = await Driver.create(
         [
           {
@@ -216,7 +217,7 @@ export async function createDriver(req: Request, res: Response) {
             vehicleNumber: vehicleNumber.toUpperCase(),
             vehicleType,
             vehicleName,
-            mobileNumber:`91${mobileNumber}`,
+            mobileNumber: `91${mobileNumber}`,
             profileImageKey,
             documentsKey,
           },
@@ -225,7 +226,7 @@ export async function createDriver(req: Request, res: Response) {
       );
       console.log('driver data :>> ', driver);
       // throw new Error('Error while creating driver');
-  
+
       if (driver.length == 0) {
         throw new Error('Error while creating driver');
       }
@@ -238,14 +239,14 @@ export async function createDriver(req: Request, res: Response) {
         { vehicleStatus: 'unavailable', vehicleAssignedToId: driver[0]._id },
         { session: session, new: true },
       );
-  
+
       console.log('object vehicle :>> ', vehicle);
-  
+
       if (!vehicle) {
         throw new Error('Error while updating vehicle');
       }
     }
-    
+
 
     await session.commitTransaction();
     res.status(200).send({
@@ -300,39 +301,6 @@ export async function deleteDriver(req: Request, res: Response) {
       { session: session },
     );
 
-    // if (body?.profileImageKey !== undefined) {
-    //   const params = {
-    //     Bucket: 'cargator',
-    //     Key: body?.profileImageKey, // Replace with the key of the object you want to delete
-    //   };
-
-    //   s3.deleteObject(params, (err: any, data: any) => {
-    //     if (err) {
-    //       console.error('Error deleting object:', err);
-    //     } else {
-    //       console.log('Object deleted successfully', data);
-    //     }
-    //   });
-    // }
-
-    // if (Array.isArray(body?.documentsKey) && body?.documentsKey.length > 0) {
-    //   console.log('object docs:>> ');
-    //   body.documentsKey.forEach((element: string) => {
-    //     const params = {
-    //       Bucket: 'cargator',
-    //       Key: element, // Replace with the key of the object you want to delete
-    //     };
-
-    //     s3.deleteObject(params, (err: any, data: any) => {
-    //       if (err) {
-    //         console.error('Error deleting object:', err);
-    //       } else {
-    //         console.log('Object deleted successfully', data);
-    //       }
-    //     });
-    //   });
-    // }
-
     await session.commitTransaction();
     res.status(200).send({
       message: ' Driver data deleted.',
@@ -382,19 +350,19 @@ export async function updateDriver(req: Request, res: Response) {
     const id = req.params.uid;
     session.startTransaction();
 
-    if(vehicleNumber !== "none"){
+    if (vehicleNumber !== "none") {
       const vehicle = await Vehicles.findOneAndUpdate(
         { vehicleNumber: vehicleNumber.toUpperCase() },
         { vehicleStatus: 'unavailable', vehicleAssignedToId: id },
         { session: session },
       );
-  
+
       if (!vehicle) {
         throw new Error('Vehicle not found');
       }
     }
-  
-    if(vehicleNumber === "none"){
+
+    if (vehicleNumber === "none") {
       const driver = await Driver.findOneAndUpdate(
         {
           _id: id,
@@ -413,7 +381,7 @@ export async function updateDriver(req: Request, res: Response) {
         },
         { session: session },
       );
-  
+
       if (!driver) {
         console.log(
           'driver data not found, invalid id or driver status is inactive :>> ',
@@ -434,7 +402,7 @@ export async function updateDriver(req: Request, res: Response) {
         );
       }
 
-    }else{
+    } else {
       const driver = await Driver.findOneAndUpdate(
         {
           _id: id,
@@ -453,7 +421,7 @@ export async function updateDriver(req: Request, res: Response) {
         },
         { session: session },
       );
-  
+
       if (!driver) {
         console.log(
           'driver data not found, invalid id or driver status is inactive :>> ',
@@ -462,21 +430,21 @@ export async function updateDriver(req: Request, res: Response) {
           'Mobile number invalid or driver status is inactive or driver is on-ride',
         );
       }
-  
+
       // console.log('driver.vehicleNumber :>> ', driver.vehicleNumber);
-        if (driver.vehicleNumber !== vehicleNumber.toUpperCase()) {
-          await Vehicles.findOneAndUpdate(
-            {
-              vehicleNumber: driver.vehicleNumber,
-              vehicleStatus: 'unavailable',
-            },
-            { vehicleStatus: 'available', vehicleAssignedToId: '' },
-            { session: session },
-          );
-        }
+      if (driver.vehicleNumber !== vehicleNumber.toUpperCase()) {
+        await Vehicles.findOneAndUpdate(
+          {
+            vehicleNumber: driver.vehicleNumber,
+            vehicleStatus: 'unavailable',
+          },
+          { vehicleStatus: 'available', vehicleAssignedToId: '' },
+          { session: session },
+        );
+      }
     }
-   
-    
+
+
 
     await session.commitTransaction();
 
@@ -644,8 +612,8 @@ export async function nearBydriver(req: Request, res: Response) {
     }
     // const nearbyDriversDistanceInKm: any =getUtilsDataa().nearbyDriversDistanceInKm
     // console.log('nearbyDriversDistanceInKm',nearbyDriversDistanceInKm )
-    const utilsdata = getUtils();
-    const nearbyDriversDistanceInKm: any = utilsdata.nearbyDriversDistanceInKm;
+    const utilsdata = getUtilsData();
+    const nearbyDriversDistanceInKm: any = (await utilsdata).nearbyDriversDistanceInKm;
     if (!nearbyDriversDistanceInKm) {
       throw new Error('nearbyDriversDistanceInKm is required');
     }
@@ -676,135 +644,3 @@ export async function nearBydriver(req: Request, res: Response) {
     res.status(400).send({ error: err.message });
   }
 }
-
-
-
-// ///      LOGIN SESSION apis 
-
-// // Endpoint to log driver login time
-// export async function loginTime(req: Request, res: Response) {
-//   const { name } = req.body;
-//   try {
-//     let driver = await Driver.findOne({ name });
-//     if (!driver) {
-//       driver = new Driver({ name, loginSessions: [] });
-//     }
-//     driver.loginSessions.push({ loginTime: new Date() });
-//     await driver.save();
-//     res.status(200).send('Login time recorded.');
-//   } catch (error) {
-//     res.status(500).send('Server error');
-//   }
-// };
-
-// // Endpoint to log driver logout time
-// export async function logoutTime(req: Request, res: Response) {
-//   const { name } = req.body;
-//   try {
-//     const driver = await Driver.findOne({ name });
-//     if (!driver) {
-//       return res.status(404).send('Driver not found');
-//     }
-//     const lastSession = driver.loginSessions[driver.loginSessions.length - 1];
-//     if (!lastSession || lastSession.logoutTime) {
-//       return res.status(400).send('No active login session found');
-//     }
-//     lastSession.logoutTime = new Date();
-//     await driver.save();
-//     res.status(200).send('Logout time recorded.');
-//   } catch (error) {
-//     res.status(500).send('Server error');
-//   }
-// };
-
-
-
-
-// // Helper functions
-// const isToday = (date: any) => {
-//   const today = new Date();
-//   return (
-//     date.getDate() === today.getDate() &&
-//     date.getMonth() === today.getMonth() &&
-//     date.getFullYear() === today.getFullYear()
-//   );
-// };
-
-// const isThisWeek = (date: any) => {
-//   const today = new Date();
-//   const firstDayOfWeek = new Date(today.setDate(today.getDate() - today.getDay()));
-//   const lastDayOfWeek = new Date(today.setDate(today.getDate() - today.getDay() + 6));
-//   return date >= firstDayOfWeek && date <= lastDayOfWeek;
-// };
-
-// const isCurrentMonth = (date: any) => {
-//   const today = new Date();
-//   return (
-//     date.getMonth() === today.getMonth() &&
-//     date.getFullYear() === today.getFullYear()
-//   );
-// };
-
-// const calculateTotalTime = (sessions: any) => {
-//   const totalMilliseconds: any = sessions.reduce((total: any, session: any) => {
-//     if (session.loginTime && session.logoutTime) {
-//       total += (new Date(session.logoutTime) - new Date(session.loginTime));
-//     }
-//     return total;
-//   }, 0);
-
-//   const totalSeconds = Math.floor(totalMilliseconds / 1000);
-//   const hours = Math.floor(totalSeconds / 3600);
-//   const minutes = Math.floor((totalSeconds % 3600) / 60);
-//   const seconds = totalSeconds % 60;
-
-//   return { hours, minutes, seconds };
-// };
-
-// // Endpoint to get today's total login time
-// router.get('/:name/today', async (req, res) => {
-//   const { name } = req.params;
-//   try {
-//     const driver = await Driver.findOne({ name });
-//     if (!driver) {
-//       return res.status(404).send('Driver not found');
-//     }
-//     const todaySessions = driver.loginSessions.filter((session) => isToday(session.loginTime));
-//     const totalTime = calculateTotalTime(todaySessions);
-//     res.json({ totalTime });
-//   } catch (error) {
-//     res.status(500).send('Server error');
-//   }
-// });
-
-// // Endpoint to get this week's total login time
-// router.get('/:name/week', async (req, res) => {
-//   const { name } = req.params;
-//   try {
-//     const driver = await Driver.findOne({ name });
-//     if (!driver) {
-//       return res.status(404).send('Driver not found');
-//     }
-//     const weekSessions = driver.loginSessions.filter((session) => isThisWeek(session.loginTime));
-//     const totalTime = calculateTotalTime(weekSessions);
-//     res.json({ totalTime });
-//   } catch (error) {
-//     res.status(500).send('Server error');
-//   }
-// });
-
-// // Endpoint to get this month's total login time
-// router.get('/:name/month', async (req, res) => {
-//   const { name } = req.params;
-//   try {
-//     const driver = await Driver.findOne({ name });
-//     if (!driver) {
-//       return res.status(404).send('Driver not found');
-//     }
-//     const monthSessions = driver.loginSessions.filter((session) => isCurrentMonth(session.loginTime));
-//     const totalTime = calculateTotalTime(monthSessions);
-//     res.json({ totalTime });
-//   } catch (error) {
-//     res.status(500).send('Server error');
-//   }
-// });

@@ -15,8 +15,7 @@ import {
   getDirections,
   getDirectionsmapmyindia,
 } from '../helpers/common';
-import { getUtils } from '..';
-
+import { getUtilsData } from '../services/utilsService'; 
 const _ = require('lodash');
 
 export async function addressFromCoordinates(req: Request, res: Response) {
@@ -26,8 +25,8 @@ export async function addressFromCoordinates(req: Request, res: Response) {
     // const location = body.location;
     const long = body.longitude;
     const lat = body.latitude;
-    const utilsdata = getUtils();
-    const nearbyDriversDistanceInKm: any = utilsdata.nearbyDriversDistanceInKm;
+    const utilsdata = getUtilsData();
+    const nearbyDriversDistanceInKm: any = (await utilsdata).nearbyDriversDistanceInKm;
     const nearbylocationDistanceInRadians = nearbyDriversDistanceInKm / 111.12;
     // const addressDoc: any = await addressLatlong.findOne({
     //   latlong: {
@@ -134,7 +133,6 @@ export async function addressFromCoordinatesmapmyindia(
     const long = location.longitude;
     const lat = location.latitude;
 
-    const utilsdata = getUtils();
     const radiusInKm = 0.1;
     const nearbylocationDistanceInRadians1 = radiusInKm / 6371;
 
@@ -183,7 +181,6 @@ export async function addressFromCoordinatesmapmyindiaForWhatsapp(body:any) {
     const lat = location.longitude;
     const long = location.latitude;
 
-    const utilsdata = getUtils();
     const radiusInKm = 1;
     const nearbylocationDistanceInRadians1 = radiusInKm / 111.12;
 
