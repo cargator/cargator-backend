@@ -9,7 +9,12 @@ const adminSchema = new mongoose.Schema(
       type: String,
       unique: true,
     },
+    mobile_Number:{
+      type:String,
+      unique:true
+    },
     password: String,
+
   },
   {
     timestamps: true,

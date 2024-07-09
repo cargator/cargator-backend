@@ -9,6 +9,8 @@ export async function adminLogin(req: Request, res: Response) {
     // console.log(`admin-login API >> body :>> `, req.body);
     const body = req.body;
     const { email, password } = body;
+  
+    
 
     if (!email || !password) {
       throw new Error(`Invalid email or password !`);
@@ -45,23 +47,27 @@ export async function adminRegister(req: Request, res: Response) {
   try {
     // console.log(`admin-login API >> body :>> `, req.body);
     const body = req.body;
-    const { name, email, password, confirmPassword } = body;
+    const { name, email,mobile_Number} = body;
+    
+    
 
-    if (!name || !email || !password || !confirmPassword) {
+    if (!name || !email || ! mobile_Number) {
       throw new Error(`Invalid data provided !`);
     }
+    const password=(mobile_Number+"").slice(-4);
 
-    if (password !== confirmPassword) {
-      throw new Error(`Passwords do not match !`);
-    }
+    // if (password !== confirmPassword) {
+    //   throw new Error(`Passwords do not match !`);
+    // }
 
-    let adminDoc: any = await Admin.create({
+     await Admin.create({
       name,
       email,
+      mobile_Number,
       password,
-      confirmPassword,
+      // confirmPassword,
     });
-    // console.log(`admin-register >> adminDoc :>> `, adminDoc);
+    
 
     // Generate a JWT token
     const token = jwt.sign({ email }, environmentVars.PUBLIC_KEY, {

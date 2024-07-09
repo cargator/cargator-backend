@@ -260,7 +260,7 @@ export async function orderUpdate(req: any, res: Response) {
       const newStatusUpdate = { status: status, time: new Date() };
       const response = await PlaceOrder.findOneAndUpdate(
         { _id: orderId },
-        { status: status, statusUpdates: [newStatusUpdate] },
+        { status: status, $push: {statusUpdates: newStatusUpdate }},
         { new: true },
       );
 
