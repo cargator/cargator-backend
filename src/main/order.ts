@@ -565,6 +565,13 @@ export async function getHistory(req: any, res: Response) {
 export async function getProgress(req: any, res: Response) {
   const userId = req.decoded.user._id;
   try {
+
+    console.log(
+      JSON.stringify({
+        method: 'getProgress',
+        message: 'get Progress body.'
+      }),
+    );
     const getOrderCount = await getOrderCounts(userId);
 
     const response = {
@@ -587,6 +594,15 @@ export async function getProgress(req: any, res: Response) {
         },
       },
     };
+
+    console.log(
+      JSON.stringify({
+        method: 'getProgress',
+        message: 'get Progress body.',
+        data: response
+      }),
+    );
+
     res.send(response).status(200);
   } catch (error: any) {
     console.log(
@@ -707,7 +723,7 @@ export async function getOrderHistory(req: Request, res: Response){
         $facet: {
           data: [
             {
-              $sort: { sequenceNo: -1 }, 
+              $sort: { createdAt: -1 },
             },
             {
               $skip: skip,
