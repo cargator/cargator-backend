@@ -2,9 +2,11 @@ import { Request, Response } from 'express';
 import axios from 'axios';
 import { Rides } from '../models';
 import environmentVars from '../constantsVars'
+import { log } from 'console';
 const apiUrl: any = environmentVars.OPEN_AI_API_URL;
 
 export async function chatGptApi(req: Request, res: Response) {
+  
   const mode = req.body.mode;
   const input = req.body.input;
   try {
@@ -60,7 +62,7 @@ export async function chatGptApi(req: Request, res: Response) {
 
       const responseData = response.data.choices[0].message;
       // Perform data analysis on responseData
-      // console.log(responseData['content']);
+      console.log("chatgpt response>>>>>>",responseData['content']);
       res.status(200).send({
         message: 'Fetched chat-gpt data successfully',
         data: responseData['content'],
