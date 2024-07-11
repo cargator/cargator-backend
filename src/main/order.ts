@@ -729,3 +729,28 @@ export async function getOrderHistory(req: Request, res: Response){
     res.status(400).send({ error: error.message });
   }
 }
+
+export async function getOrderById(req: Request, res: Response){
+  try{
+    console.log("hiiiiii");
+    
+    const id=req.params.id;
+    console.log(id);
+
+    
+    const orderDetails = await PlaceOrder.findById(id);
+    if(!orderDetails)
+    {
+      throw new Error('Order not found');
+       
+    }
+    return res.status(200).send({
+      message: 'Fetched Order details successfully.',
+      data: orderDetails,
+    });
+  }
+  catch (error: any) {
+    console.log('get Order details error: ', error);
+    res.status(400).send({ error: error.message });
+  }
+}

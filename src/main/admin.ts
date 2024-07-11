@@ -32,6 +32,7 @@ export async function adminLogin(req: Request, res: Response) {
     const token = jwt.sign({ email }, environmentVars.PUBLIC_KEY, {
       expiresIn: '7d',
     });
+   
 
     return res.status(200).send({
       message: 'success',
