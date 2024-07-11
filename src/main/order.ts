@@ -8,6 +8,7 @@ import { getDirections } from '../helpers/common';
 import { OrderStatusEnum } from '../shared/enums/status.enum';
 import environmentVars from '../constantsVars';
 import { checkOrders } from '..';
+import { sendEmail } from '../helpers/sendEmail';
 
 const petpoojaAcknowledge = async (data: any) => {
   try {
@@ -80,6 +81,7 @@ export async function placeOrder(req: Request, res: Response) {
     }
 
     await checkOrders(saveOrder);
+    await sendEmail(req.body);
     res.status(200).send({
       status: true,
       vendor_order_id: order_details.vendor_order_id,
