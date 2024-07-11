@@ -1124,7 +1124,52 @@ const driverSocketConnected = async (
     }
   });
 
+  // socket.on('emit-driver-live-location',async (body) => {
+  //   let session: any;
+  //   try {
+  //     session = await Driver.startSession();
+  //     session.startTransaction();
+  //     if (!body.coordinates) {
+  //       throw new Error('Coordinates are missing ');
+  //     }
+      
+  //     /// Update the driver's live location in the database
+  //     const updateLocation: any = await Driver.findOneAndUpdate(
+  //       {
+  //         _id: _userId,
+  //       },
+  //       {
+  //         liveLocation: body.coordinates,
+  //       },
+  //       { session, new: true },
+  //     );
+
+  //     console.log("updateLocation", updateLocation  );
+      
+  //   } catch (err: any) {
+  //     console.log('err in live-location', err);
+
+  //     //! add proper error message. Or you can add status codes for every error message and handle frontend based on this errorcodes create enum for this.
+  //     socket.emit(
+  //       'error',
+  //       formatSocketResponse({
+  //         event: 'live-location',
+  //         message: err.message,
+  //       }),
+  //     );
+  //     if (session) {
+  //       await session.abortTransaction();
+  //     }
+  //   } finally {
+  //     if (session) {
+  //       await session.endSession();
+  //     }
+  //   }
+  // });
+
   // Event listener for socket disconnection
+
+  
   socket.on('disconnect', async () => {
     console.log(`Driver ${userId} disconnected !`);
 

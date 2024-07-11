@@ -36,6 +36,7 @@ import {
   searchDrivers,
   updateDriver,
   updateDriverStatus,
+  updateLiveLocation,
 } from './main/driver';
 import {
   addressFromCoordinates,
@@ -589,6 +590,7 @@ app.use(authorize);
 
 app.post("/get-history", getHistory);
 app.get("/progress", getProgress);
+app.post(`/update-live-location`,updateLiveLocation)
 
 // app.get("/get-new-orders", getNewOrders)
 
