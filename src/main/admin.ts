@@ -1,8 +1,9 @@
-import { Driver, Rides, Admin } from '../models';
+import { Driver, Rides, Admin, PlaceOrder } from '../models';
 import { Request, Response } from 'express';
 const jwt = require('jsonwebtoken');
 const _ = require('lodash');
 import environmentVars from '../constantsVars'
+import { placeOrder } from './order';
 
 export async function adminLogin(req: Request, res: Response) {
   try {
@@ -134,7 +135,7 @@ export async function changePassword(req: Request, res: Response) {
 
 export async function dashboardData(req: Request, res: Response) {
   try {
-    const resp = await Rides.aggregate([
+    const resp = await PlaceOrder.aggregate([
       {
         $facet: {
           ongoing: [
@@ -142,11 +143,10 @@ export async function dashboardData(req: Request, res: Response) {
               $match: {
                 status: {
                   $in: [
-                    'pending-accept',
-                    'pending-arrival',
-                    'ride-started',
-                    'pending-otp',
-                    'pending-payment',
+                    'ALLOTTED',
+                    'ARRIVED',
+                    'DISPATCHED',
+                    'ARRIVED_CUSTOMER_DOORSTEP',
                   ],
                 },
               },
@@ -154,13 +154,15 @@ export async function dashboardData(req: Request, res: Response) {
             { $count: 'Pending' },
           ],
           completed: [
-            { $match: { status: { $in: ['completed'] } } },
+            { $match: { status: { $in: ['DELIVERED'] } } },
             { $count: 'completed' },
           ],
         },
       },
     ]);
-    const ongoingRidesCount = resp[0]['ongoing'][0]?resp[0]['ongoing'][0]['Pending']:0;
+    const ongoingOrderCount = resp[0]['ongoing'][0]?resp[0]['ongoing'][0]['Pending']:0;
+    console.log("ongoingOrderCount>>>>>>", ongoingOrderCount);
+    
     const completedRidesCount = resp[0]['completed'][0]?resp[0]['completed'][0]['completed']:0;
 
     const response = await Driver.aggregate([
@@ -178,7 +180,7 @@ export async function dashboardData(req: Request, res: Response) {
     const totalDriversCount = response[0]['totalDrivers'][0]?response[0]['totalDrivers'][0]['total']:0;
 
     const data = {
-      ongoingRidesCount,
+      ongoingOrderCount,
       completedRidesCount,
       onlineDriversCount,
       totalDriversCount,
