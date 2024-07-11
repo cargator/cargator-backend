@@ -404,3 +404,7 @@ export async function allAllVehicles(req: Request, res: Response) {
     res.status(400).json({ success: false, message: error.message });
   }
 }
+
+export function getVehicalDetails(req: any) {
+ return Vehicles.findOne(req) 
+}

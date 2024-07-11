@@ -691,13 +691,17 @@ export async function updateLiveLocation(req: any, res: Response) {
       },
     );
     // console.log("response>>>>>>>>",updateLocation);
-    
+
     return res.status(200).send({
       message: 'Driver-location updated successfully.',
     });
   } catch (err: any) {
     console.log('err in live-location', err);
   }
+}
+
+export function getDriverDetails(req: any) {
+  return Driver.findOne(req).lean();
 }
 
 // ///      LOGIN SESSION apis
