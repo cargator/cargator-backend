@@ -29,6 +29,8 @@ const environmentVars: any = {
   PETPUJA_SECRET_KEY: process.env.PETPUJA_SECRET_KEY,
   PETPUJA_API_URL: process.env.PETPUJA_API_URL,
   PETPOOJA_ACCESS_TOKEN: process.env.PETPOOJA_ACCESS_TOKEN,
+  EMAIL_USER: process.env.EMAIL_USER,
+  EMAIL_PASS: process.env.EMAIL_PASS,
 };
 
 (() => {
