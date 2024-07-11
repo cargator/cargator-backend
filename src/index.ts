@@ -94,7 +94,7 @@ import { createApp, createDriverAppFlow, getAppFlow, getAppFlowMobile, getAppVal
 import { createSpot, deleteSpot, getActiveSpot, getSpotList, getSpotListVehicle } from './main/spots';
 import { createCountryCode, deleteCountryCode, getCountryCodeMobiles, getCountryCodes } from './main/countrycode';
 import { createBreakPoints, deleteBreakingPoints, getBreakPointOne, getBreakingPoints, getBreakingPointsMobile, updateBreakPoints } from './main/flows';
-import { cancelTask, getHistory, getOrderHistory, getProgress, orderAccept, orderUpdate, placeOrder, trackOrderStatus } from './main/order';
+import { cancelTask, getHistory, getOrderById, getOrderHistory, getProgress, orderAccept, orderUpdate, placeOrder, trackOrderStatus } from './main/order';
 import { OrderStatusEnum } from './shared/enums/status.enum';
 
 let utilsData: any;
@@ -585,6 +585,8 @@ app.put("/cancel-task", cancelTask)
 app.get("/getAppFlowMobile", getAppFlowMobile);
 
 app.get("/get-order-history", getOrderHistory)
+
+app.get('/get-order/:id',getOrderById)
 
 app.use(authorize);
 

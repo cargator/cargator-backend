@@ -745,3 +745,25 @@ export async function getOrderHistory(req: Request, res: Response){
     res.status(400).send({ error: error.message });
   }
 }
+
+export async function getOrderById(req: Request, res: Response){
+  try{ 
+    const id=req.params.id;
+
+    const orderDetails = await PlaceOrder.findOne({ "order_details.vendor_order_id": id })
+    if(!orderDetails)
+    {
+      throw new Error('Order not found');
+       
+    }
+    return res.status(200).send({
+      message: 'Fetched Order details successfully.',
+      data: orderDetails,
+    });
+  }
+  catch (error: any) {
+    console.log('get Order details error: ', error);
+    res.status(400).send({ error: error.message });
+  }
+}
+
