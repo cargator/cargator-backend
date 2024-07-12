@@ -161,7 +161,6 @@ export async function dashboardData(req: Request, res: Response) {
       },
     ]);
     const ongoingOrderCount = resp[0]['ongoing'][0]?resp[0]['ongoing'][0]['Pending']:0;
-    console.log("ongoingOrderCount>>>>>>", ongoingOrderCount);
     
     const completedRidesCount = resp[0]['completed'][0]?resp[0]['completed'][0]['completed']:0;
 

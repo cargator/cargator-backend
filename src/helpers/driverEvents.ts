@@ -894,6 +894,18 @@ const driverSocketConnected = async (
         pickupLocation,
       );
 
+      updatedOrder = await PlaceOrder.findOneAndUpdate(
+        {
+          _id: new Types.ObjectId(body.id),
+          status: OrderStatusEnum.ORDER_ALLOTTED
+        },
+        {
+          riderPathToPickUp: driverDataFromCurrLocationToPickup?.coords,
+        },
+        { session, new: true },
+      ).lean()
+
+
       io.to(`${updatedOrder._id.toString()}-ride-room-pre`).emit(
         'accept-order-response',
         formatSocketResponse({
@@ -984,7 +996,7 @@ const driverSocketConnected = async (
   // update order --------
   socket.on('update-order-status', async (body: any) => {
     let session: any;
-    let driverDataFromCurrLocationToPickup;
+    let driverDataFromPickupToDrop;
     try {
       const { id, status } = body;
 
@@ -1088,10 +1100,20 @@ const driverSocketConnected = async (
           longitude: updateOrder.drop_details.longitude,
         };
 
-        driverDataFromCurrLocationToPickup = await getDirections(
+        driverDataFromPickupToDrop = await getDirections(
           pickupLocation,
           dropLocation,
         );
+
+        updateOrder = await PlaceOrder.findOneAndUpdate(
+          {
+            _id: new Types.ObjectId(body.id),
+          },
+          {
+            pickupToDrop: driverDataFromPickupToDrop?.coords,
+          },
+          { session, new: true }
+        ).lean()
       }
 
       // console.log("driverDataFromCurrLocationToPickup",driverDataFromCurrLocationToPickup);
@@ -1102,7 +1124,7 @@ const driverSocketConnected = async (
           message: `order updated`,
           driverId: userId,
           order: updateOrder,
-          path: driverDataFromCurrLocationToPickup,
+          path: driverDataFromPickupToDrop,
         }),
       );
 
