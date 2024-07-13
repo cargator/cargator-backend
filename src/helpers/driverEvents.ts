@@ -844,7 +844,7 @@ const driverSocketConnected = async (
         },
         {
           status: OrderStatusEnum.ORDER_ALLOTTED,
-          statusUpdates: newStatusUpdate,
+          $push: {statusUpdates: newStatusUpdate},
           driver_details: driverDetails,
         },
         { session, new: true },
@@ -1050,7 +1050,7 @@ const driverSocketConnected = async (
         },
         {
           status: status,
-          statusUpdates: newStatusUpdate,
+          $push: {statusUpdates: newStatusUpdate},
         },
         { session, new: true },
       ).lean();
