@@ -8,13 +8,13 @@ export async function createApp(req: Request, res: Response) {
     session = await mongoose.startSession();
     session.startTransaction();
 
-    const { name , profileImageKey} = req.body;
+    const { name, profileImageKey } = req.body;
 
     const fareRes = await apps.create(
       [
         {
           name,
-          profileImageKey
+          profileImageKey,
         },
       ],
       { session: session },
@@ -80,7 +80,7 @@ export async function upDateAppValue(req: Request, res: Response) {
       { _id: id },
       {
         name: req.body.name,
-        profileImageKey: req.body.profileImageKey
+        profileImageKey: req.body.profileImageKey,
       },
       { new: true },
     );
@@ -111,13 +111,13 @@ export async function createDriverAppFlow(req: Request, res: Response) {
     session = await mongoose.startSession();
     session.startTransaction();
 
-    const {selectedFlowOption} = req.body;
-    console.log("object" , selectedFlowOption)
+    const { selectedFlowOption } = req.body;
+    console.log('object', selectedFlowOption);
 
     const flowres = await DriverAppFlow.create(
       [
         {
-          applicationFLow:selectedFlowOption,
+          applicationFLow: selectedFlowOption,
         },
       ],
       { session: session },
@@ -145,33 +145,6 @@ export async function createDriverAppFlow(req: Request, res: Response) {
   }
 }
 
-export async function getAppFlow(req: Request, res: Response) {
-  let session: any;
-  try {
-    session = await mongoose.startSession();
-    session.startTransaction();
-
-    const flowRes = await DriverAppFlow.find({});
-
-    await session.commitTransaction();
-    res.status(200).send({
-      message: 'App Flow got successfully.',
-      data: flowRes,
-    });
-  } catch (error: any) {
-    res.status(400).json({ success: false, message: error.message });
-    if (session) {
-      await session.abortTransaction();
-    }
-    console.log('err :>> ', error);
-  } finally {
-    if (session) {
-      await session.endSession();
-    }
-  }
-}
-
-
 export async function updateAppFlow(req: Request, res: Response) {
   let session: any;
   try {
@@ -179,7 +152,6 @@ export async function updateAppFlow(req: Request, res: Response) {
     session.startTransaction();
 
     const id = req.params.id;
-    console.log("--------------",id)
 
     const flowRes = await DriverAppFlow.findOneAndUpdate(
       { _id: id },
@@ -207,7 +179,6 @@ export async function updateAppFlow(req: Request, res: Response) {
   }
 }
 
-
 export async function getAppFlowMobile(req: Request, res: Response) {
   let session: any;
   try {
@@ -232,4 +203,37 @@ export async function getAppFlowMobile(req: Request, res: Response) {
       await session.endSession();
     }
   }
+}
+
+export async function getCurrentFlow(res: Response) {
+  try {
+    console.log(
+      JSON.stringify({
+        method: 'getCurrentFlow',
+      }),
+    );
+
+    const response = await getAppFLow();
+    console.log(
+      JSON.stringify({
+        method: 'getCurrentFlow',
+        data: response,
+      }),
+    );
+
+    res.status(200).send({
+      message: 'App Flow got successfully.',
+      data: response,
+    });
+  } catch (error: any) {
+    console.log({
+      method: 'getCurrentFlow',
+      error: error,
+    });
+    res.status(400).json({ success: false, message: error.message });
+  }
+}
+
+export function getAppFLow() {
+  return DriverAppFlow.findOne().lean()
 }

@@ -90,7 +90,7 @@ import axios from 'axios';
 import { handleWebhookPost, handleWebhookVerification } from './main/whatsAppChat';
 import { createVehicleType, deleteVehicleType, getVehicleOne, getVehicleType, updateVehicleType } from './main/vehicleType';
 import { createFare, getFareValue, upDateFareValue } from './main/fare';
-import { createApp, createDriverAppFlow, getAppFlow, getAppFlowMobile, getAppValue, upDateAppValue, updateAppFlow } from './main/app';
+import { createApp, createDriverAppFlow, getAppFlowMobile, getAppValue, getCurrentFlow, upDateAppValue, updateAppFlow } from './main/app';
 import { createSpot, deleteSpot, getActiveSpot, getSpotList, getSpotListVehicle } from './main/spots';
 import { createCountryCode, deleteCountryCode, getCountryCodeMobiles, getCountryCodes } from './main/countrycode';
 import { createBreakPoints, deleteBreakingPoints, getBreakPointOne, getBreakingPoints, getBreakingPointsMobile, updateBreakPoints } from './main/flows';
@@ -932,7 +932,7 @@ app.get('/get-break-point-id/:id', getBreakPointOne);
 
 app.post("/create-app-flow", createDriverAppFlow);
 
-app.get("/get-app-flow", getAppFlow);
+app.get("/get-app-flow", getCurrentFlow);
 
 app.patch('/update-app-flow/:id', updateAppFlow)
 
