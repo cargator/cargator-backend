@@ -768,18 +768,10 @@ export async function getOrderById(req: Request, res: Response) {
       return res.status(404).send({ error: 'Driver not found' });
     }
 
-    const vehicleDetails: any = await getVehicalDetails({
-      vehicleNumber: driverData.vehicleNumber,
-    });
-
-    if (!vehicleDetails) {
-      return res.status(404).send({ error: 'Vehicle not found' });
-    }
-
     const response = {
       ...orderDetails,
-      vehicleNumber: vehicleDetails.vehicleNumber,
-      vehicleName: vehicleDetails.vehicleName,
+      vehicleNumber: driverData.vehicleNumber,
+      vehicleName: driverData.vehicleName,
     };
 
     return res.status(200).send({
