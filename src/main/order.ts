@@ -798,12 +798,15 @@ export async function driverLoginHours(req: any, res: Response){
 
   const driverId = req.decoded.user._id;
   const time=req.body.time;
+  update(driverId,time)
+  res.status(200).send("OK")
+}
+
+export async function update(driverId:String,time:number){
   const currentDate = new Date();
   const loginRecord = await DriverLoginTime.findOneAndUpdate(
     { driverId ,createdAt:{ $gte: new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate()), $lt: new Date() }},
     { $inc: { loginHours: time } }, // Increment the time by logoutTime, date: { $gte: new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate()), $lt: new Date() }
     { new: true, upsert: true } // Options: return updated document and create if it doesn't exist
   );
-  
-  res.status(200).send("OK")
 }

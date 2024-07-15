@@ -5,6 +5,7 @@ import { Driver, PlaceOrder, Riders, Rides, DriverLoginTime } from '../models';
 import { formatSocketResponse, getDirections } from './common';
 import { OrderStatusEnum } from '../shared/enums/status.enum';
 import { log } from 'console';
+import { update } from '../main/order';
 
 // const { utilsData } = require('../index.ts');
 
@@ -992,6 +993,18 @@ const driverSocketConnected = async (
     // console.log(order);
 
   })
+  
+//   socket.on('driver-login-hours', async (body: any) => {
+//     console.log("Login hours event received");
+
+//     // Ensure userId is defined in the body
+//     if (body && body.userId) {
+//         console.log(body.userId);
+//         update(userId,0.6)
+//     } else {
+//         console.error("userId is missing in the event body");
+//     }
+// });
 
   // update order --------
   socket.on('update-order-status', async (body: any) => {
