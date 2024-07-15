@@ -584,17 +584,17 @@ export async function getProgress(req: any, res: Response) {
       data: {
         today: {
           earning: 0,
-          loginHours: loginHoures.todayLoginHours.toFixed(2),
+          loginHours: loginHoures.todayLoginHours.toFixed(2)+" hr",
           orders: getOrderCount.todayCount,
         },
         week: {
           earning: 0,
-          loginHours: loginHoures.weekLoginHours.toFixed(2),
+          loginHours: loginHoures.weekLoginHours.toFixed(2)+" hr",
           orders: getOrderCount.weekCount,
         },
         month: {
           earning: 0,
-          loginHours: loginHoures.monthLoginHours.toFixed(2),
+          loginHours: (loginHoures.monthLoginHours.toFixed(2))+" hr",
           orders: getOrderCount.monthCount,
         },
       },
