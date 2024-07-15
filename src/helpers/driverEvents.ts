@@ -1204,16 +1204,16 @@ const driverSocketConnected = async (
     });
     try {
       // Update the driver's ride status to 'offline' upon socket disconnection
-      await Driver.updateOne(
-        {
-          //todo: change mobileNumber to _id in future
-          _id: _userId,
-          rideStatus: 'online',
-        },
-        {
-          rideStatus: 'offline',
-        },
-      );
+  //     await Driver.updateOne(
+  //       {
+  //         //todo: change mobileNumber to _id in future
+  //         _id: _userId,
+  //         rideStatus: 'online',
+  //       },
+  //       {
+  //         rideStatus: 'offline',
+  //       },
+  //     );
     } catch (err: any) {
       console.error('Error while updating driver status:', err);
     }
