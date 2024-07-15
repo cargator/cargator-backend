@@ -1,4 +1,5 @@
 // import { Vehicles } from './index';
+import { time } from 'console';
 import mongoose, { Types } from 'mongoose';
 import customers from 'razorpay/dist/types/customers';
 
@@ -497,7 +498,20 @@ const cancelTask = new mongoose.Schema(
   }
 )
 
+const driverLoginTimeSchema = new mongoose.Schema(
+  {
+    driverId:{
+       type:mongoose.Schema.Types.ObjectId,
+        ref:'Driver'
+    },
+    loginHours:Number,
+  },
+  {
+    timestamps: true
+  }
+)
 
+export const DriverLoginTime=mongoose.model('DriverLoginTime',driverLoginTimeSchema)
 export const Admin = mongoose.model('Admin', adminSchema);
 export const VehicleTypes = mongoose.model('vehicleTypes', vehicleTypeSchema);
 export const fares = mongoose.model('fares', faresSchema);

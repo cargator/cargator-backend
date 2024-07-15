@@ -1,7 +1,7 @@
 import { Types } from 'mongoose';
 import { Server, Socket } from 'socket.io';
 import { getUtils, pubClient } from '..';
-import { Driver, PlaceOrder, Riders, Rides } from '../models';
+import { Driver, PlaceOrder, Riders, Rides, DriverLoginTime } from '../models';
 import { formatSocketResponse, getDirections } from './common';
 import { OrderStatusEnum } from '../shared/enums/status.enum';
 import { log } from 'console';
@@ -798,7 +798,7 @@ const driverSocketConnected = async (
       const driver_location = body.driverLoc;
 
       console.log("accept order request", body);
-      
+
 
       if (!body.id) {
         // If order ID is missing in the request, handle the error
@@ -844,7 +844,7 @@ const driverSocketConnected = async (
         },
         {
           status: OrderStatusEnum.ORDER_ALLOTTED,
-          $push: {statusUpdates: newStatusUpdate},
+          $push: { statusUpdates: newStatusUpdate },
           driver_details: driverDetails,
         },
         { session, new: true },
@@ -981,7 +981,7 @@ const driverSocketConnected = async (
   });
 
 
-  socket.on('payment-status',async (body: any)=>{
+  socket.on('payment-status', async (body: any) => {
     // console.log("payment-status");
     console.log("Paymont done");
     const order = await PlaceOrder.findByIdAndUpdate(
@@ -990,7 +990,7 @@ const driverSocketConnected = async (
       { new: true } // This option returns the modified document
     );
     // console.log(order);
-    
+
   })
 
   // update order --------
@@ -1050,7 +1050,7 @@ const driverSocketConnected = async (
         },
         {
           status: status,
-          $push: {statusUpdates: newStatusUpdate},
+          $push: { statusUpdates: newStatusUpdate },
         },
         { session, new: true },
       ).lean();
@@ -1154,7 +1154,7 @@ const driverSocketConnected = async (
   //     if (!body.coordinates) {
   //       throw new Error('Coordinates are missing ');
   //     }
-      
+
   //     /// Update the driver's live location in the database
   //     const updateLocation: any = await Driver.findOneAndUpdate(
   //       {
@@ -1167,7 +1167,7 @@ const driverSocketConnected = async (
   //     );
 
   //     console.log("updateLocation", updateLocation  );
-      
+
   //   } catch (err: any) {
   //     console.log('err in live-location', err);
 
@@ -1191,7 +1191,7 @@ const driverSocketConnected = async (
 
   // Event listener for socket disconnection
 
-  
+
   socket.on('disconnect', async () => {
     console.log(`Driver ${userId} disconnected !`);
 
@@ -1219,6 +1219,47 @@ const driverSocketConnected = async (
     }
   });
 };
+
+export async function fetchLast30DaysRecords(driverId: string) {
+  try {
+    // Calculate start date (30 days ago from today)
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - 30);
+
+    // Query documents based on driverId and date within the last 30 days
+    const records = await DriverLoginTime.find({ driverId })
+      .limit(30);
+    let todayLoginHours = 0;
+    let weekLoginHours = 0;
+    let monthLoginHours = 0;
+
+    for (let i = 0; i < records.length; i++) {
+      const record = records[i];
+     
+      
+      const loginHours: number = record.loginHours || 0;
+      if (i === 0) {
+        todayLoginHours = loginHours;
+      }
+      if (i < 7) {
+        weekLoginHours += loginHours;
+      }
+      monthLoginHours += loginHours;
+    }
+    return {
+      todayLoginHours,
+      weekLoginHours,
+      monthLoginHours
+    };
+  } catch (error) {
+    console.error('Error fetching records:', error);
+    throw error; // Handle the error appropriately in your application
+  }
+};
+
+
 // Exporting functions and the event listener for reuse
 export default driverSocketConnected;
 export { getDriverSocket, setDriverSocket };
+
+

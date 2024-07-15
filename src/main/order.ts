@@ -1,9 +1,9 @@
 import mongoose from 'mongoose';
-import { Driver, PlaceOrder } from '../models';
+import { Driver, PlaceOrder,DriverLoginTime } from '../models';
 import { Earning } from '../models/earning.model';
 import { Request, Response } from 'express';
 import axios from 'axios';
-import { error } from 'console';
+import { error, log, time } from 'console';
 import { getDirections } from '../helpers/common';
 import { OrderStatusEnum } from '../shared/enums/status.enum';
 import environmentVars from '../constantsVars';
@@ -11,6 +11,7 @@ import { checkOrders } from '..';
 import { sendEmail } from '../helpers/sendEmail';
 import { getVehicalDetails } from './vehiclesDetails';
 import { getDriverDetails } from './driver';
+import { fetchLast30DaysRecords } from '../helpers/driverEvents';
 
 const petpoojaAcknowledge = async (data: any) => {
   try {
@@ -567,7 +568,8 @@ export async function getHistory(req: any, res: Response) {
 }
 
 export async function getProgress(req: any, res: Response) {
-  const userId = req.decoded.user._id;
+  const driverId = req.decoded.user._id;
+  const loginHoures=await fetchLast30DaysRecords(driverId)
   try {
     console.log(
       JSON.stringify({
@@ -575,24 +577,24 @@ export async function getProgress(req: any, res: Response) {
         message: 'get Progress body.',
       }),
     );
-    const getOrderCount = await getOrderCounts(userId);
+    const getOrderCount = await getOrderCounts(driverId);
 
     const response = {
       message: 'Fetched all Order History!',
       data: {
         today: {
           earning: 0,
-          loginHours: 0,
+          loginHours: loginHoures.todayLoginHours.toFixed(2),
           orders: getOrderCount.todayCount,
         },
         week: {
           earning: 0,
-          loginHours: 0,
+          loginHours: loginHoures.weekLoginHours.toFixed(2),
           orders: getOrderCount.weekCount,
         },
         month: {
           earning: 0,
-          loginHours: 0,
+          loginHours: loginHoures.monthLoginHours.toFixed(2),
           orders: getOrderCount.monthCount,
         },
       },
@@ -790,4 +792,18 @@ export async function getOrderById(req: Request, res: Response) {
     console.log('getOrderById error: ', error);
     res.status(400).send({ error: error.message });
   }
+}
+
+export async function driverLoginHours(req: any, res: Response){
+
+  const driverId = req.decoded.user._id;
+  const time=req.body.time;
+  const currentDate = new Date();
+  const loginRecord = await DriverLoginTime.findOneAndUpdate(
+    { driverId ,createdAt:{ $gte: new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate()), $lt: new Date() }},
+    { $inc: { loginHours: time } }, // Increment the time by logoutTime, date: { $gte: new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate()), $lt: new Date() }
+    { new: true, upsert: true } // Options: return updated document and create if it doesn't exist
+  );
+  
+  res.status(200).send("OK")
 }
