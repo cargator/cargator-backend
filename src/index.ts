@@ -133,15 +133,15 @@ const addDriversToRoom: any = (data: any) => {
 const sendOrderToDriverRoom: any = (data: any) => {
   try {
     const { newOrder, drivers } = JSON.parse(data);
-  drivers.forEach((driver: any) => {
-    let tempDriverId = driver._id.toString();
-    const driversSocket = getDriverSocket(tempDriverId);
-    if (driversSocket) {
-      driversSocket.join(`${newOrder._id.toString()}-ride-room-pre`);
-      driversSocket.emit('order-request', [newOrder]);
-    }
-  });
-  console.log('all drivers added to room');
+    drivers.forEach((driver: any) => {
+      let tempDriverId = driver._id.toString();
+      const driversSocket = getDriverSocket(tempDriverId);
+      if (driversSocket) {
+        driversSocket.join(`${newOrder._id.toString()}-ride-room-pre`);
+        driversSocket.emit('order-request', [newOrder]);
+      }
+    });
+    console.log('all drivers added to room');
   } catch (error: any) {
     console.log("error :", error);
   }
@@ -251,7 +251,7 @@ async function setUpCronJobs() {
     //   return;
     // }
     // flag = true;
-    utilsData = await Utils.findOne({ _id: '64c8b0909850db70747e62b9' });
+    utilsData = await Utils.findOne();
     if (!utilsData) {
       utilsData = {
         georange: '0.015',
@@ -270,7 +270,7 @@ async function setUpCronJobs() {
       try {
         console.log('Cron job executed at:', new Date());
 
-        utilsData = await Utils.findOne({ _id: '64c8b0909850db70747e62b9' });
+        utilsData = await Utils.findOne();
       } catch {
         utilsData = {
           georange: '0.015',
@@ -304,6 +304,29 @@ async function setUpCronJobs() {
     });
   } catch (err) {
     console.log('err', err);
+  }
+}
+
+export async function setDriverOffline(req: any) {
+  const driverId = req.decoded.user._id;
+
+  console.log("req.decoded.user._id",driverId);
+  
+
+  try {
+    // Update the driver's status to 'offline' 
+      const updateDriver = await Driver.updateOne(
+          {
+            //todo: change mobileNumber to _id in future
+            _id: driverId,
+            rideStatus: 'online',
+          },
+          {
+            rideStatus: 'offline',
+          },
+        );
+  } catch (err: any) {
+    console.error('Error while updating driver status:', err);
   }
 }
 
@@ -417,47 +440,42 @@ export const checkOrders = async (newOrder: any) => {
     if (newOrder === undefined) {
       let orders: any = await PlaceOrder.find({
         createdAt: {
-          $gte: endDate
+          $gte: endDate,
         },
-        status: OrderStatusEnum.ORDER_ACCEPTED
+        status: OrderStatusEnum.ORDER_ACCEPTED,
       });
 
       for (const newOrder of orders) {
-
         // find drivers available to accept new ride
         const availableDrivers = await Driver.find({
           rideStatus: 'online',
           status: 'active',
-        }).limit(20).lean();
+        })
+          .limit(20)
+          .lean();
 
         // console.log(`checkPreBookRides availableDrivers :>> `, availableDrivers);
         const data = { newOrder, drivers: availableDrivers };
 
-        pubClient.publish(
-          'join-drivers-to-orders',
-          formatSocketResponse(data),
-        );
+        pubClient.publish('join-drivers-to-orders', formatSocketResponse(data));
       }
-    }
-    else {
+    } else {
       const availableDrivers = await Driver.find({
         rideStatus: 'online',
         status: 'active',
-      }).limit(20).lean();
+      })
+        .limit(20)
+        .lean();
 
       // console.log(`checkPreBookRides availableDrivers :>> `, availableDrivers);
       const data = { newOrder, drivers: availableDrivers };
 
-      pubClient.publish(
-        'join-drivers-to-orders',
-        formatSocketResponse(data),
-      );
+      pubClient.publish('join-drivers-to-orders', formatSocketResponse(data));
     }
-
   } catch (error: any) {
-    console.log("Error while check orders", error.message);
+    console.log('Error while check orders', error.message);
   }
-}
+};
 
 // container health check endpoint
 app.get('/', (req: Request, res: Response) => {
@@ -466,7 +484,7 @@ app.get('/', (req: Request, res: Response) => {
 
 //whatsAppChatBot
 
-app.get('/webhook', handleWebhookVerification)
+app.get('/webhook', handleWebhookVerification);
 
 app.post('/webhook', handleWebhookPost);
 
@@ -476,16 +494,20 @@ const authorize = async (req: any, res: Response, next: any) => {
     const token = req?.headers?.authorization?.split(' ')[1];
     if (token) {
       // Verify the JWT token
-      jwt.verify(token, environmentVars.PUBLIC_KEY, (err: any, decoded: any) => {
-        if (err) {
-          throw new Error('Invalid token');
-          // res.status(401).send({ message: 'Token invalid' });
-          // res.json({ success: false, message: "Token invalid" }); // Token has expired or is invalid
-        } else {
-          req.decoded = decoded; // Assign to req. variable to be able to use it in next() route ('/me' route)
-          next(); // Required to leave middleware
-        }
-      });
+      jwt.verify(
+        token,
+        environmentVars.PUBLIC_KEY,
+        (err: any, decoded: any) => {
+          if (err) {
+            throw new Error('Invalid token');
+            // res.status(401).send({ message: 'Token invalid' });
+            // res.json({ success: false, message: "Token invalid" }); // Token has expired or is invalid
+          } else {
+            req.decoded = decoded; // Assign to req. variable to be able to use it in next() route ('/me' route)
+            next(); // Required to leave middleware
+          }
+        },
+      );
     } else {
       res.status(401).send({ success: false, message: 'No token provided' }); // Return error if no token was provided in the request
     }
@@ -498,7 +520,7 @@ const decodeToken = (token: any) => {
   try {
     const data = jwt.verify(token, environmentVars.PUBLIC_KEY);
     // return JSON.parse(data);
-    return data
+    return data;
   } catch (error) {
     return false;
   }
@@ -573,37 +595,37 @@ app.post('/admin-login', adminLogin);
 // Route for admin register
 app.post('/admin-register', adminRegister);
 
+// PetPooja API's--------------------
 
-// Order API's--------------------
+app.post('/place-order', placeOrder);
 
-app.post("/place-order", placeOrder);
+app.put('/track-order-status', trackOrderStatus);
 
-app.put("/track-order-status", trackOrderStatus)
+app.put('/cancel-task', cancelTask);
 
-app.put("/cancel-task", cancelTask)
+app.get('/getAppFlowMobile', getAppFlowMobile);
 
-app.get("/getAppFlowMobile", getAppFlowMobile);
+app.get('/get-order-history', getOrderHistory);
 
-app.get("/get-order-history", getOrderHistory)
+app.get('/get-order/:id', getOrderById);
 
-app.get('/get-order/:id',getOrderById)
 
 app.use(authorize);
 
-app.post("/get-history", getHistory);
-app.get("/progress", getProgress);
-app.post(`/update-live-location`,updateLiveLocation)
+app.post('/set-driver-offline', setDriverOffline);
+app.post('/get-history', getHistory);
+app.get('/progress', getProgress);
+app.post(`/update-live-location`, updateLiveLocation);
 
 // app.get("/get-new-orders", getNewOrders)
 
-app.post('/order-accept', orderAccept)
+app.post('/order-accept', orderAccept);
 
-app.post('/order-update', orderUpdate)
+app.post('/order-update', orderUpdate);
 
 app.post('/add-profile-details', addProfileDetails);
 
 if (environmentVars.MAP_MY_INDIA == 'false') {
-
   // Route for fetching address predictions from Google Places Autocomplete API
   app.post('/get-address-from-autocomplete', getAddressFromAutocomplete);
 
@@ -614,11 +636,7 @@ if (environmentVars.MAP_MY_INDIA == 'false') {
   // Route for fetching coordinates from address using Google Geocoding API
   app.post('/get-coordinates-from-address', coordinatesFromAddress);
 } else {
-
-  app.post(
-    '/get-address-from-autocomplete',
-    getAddressFromAutocompleteOlaMaps,
-  );
+  app.post('/get-address-from-autocomplete', getAddressFromAutocompleteOlaMaps);
 
   // app.post(
   //   '/get-address-from-autocomplete',
@@ -628,7 +646,6 @@ if (environmentVars.MAP_MY_INDIA == 'false') {
 
   app.post('/get-address-from-coordinates', addressFromCoordinates);
   // app.post('/get-address-from-coordinates', addressFromCoordinatesmapmyindia);
-
 
   app.post('/get-directions', getDirectionmapmyindia);
 
@@ -879,41 +896,41 @@ app.get('/get-vehicle-data', getVehicleData);
 
 // vehicleType
 
-app.post('/create-vehicle-type', createVehicleType)
+app.post('/create-vehicle-type', createVehicleType);
 
-app.get('/get-vehicle-type', getVehicleType)
+app.get('/get-vehicle-type', getVehicleType);
 
-app.delete('/delete-vehicle-type/:id', deleteVehicleType)
+app.delete('/delete-vehicle-type/:id', deleteVehicleType);
 
-app.get('/get-vehicle-type-id/:id', getVehicleOne)
+app.get('/get-vehicle-type-id/:id', getVehicleOne);
 
 app.patch('/updateVehicleType/:uid', updateVehicleType);
 
 // fare
 
-app.post('/add-fare', createFare)
+app.post('/add-fare', createFare);
 
-app.get('/get-fare', getFareValue)
+app.get('/get-fare', getFareValue);
 
-app.patch('/update-fare/:uid', upDateFareValue)
+app.patch('/update-fare/:uid', upDateFareValue);
 
 // spots crud
-app.post("/create-spot", createSpot);
+app.post('/create-spot', createSpot);
 
-app.get("/get-spot-list", getSpotList);
+app.get('/get-spot-list', getSpotList);
 
-app.delete("/delete-spot/:id", deleteSpot);
+app.delete('/delete-spot/:id', deleteSpot);
 
 app.get('/get-active-spot', getActiveSpot);
-app.get('/get-spot-list-vehicle', getSpotListVehicle)
+app.get('/get-spot-list-vehicle', getSpotListVehicle);
 
 // appName and Image
 
-app.post('/create-app', createApp)
+app.post('/create-app', createApp);
 
-app.get('/get-app', getAppValue)
+app.get('/get-app', getAppValue);
 
-app.patch('/update-app/:uid', upDateAppValue)
+app.patch('/update-app/:uid', upDateAppValue);
 
 // flows crud
 app.post('/create-break-points', createBreakPoints);
@@ -930,11 +947,11 @@ app.get('/get-break-point-id/:id', getBreakPointOne);
 
 // driverAppFlow
 
-app.post("/create-app-flow", createDriverAppFlow);
+app.post('/create-app-flow', createDriverAppFlow);
 
-app.get("/get-app-flow", getCurrentFlow);
+app.get('/get-app-flow', getCurrentFlow);
 
-app.patch('/update-app-flow/:id', updateAppFlow)
+app.patch('/update-app-flow/:id', updateAppFlow);
 
 // app.post('/login-time', loginTime);
 
@@ -942,10 +959,9 @@ app.patch('/update-app-flow/:id', updateAppFlow)
 
 // custom rides crud -----------------------------
 
-app.post("/createRide", createCustomRides);
+app.post('/createRide', createCustomRides);
 
-app.patch("/updateRide", updateRides);
-
+app.patch('/updateRide', updateRides);
 
 // vehicle crud
 
