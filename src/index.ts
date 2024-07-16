@@ -94,7 +94,7 @@ import { createApp, createDriverAppFlow, getAppFlowMobile, getAppValue, getCurre
 import { createSpot, deleteSpot, getActiveSpot, getSpotList, getSpotListVehicle } from './main/spots';
 import { createCountryCode, deleteCountryCode, getCountryCodeMobiles, getCountryCodes } from './main/countrycode';
 import { createBreakPoints, deleteBreakingPoints, getBreakPointOne, getBreakingPoints, getBreakingPointsMobile, updateBreakPoints } from './main/flows';
-import { cancelTask, driverLoginHours, getHistory, getOrderById, getOrderHistory, getProgress, orderAccept, orderUpdate, placeOrder, trackOrderStatus } from './main/order';
+import { cancelTask, getHistory, getOrderById, getOrderHistory, getProgress, orderAccept, orderUpdate, placeOrder, riderLoginHours, trackOrderStatus } from './main/order';
 import { OrderStatusEnum } from './shared/enums/status.enum';
 
 let utilsData: any;
@@ -612,11 +612,10 @@ app.get('/get-order/:id', getOrderById);
 
 app.use(authorize);
 
-app.post('/set-driver-offline', setDriverOffline);
-app.post('/get-history', getHistory);
-app.post("/driver-login-time",driverLoginHours)
-app.get('/progress', getProgress);
-app.post(`/update-live-location`, updateLiveLocation);
+app.post("/get-history", getHistory);
+app.post("/rider-login-time",riderLoginHours)
+app.get("/progress", getProgress);
+app.post(`/update-live-location`,updateLiveLocation)
 
 // app.get("/get-new-orders", getNewOrders)
 

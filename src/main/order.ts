@@ -568,8 +568,8 @@ export async function getHistory(req: any, res: Response) {
 }
 
 export async function getProgress(req: any, res: Response) {
-  const driverId = req.decoded.user._id;
-  const loginHoures=await fetchLast30DaysRecords(driverId)
+  const riderId = req.decoded.user._id;
+  const loginHoures=await fetchLast30DaysRecords(riderId)
   try {
     console.log(
       JSON.stringify({
@@ -577,7 +577,7 @@ export async function getProgress(req: any, res: Response) {
         message: 'get Progress body.',
       }),
     );
-    const getOrderCount = await getOrderCounts(driverId);
+    const getOrderCount = await getOrderCounts(riderId);
 
     const response = {
       message: 'Fetched all Order History!',
@@ -786,16 +786,17 @@ export async function getOrderById(req: Request, res: Response) {
   }
 }
 
-export async function driverLoginHours(req: any, res: Response){
+export async function riderLoginHours(req: any, res: Response){
 
-  const driverId = req.decoded.user._id;
+  const riderId = req.decoded.user._id;
   const time=req.body.time;
-  update(driverId,time)
+  update(riderId,time)
   res.status(200).send("OK")
 }
 
-export async function update(driverId:String,time:number){
+export async function update(riderId:String,time:number){
   const currentDate = new Date();
+  const driverId=riderId
   const loginRecord = await DriverLoginTime.findOneAndUpdate(
     { driverId ,createdAt:{ $gte: new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate()), $lt: new Date() }},
     { $inc: { loginHours: time } }, // Increment the time by logoutTime, date: { $gte: new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate()), $lt: new Date() }
