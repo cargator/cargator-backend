@@ -1144,28 +1144,28 @@ const driverSocketConnected = async (
     }
   });
 
-  socket.on('update-FCM-token', async (body: any) => {
-    const { token } = body;
+  // socket.on('update-FCM-token', async (body: any) => {
+  //   const { token } = body;
 
-    if (!token) {
-      throw new Error('device Token not found.');
-    }
+  //   if (!token) {
+  //     throw new Error('device Token not found.');
+  //   }
 
-    await Driver.findOneAndUpdate(
-      { _id: _userId },
-      {
-        deviceToken: token,
-      },
-    ).lean();
+  //   await Driver.findOneAndUpdate(
+  //     { _id: _userId },
+  //     {
+  //       deviceToken: token,
+  //     },
+  //   ).lean();
 
-    socket.emit(
-      'update-FCM-token-response',
-      formatSocketResponse({
-        message: 'FCM token updated successfully',
-        driverId: _userId,
-      }),
-    );
-  })
+  //   socket.emit(
+  //     'update-FCM-token-response',
+  //     formatSocketResponse({
+  //       message: 'FCM token updated successfully',
+  //       driverId: _userId,
+  //     }),
+  //   );
+  // })
 
   // socket.on('emit-driver-live-location',async (body) => {
   //   let session: any;
