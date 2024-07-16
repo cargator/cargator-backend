@@ -205,7 +205,7 @@ export async function getAppFlowMobile(req: Request, res: Response) {
   }
 }
 
-export async function getCurrentFlow(res: Response) {
+export async function getCurrentFlow(req: Request, res: Response) {
   try {
     console.log(
       JSON.stringify({
