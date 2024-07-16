@@ -2,9 +2,9 @@ name: GCP Production
 
 on: 
    workflow_dispatch:
-   push:
-    branches:
-      - "sukam"
+  #  push:
+  #   branches:
+  #     - "sukam"
 
 jobs:
   gcp-dev-deployment:
