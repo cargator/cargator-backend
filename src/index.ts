@@ -1068,6 +1068,7 @@ subClient.on('error', () => console.log(`Subscriber Client Error`));
       const Token: any = String(socket?.handshake.query?.['token']);
       // Validate user and type information from the socket handshake
       const data = decodeToken(Token);
+      console.log("data ====> ", JSON.stringify(data));
       const userId = data.user._id;
       const type = data.type;
       if (!userId || !type) {
