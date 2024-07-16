@@ -4,8 +4,6 @@ import { getUtils, pubClient } from '..';
 import { Driver, PlaceOrder, Riders, Rides } from '../models';
 import { formatSocketResponse, getDirections } from './common';
 import { OrderStatusEnum } from '../shared/enums/status.enum';
-import { log } from 'console';
-
 // const { utilsData } = require('../index.ts');
 
 const driversSocket: Record<string, Socket> = {};
@@ -1145,6 +1143,29 @@ const driverSocketConnected = async (
       }
     }
   });
+
+  socket.on('update-FCM-token', async (body: any) => {
+    const { token } = body;
+
+    if (!token) {
+      throw new Error('device Token not found.');
+    }
+
+    await Driver.findOneAndUpdate(
+      { _id: _userId },
+      {
+        deviceToken: token,
+      },
+    ).lean();
+
+    socket.emit(
+      'update-FCM-token-response',
+      formatSocketResponse({
+        message: 'FCM token updated successfully',
+        driverId: _userId,
+      }),
+    );
+  })
 
   // socket.on('emit-driver-live-location',async (body) => {
   //   let session: any;

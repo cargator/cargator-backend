@@ -5,12 +5,13 @@ import { Request, Response } from 'express';
 import axios from 'axios';
 import { error } from 'console';
 import { getDirections } from '../helpers/common';
-import { OrderStatusEnum } from '../shared/enums/status.enum';
+import { NotificationMessageEnum, OrderStatusEnum } from '../shared/enums/status.enum';
 import environmentVars from '../constantsVars';
 import { checkOrders } from '..';
 import { sendEmail } from '../helpers/sendEmail';
 import { getVehicalDetails } from './vehiclesDetails';
 import { getDriverDetails } from './driver';
+import { sendOrderNotification } from '../config/firebase-admin';
 
 const petpoojaAcknowledge = async (data: any) => {
   try {
@@ -77,13 +78,24 @@ export async function placeOrder(req: Request, res: Response) {
         payment_status: req.body.order_details.paid,
       },
     });
+    const RiderDetails = await Driver.find().lean();
 
     if (!saveOrder) {
       throw new Error('error while placing order');
     }
 
     await checkOrders(saveOrder);
-    // await sendEmail(req.body);
+    await sendEmail(req.body);
+
+    if (RiderDetails.length > 0) {
+      for (const iterator of RiderDetails) {
+        await sendOrderNotification({
+          token: iterator.rideStatus,
+          message: NotificationMessageEnum.NEW_ORDER,
+        });
+      }
+    }
+
     res.status(200).send({
       status: true,
       vendor_order_id: order_details.vendor_order_id,
