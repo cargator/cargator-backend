@@ -1270,9 +1270,9 @@ export async function fetchLast30DaysRecords(driverId: string) {
   }
 };
 
-
 // Exporting functions and the event listener for reuse
 export default driverSocketConnected;
 export { getDriverSocket, setDriverSocket };
 
 
+ 
