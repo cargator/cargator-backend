@@ -51,6 +51,8 @@ jobs:
           envKey_PETPUJA_SECRET_KEY: ${{secrets.PETPUJA_SECRET_KEY}}
           envKey_PETPUJA_API_URL: ${{secrets.PETPUJA_API_URL}}
           envKey_PETPOOJA_ACCESS_TOKEN: ${{secrets.PETPOOJA_ACCESS_TOKEN}}
+          envKey_EMAIL_USER: ${{secrets.EMAIL_USER}}
+          envKey_EMAIL_PASS: ${{secrets.EMAIL_PASS}}
       # Autheticatw with google
       - name: "Autheticate with Google"
         uses: "google-github-actions/auth@v1"
