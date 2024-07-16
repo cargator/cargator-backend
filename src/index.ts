@@ -617,7 +617,7 @@ app.post('/set-driver-offline', setDriverOffline);
 app.post('/get-history', getHistory);
 app.get('/progress', getProgress);
 app.post(`/update-live-location`, updateLiveLocation);
-app.post('update-FCM-token', updateFcmToken);
+app.post('/update-FCM-token', updateFcmToken);
 
 // app.get("/get-new-orders", getNewOrders)
 
