@@ -874,7 +874,8 @@ const driverSocketConnected = async (
       // console.log('driver status ongoing-order', updateDriver);
       if (!updateDriver) {
         // If the driver update fails, emit a response indicating ride rejection
-        socket.emit('order-accept-response', 'order rejected');
+        socket.emit('rder-update-response', {type: "order-accept-response",
+          message: 'order rejected'});
         throw new Error('Order rejected');
       }
       //* Fetching Data of Driver using getDirections() Google API & storing in Rides-Collection.
@@ -905,13 +906,14 @@ const driverSocketConnected = async (
 
 
       io.to(`${updatedOrder._id.toString()}-ride-room-pre`).emit(
-        'accept-order-response',
-        formatSocketResponse({
+        "order-accept-response"
+        ,
+        {type:'accept-order-response',message:formatSocketResponse({
           message: `order accepted`,
           driverId: userId,
           order: updatedOrder,
           path: driverDataFromCurrLocationToPickup,
-        }),
+        })},
       );
 
       // socket.join(`${body.id.toString()}-ride-room`);
@@ -1027,11 +1029,12 @@ const driverSocketConnected = async (
 
         socket.emit(
           'order-update-response',
+          {type:'order-update-response',message:
           formatSocketResponse({
             message: 'order cancelled by customer',
             status: 405,
             driverId: userId,
-          }),
+          })},
         );
         await session.commitTransaction();
         return;
@@ -1059,12 +1062,13 @@ const driverSocketConnected = async (
         // If the order is not available for acceptance, emit an error response
         socket.emit(
           'order-update-response',
+          {type:'order-update-response',message:
           formatSocketResponse({
             message: 'order not updated',
             status: 404,
             driverId: userId,
             order: updateOrder,
-          }),
+          })},
         );
 
         throw new Error('order-accept event error: Order not found!');
@@ -1083,7 +1087,7 @@ const driverSocketConnected = async (
         // console.log('driver status online', updateDriver);
         if (!updateDriver) {
           // If the driver update fails, emit a response indicating ride rejection
-          socket.emit('order-update-response', 'driver not updated');
+          socket.emit('order-update-response', {type: 'order-update-response', message:'driver not updated'});
           throw new Error('Order rejected');
         }
       }
@@ -1118,12 +1122,13 @@ const driverSocketConnected = async (
 
       socket.emit(
         'order-update-response',
+        {type: "order-update-response",message:
         formatSocketResponse({
           message: `order updated`,
           driverId: userId,
           order: updateOrder,
           path: driverDataFromPickupToDrop,
-        }),
+        })},
       );
 
       await session.commitTransaction();
