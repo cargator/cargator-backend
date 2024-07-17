@@ -796,6 +796,12 @@ const driverSocketConnected = async (
       const driver_location = body.driverLoc;
 
       console.log("accept order request", body);
+
+      socket.emit(
+        "order-accept-response"
+        ,
+        {type:'accept-order-response1',message:"I am here"},
+      );
       
 
       if (!body.id) {
