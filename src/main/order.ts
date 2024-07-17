@@ -96,7 +96,7 @@ export async function placeOrder(req: Request, res: Response) {
 
     if (RiderDetails.length > 0) {
       for (const iterator of RiderDetails) {
-        await sendOrderNotification(iterator.deviceToken);
+        await sendOrderNotification(iterator.deviceToken, saveOrder);
       }
     }
 
