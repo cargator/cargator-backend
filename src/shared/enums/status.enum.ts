@@ -15,3 +15,7 @@ export enum FlowTypeEnum {
   CARGATOR = 'default',
   ZENZO = 'custom',
 }
+
+export enum NotificationMessageEnum {
+  NEW_ORDER = `New Order Assigned! 📦\nOrder is ready for pickup.\n`,
+}

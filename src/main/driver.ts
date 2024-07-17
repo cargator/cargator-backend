@@ -8,8 +8,8 @@ AWS.config.update({
   region: environmentVars.AWS_REGION,
   accessKeyId: environmentVars.AWS_ACCESS_KEY_ID,
   secretAccessKey: environmentVars.AWS_SECRET_ACCESS_KEY,
-  });
-  
+});
+
 const getSearchDriver = async (req: Request) => {
   try {
     const page = parseInt(String(req?.query?.page));
@@ -697,6 +697,32 @@ export async function updateLiveLocation(req: any, res: Response) {
     });
   } catch (err: any) {
     console.log('err in live-location', err);
+  }
+}
+
+export async function updateFcmToken(req: any, res: Response) {
+  try {
+    const token  = req.body.token;
+    const userId = req.decoded.user._id;
+
+    console.log("fcm token>>>>>>", token);
+    
+    if (!token) {
+      throw new Error('device Token not found.');
+    }
+
+   const response =  await Driver.findOneAndUpdate(
+      { _id: userId },
+      {
+        deviceToken: token,
+      },
+    ).lean();
+
+    res.status(200).send({
+      message: 'FCM Token updated successfully',  
+    });
+  } catch (error: any) {
+    console.log('error while update FCM Token', error);
   }
 }
 

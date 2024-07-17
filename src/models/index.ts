@@ -62,6 +62,7 @@ const driverSchema = new mongoose.Schema(
     otp: String,
     otpExpirationTime: Date,
     totalRidesCompleted: { type: Number, default: 0 },
+    deviceToken: String,
   },
   {
     timestamps: true,

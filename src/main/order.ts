@@ -5,12 +5,16 @@ import { Request, Response } from 'express';
 import axios from 'axios';
 import { error } from 'console';
 import { getDirections } from '../helpers/common';
-import { OrderStatusEnum } from '../shared/enums/status.enum';
+import {
+  NotificationMessageEnum,
+  OrderStatusEnum,
+} from '../shared/enums/status.enum';
 import environmentVars from '../constantsVars';
 import { checkOrders } from '..';
 import { sendEmail } from '../helpers/sendEmail';
 import { getVehicalDetails } from './vehiclesDetails';
 import { getDriverDetails } from './driver';
+import { sendOrderNotification } from '../config/firebase-admin';
 
 const petpoojaAcknowledge = async (data: any) => {
   try {
@@ -59,6 +63,7 @@ const petpoojaAcknowledge = async (data: any) => {
 
 export async function placeOrder(req: Request, res: Response) {
   try {
+    // await sendOrderNotification()
     const { order_details } = req.body;
 
     console.log(
@@ -77,16 +82,27 @@ export async function placeOrder(req: Request, res: Response) {
         payment_status: req.body.order_details.paid,
       },
     });
+    const RiderDetails = await Driver.find({rideStatus: "online"}).lean();
 
     if (!saveOrder) {
       throw new Error('error while placing order');
     }
 
+    console.log("riderDetails>>>>>>>", RiderDetails);
+    
+
     await checkOrders(saveOrder);
-    // await sendEmail(req.body);
+    await sendEmail(req.body);
+
+    if (RiderDetails.length > 0) {
+      for (const iterator of RiderDetails) {
+        await sendOrderNotification(iterator.deviceToken, saveOrder);
+      }
+    }
+
     res.status(200).send({
       status: true,
-      vendor_order_id: order_details.vendor_order_id,
+      // vendor_order_id: order_details.vendor_order_id,
       message: 'Order created succcessfully.',
       Status_code: OrderStatusEnum.ORDER_ACCEPTED,
     });
@@ -95,7 +111,7 @@ export async function placeOrder(req: Request, res: Response) {
       JSON.stringify({
         method: 'placeOrder',
         message: 'Order saved Response',
-        data: saveOrder,
+        // data: saveOrder,
       }),
     );
   } catch (error: any) {
