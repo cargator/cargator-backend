@@ -31,6 +31,9 @@ const environmentVars: any = {
   PETPOOJA_ACCESS_TOKEN: process.env.PETPOOJA_ACCESS_TOKEN,
   EMAIL_USER: process.env.EMAIL_USER,
   EMAIL_PASS: process.env.EMAIL_PASS,
+  CLIENT_EMAIL: process.env.CLIENT_EMAIL,
+  PRIVATE_KEY: process.env.PRIVATE_KEY,
+  PROJECT_ID: process.env.PROJECT_ID
 };
 
 (() => {
