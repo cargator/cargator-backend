@@ -702,9 +702,11 @@ export async function updateLiveLocation(req: any, res: Response) {
 
 export async function updateFcmToken(req: any, res: Response) {
   try {
-    const { token } = req.body;
+    const token  = req.body.token;
     const userId = req.decoded.user._id;
 
+    console.log("fcm token>>>>>>", token);
+    
     if (!token) {
       throw new Error('device Token not found.');
     }
@@ -717,7 +719,7 @@ export async function updateFcmToken(req: any, res: Response) {
     ).lean();
 
     res.status(200).send({
-      message: 'FCM Token updated successfully',
+      message: 'FCM Token updated successfully',  
     });
   } catch (error: any) {
     console.log('error while update FCM Token', error);

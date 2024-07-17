@@ -5,7 +5,10 @@ import { Request, Response } from 'express';
 import axios from 'axios';
 import { error } from 'console';
 import { getDirections } from '../helpers/common';
-import { NotificationMessageEnum, OrderStatusEnum } from '../shared/enums/status.enum';
+import {
+  NotificationMessageEnum,
+  OrderStatusEnum,
+} from '../shared/enums/status.enum';
 import environmentVars from '../constantsVars';
 import { checkOrders } from '..';
 import { sendEmail } from '../helpers/sendEmail';
@@ -60,6 +63,7 @@ const petpoojaAcknowledge = async (data: any) => {
 
 export async function placeOrder(req: Request, res: Response) {
   try {
+    // await sendOrderNotification()
     const { order_details } = req.body;
 
     console.log(
@@ -78,11 +82,14 @@ export async function placeOrder(req: Request, res: Response) {
         payment_status: req.body.order_details.paid,
       },
     });
-    const RiderDetails = await Driver.find().lean();
+    const RiderDetails = await Driver.find({rideStatus: "online"}).lean();
 
     if (!saveOrder) {
       throw new Error('error while placing order');
     }
+
+    console.log("riderDetails>>>>>>>", RiderDetails);
+    
 
     await checkOrders(saveOrder);
     await sendEmail(req.body);
@@ -98,7 +105,7 @@ export async function placeOrder(req: Request, res: Response) {
 
     res.status(200).send({
       status: true,
-      vendor_order_id: order_details.vendor_order_id,
+      // vendor_order_id: order_details.vendor_order_id,
       message: 'Order created succcessfully.',
       Status_code: OrderStatusEnum.ORDER_ACCEPTED,
     });
@@ -107,7 +114,7 @@ export async function placeOrder(req: Request, res: Response) {
       JSON.stringify({
         method: 'placeOrder',
         message: 'Order saved Response',
-        data: saveOrder,
+        // data: saveOrder,
       }),
     );
   } catch (error: any) {
