@@ -153,9 +153,13 @@ const sendToAllRiders:any = (data: any) => {
     const dataNew= JSON.parse(data);
     const message = JSON.parse(dataNew.message)
     const driverSocket = getAllSocket()
+    console.log("driverSocket length>>>>>", Object.values(driverSocket).length);
+    
     for (let index = 0; index < Object.values(driverSocket).length; index++) {
       const element: any = Object.values(driverSocket)[index];
       element.emit(dataNew.type, data);
+      console.log("event emitted to", message.driverId);
+      
     }
   } catch (error: any) {
     console.log("error :", error);
