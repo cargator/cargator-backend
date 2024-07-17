@@ -13,6 +13,10 @@ const getDriverSocket = (userId: string): Socket => {
   return driversSocket[userId];
 };
 
+const getAllSocket = () => {
+  return driversSocket;
+}
+
 // Function to set the socket of a driver based on their userId
 const setDriverSocket = (userId: string, socket: Socket): Socket => {
   driversSocket[userId] = socket;
@@ -1265,4 +1269,4 @@ const driverSocketConnected = async (
 };
 // Exporting functions and the event listener for reuse
 export default driverSocketConnected;
-export { getDriverSocket, setDriverSocket };
+export { getDriverSocket, setDriverSocket, getAllSocket };

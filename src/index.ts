@@ -13,7 +13,7 @@ import { Types } from 'mongoose';
 import mongoConnect from './config/mongo';
 import constants from './constantsVars';
 import { formatSocketResponse } from './helpers/common';
-import driverSocketConnected, { getDriverSocket } from './helpers/driverEvents';
+import driverSocketConnected, { getAllSocket, getDriverSocket } from './helpers/driverEvents';
 import riderSocketConnected, { getRiderSocket } from './helpers/riderEvents';
 import {
   adminLogin,
@@ -152,9 +152,10 @@ const sendToAllRiders:any = (data: any) => {
   try {
     const dataNew= JSON.parse(data);
     const message = JSON.parse(dataNew.message)
-    const driverSocket = getDriverSocket(message.driverId)
-    if(driverSocket){
-      driverSocket.emit(dataNew.type, data);
+    const driverSocket = getAllSocket()
+    for (let index = 0; index < Object.values(driverSocket).length; index++) {
+      const element: any = Object.values(driverSocket)[index];
+      element.emit(dataNew.type, data);
     }
   } catch (error: any) {
     console.log("error :", error);
