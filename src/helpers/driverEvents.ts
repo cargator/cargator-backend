@@ -1101,7 +1101,8 @@ const driverSocketConnected = async (
               type: 'order-update-response',
               message: formatSocketResponse({
                 message: 'driver not updated',
-                status: 404
+                status: 404,
+                driverId: userId
               }),
             }),
           );

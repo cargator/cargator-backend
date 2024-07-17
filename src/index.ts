@@ -151,9 +151,10 @@ const sendOrderToDriverRoom: any = (data: any) => {
 const sendToAllRiders:any = (data: any) => {
   try {
     const dataNew= JSON.parse(data);
-    const driverSocket = getDriverSocket(dataNew.message.driverid)
+    const message = JSON.parse(dataNew.message)
+    const driverSocket = getDriverSocket(message.driverId)
     if(driverSocket){
-      driverSocket.emit(dataNew.type, dataNew.message);
+      driverSocket.emit(dataNew.type, data);
     }
   } catch (error: any) {
     console.log("error :", error);
