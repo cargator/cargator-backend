@@ -96,10 +96,7 @@ export async function placeOrder(req: Request, res: Response) {
 
     if (RiderDetails.length > 0) {
       for (const iterator of RiderDetails) {
-        await sendOrderNotification({
-          token: iterator.rideStatus,
-          message: NotificationMessageEnum.NEW_ORDER,
-        });
+        await sendOrderNotification(iterator.deviceToken);
       }
     }
 
