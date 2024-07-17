@@ -848,6 +848,9 @@ const driverSocketConnected = async (
         { session, new: true },
       ).lean();
 
+      console.log('updatedOrder', updatedOrder);
+      
+
       if (updatedOrder == null) {
         // If the order is not available for acceptance, emit an error response
         socket.emit(
@@ -905,7 +908,7 @@ const driverSocketConnected = async (
       ).lean()
 
 
-      io.to(`${updatedOrder._id.toString()}-ride-room-pre`).emit(
+      socket.emit(
         "order-accept-response"
         ,
         {type:'accept-order-response',message:formatSocketResponse({
@@ -921,46 +924,46 @@ const driverSocketConnected = async (
       //   'join-rider-to-room',
       //   formatSocketResponse(updatedOrder),
       // );
-      let retries = 0;
-      let maxRetries = 3;
-      async function fetchSocketsWithRetry() {
-        try {
-          const allDrivers = await io
-            .in(`${updatedOrder._id.toString()}-ride-room-pre`)
-            .fetchSockets();
+      // let retries = 0;
+      // let maxRetries = 3;
+      // async function fetchSocketsWithRetry() {
+      //   try {
+      //     const allDrivers = await io
+      //       .in(`${updatedOrder._id.toString()}-ride-room-pre`)
+      //       .fetchSockets();
 
-          // Use allDrivers here
-          allDrivers.forEach((element) => {
-            element.leave(`${updatedOrder._id.toString()}-ride-room-pre`);
-          });
-          // throw new Error("failed to fetch socket")
-        } catch (error) {
-          if (retries < maxRetries) {
-            console.log('Error fetching sockets. Retrying...');
-            retries++;
-            setTimeout(fetchSocketsWithRetry, 1000); // Retry after 1 second
-          } else {
-            // updatedRide = await Rides.findOneAndUpdate(
-            //   { _id: new Types.ObjectId(body.id) },
-            //   {
-            //     driverId: _userId,
-            //     status: 'cancelled',
-            //   },
-            //   { new: true },
-            // ).lean();
-            console.log('Max retries reached. Unable to fetch sockets.');
-            // io.to(`${updatedRide._id.toString()}-ride-room-pre`).emit(
-            //   'cancel-ride',
-            //   formatSocketResponse({
-            //     message: `Ride cancelled by server`,
-            //     ride: updatedRide,
-            //   }),
-            // );
-          }
-        }
-      }
+      //     // Use allDrivers here
+      //     allDrivers.forEach((element) => {
+      //       element.leave(`${updatedOrder._id.toString()}-ride-room-pre`);
+      //     });
+      //     // throw new Error("failed to fetch socket")
+      //   } catch (error) {
+      //     if (retries < maxRetries) {
+      //       console.log('Error fetching sockets. Retrying...');
+      //       retries++;
+      //       setTimeout(fetchSocketsWithRetry, 1000); // Retry after 1 second
+      //     } else {
+      //       // updatedRide = await Rides.findOneAndUpdate(
+      //       //   { _id: new Types.ObjectId(body.id) },
+      //       //   {
+      //       //     driverId: _userId,
+      //       //     status: 'cancelled',
+      //       //   },
+      //       //   { new: true },
+      //       // ).lean();
+      //       console.log('Max retries reached. Unable to fetch sockets.');
+      //       // io.to(`${updatedRide._id.toString()}-ride-room-pre`).emit(
+      //       //   'cancel-ride',
+      //       //   formatSocketResponse({
+      //       //     message: `Ride cancelled by server`,
+      //       //     ride: updatedRide,
+      //       //   }),
+      //       // );
+      //     }
+      //   }
+      // }
 
-      await fetchSocketsWithRetry();
+      // await fetchSocketsWithRetry();
 
       await session.commitTransaction();
     } catch (err: any) {
