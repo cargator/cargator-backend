@@ -814,6 +814,8 @@ const driverSocketConnected = async (
 
       const driverData = await Driver.findOne({ _id: _userId }).lean();
 
+      console.log('driverData :>> ', driverData);
+
       if (!driverData) {
         console.log(
           JSON.stringify({
@@ -834,6 +836,7 @@ const driverSocketConnected = async (
         status: OrderStatusEnum.ORDER_ALLOTTED,
         time: new Date(),
       };
+console.log('updating order....');
 
       let updatedOrder: any = await PlaceOrder.findOneAndUpdate(
         {
@@ -866,6 +869,8 @@ const driverSocketConnected = async (
         throw new Error('order-accept event error: Order not found!');
       }
 
+      console.log('updating driver for on ride');
+      
       // Update the driver's order status to 'ongoing-order'
       const updateDriver = await Driver.findOneAndUpdate(
         { _id: _userId, rideStatus: 'online' },
@@ -896,6 +901,9 @@ const driverSocketConnected = async (
         pickupLocation,
       );
 
+      console.log('updating order with the path');
+      
+
       updatedOrder = await PlaceOrder.findOneAndUpdate(
         {
           _id: new Types.ObjectId(body.id),
@@ -907,6 +915,8 @@ const driverSocketConnected = async (
         { session, new: true },
       ).lean()
 
+      console.log('final emit to socket ');
+      
 
       socket.emit(
         "order-accept-response"
