@@ -795,14 +795,7 @@ const driverSocketConnected = async (
 
       const driver_location = body.driverLoc;
 
-      console.log("accept order request", body);
-
-      socket.emit(
-        "order-accept-response"
-        ,
-        {type:'accept-order-response1',message:"I am here"},
-      );
-      
+      console.log('accept order request', body);
 
       if (!body.id) {
         // If order ID is missing in the request, handle the error
@@ -819,8 +812,6 @@ const driverSocketConnected = async (
       }
 
       const driverData = await Driver.findOne({ _id: _userId }).lean();
-
-      console.log('driverData :>> ', driverData);
 
       if (!driverData) {
         console.log(
@@ -842,7 +833,6 @@ const driverSocketConnected = async (
         status: OrderStatusEnum.ORDER_ALLOTTED,
         time: new Date(),
       };
-console.log('updating order....');
 
       let updatedOrder: any = await PlaceOrder.findOneAndUpdate(
         {
@@ -851,32 +841,27 @@ console.log('updating order....');
         },
         {
           status: OrderStatusEnum.ORDER_ALLOTTED,
-          $push: {statusUpdates: newStatusUpdate},
+          $push: { statusUpdates: newStatusUpdate },
           driver_details: driverDetails,
         },
         { session, new: true },
       ).lean();
 
-      console.log('updatedOrder', updatedOrder);
-      
-
       if (updatedOrder == null) {
         // If the order is not available for acceptance, emit an error response
-        socket.emit(
-          'ride-accept-response',
-          formatSocketResponse({
-            message: 'order not available',
-            status: 404,
-            driverId: userId,
-            order: updatedOrder,
-          }),
-        );
+        // socket.emit(
+        //   'ride-accept-response',
+        //   formatSocketResponse({
+        //     message: 'order not available',
+        //     status: 404,
+        //     driverId: userId,
+        //     order: updatedOrder,
+        //   }),
+        // );
 
         throw new Error('order-accept event error: Order not found!');
       }
 
-      console.log('updating driver for on ride');
-      
       // Update the driver's order status to 'ongoing-order'
       const updateDriver = await Driver.findOneAndUpdate(
         { _id: _userId, rideStatus: 'online' },
@@ -888,8 +873,8 @@ console.log('updating order....');
       // console.log('driver status ongoing-order', updateDriver);
       if (!updateDriver) {
         // If the driver update fails, emit a response indicating ride rejection
-        socket.emit('rder-update-response', {type: "order-accept-response",
-          message: 'order rejected'});
+        // socket.emit('order-update-response', {type: "order-accept-response",
+        //   message: 'order rejected'});
         throw new Error('Order rejected');
       }
       //* Fetching Data of Driver using getDirections() Google API & storing in Rides-Collection.
@@ -907,39 +892,41 @@ console.log('updating order....');
         pickupLocation,
       );
 
-      console.log('updating order with the path');
-      
-
       updatedOrder = await PlaceOrder.findOneAndUpdate(
         {
           _id: new Types.ObjectId(body.id),
-          status: OrderStatusEnum.ORDER_ALLOTTED
+          status: OrderStatusEnum.ORDER_ALLOTTED,
         },
         {
           riderPathToPickUp: driverDataFromCurrLocationToPickup?.coords,
         },
         { session, new: true },
-      ).lean()
+      ).lean();
 
-      console.log('final emit to socket ');
-      
-
-      socket.emit(
-        "order-update-response"
-        ,
-        {type:'accept-order-response',message:formatSocketResponse({
-          message: `order accepted`,
-          driverId: userId,
-          order: updatedOrder,
-          path: driverDataFromCurrLocationToPickup,
-        })},
-      );
+      // socket.emit(
+      //   "order-update-response"
+      //   ,
+      //   {type:'accept-order-response',message:formatSocketResponse({
+      //     message: `order accepted`,
+      //     driverId: userId,
+      //     order: updatedOrder,
+      //     path: driverDataFromCurrLocationToPickup,
+      //   })},
+      // );
 
       // socket.join(`${body.id.toString()}-ride-room`);
-      // pubClient.publish(
-      //   'join-rider-to-room',
-      //   formatSocketResponse(updatedOrder),
-      // );
+      pubClient.publish(
+        'order-update-response',
+        formatSocketResponse({
+          type: 'accept-order-response',
+          message: formatSocketResponse({
+            message: `order accepted`,
+            driverId: userId,
+            order: updatedOrder,
+            path: driverDataFromCurrLocationToPickup,
+          }),
+        }),
+      );
       // let retries = 0;
       // let maxRetries = 3;
       // async function fetchSocketsWithRetry() {
@@ -999,18 +986,16 @@ console.log('updating order....');
     }
   });
 
-
-  socket.on('payment-status',async (body: any)=>{
+  socket.on('payment-status', async (body: any) => {
     // console.log("payment-status");
-    console.log("Paymont done");
+    console.log('Paymont done');
     const order = await PlaceOrder.findByIdAndUpdate(
       body._id,
       { 'order_details.payment_status': true },
-      { new: true } // This option returns the modified document
+      { new: true }, // This option returns the modified document
     );
     // console.log(order);
-    
-  })
+  });
 
   // update order --------
   socket.on('update-order-status', async (body: any) => {
@@ -1046,14 +1031,16 @@ console.log('updating order....');
           { session, new: true },
         ).lean();
 
-        socket.emit(
+        pubClient.publish(
           'order-update-response',
-          {type:'order-update-response',message:
           formatSocketResponse({
-            message: 'order cancelled by customer',
-            status: 405,
-            driverId: userId,
-          })},
+            type: 'order-update-response',
+            message: formatSocketResponse({
+              message: 'order cancelled by customer',
+              status: 405,
+              driverId: userId,
+            }),
+          }),
         );
         await session.commitTransaction();
         return;
@@ -1070,7 +1057,7 @@ console.log('updating order....');
         },
         {
           status: status,
-          $push: {statusUpdates: newStatusUpdate},
+          $push: { statusUpdates: newStatusUpdate },
         },
         { session, new: true },
       ).lean();
@@ -1079,15 +1066,17 @@ console.log('updating order....');
 
       if (updateOrder == null) {
         // If the order is not available for acceptance, emit an error response
-        socket.emit(
+        pubClient.publish(
           'order-update-response',
-          {type:'order-update-response',message:
           formatSocketResponse({
-            message: 'order not updated',
-            status: 404,
-            driverId: userId,
-            order: updateOrder,
-          })},
+            type: 'order-update-response',
+            message: formatSocketResponse({
+              message: 'order not updated',
+              status: 404,
+              driverId: userId,
+              order: updateOrder,
+            }),
+          }),
         );
 
         throw new Error('order-accept event error: Order not found!');
@@ -1106,7 +1095,17 @@ console.log('updating order....');
         // console.log('driver status online', updateDriver);
         if (!updateDriver) {
           // If the driver update fails, emit a response indicating ride rejection
-          socket.emit('order-update-response', {type: 'order-update-response', message:'driver not updated'});
+          pubClient.publish(
+            'order-update-response',
+            formatSocketResponse({
+              type: 'order-update-response',
+              message: formatSocketResponse({
+                message: 'driver not updated',
+                status: 404,
+                driverId: userId
+              }),
+            }),
+          );
           throw new Error('Order rejected');
         }
       }
@@ -1133,21 +1132,22 @@ console.log('updating order....');
           {
             pickupToDrop: driverDataFromPickupToDrop?.coords,
           },
-          { session, new: true }
-        ).lean()
+          { session, new: true },
+        ).lean();
       }
 
       // console.log("driverDataFromCurrLocationToPickup",driverDataFromCurrLocationToPickup);
-
-      socket.emit(
+      pubClient.publish(
         'order-update-response',
-        {type: "order-update-response",message:
         formatSocketResponse({
-          message: `order updated`,
-          driverId: userId,
-          order: updateOrder,
-          path: driverDataFromPickupToDrop,
-        })},
+          type: 'order-update-response',
+          message: formatSocketResponse({
+            message: `order updated`,
+            driverId: userId,
+            order: updateOrder,
+            path: driverDataFromPickupToDrop,
+          }),
+        }),
       );
 
       await session.commitTransaction();
@@ -1199,7 +1199,7 @@ console.log('updating order....');
   //     if (!body.coordinates) {
   //       throw new Error('Coordinates are missing ');
   //     }
-      
+
   //     /// Update the driver's live location in the database
   //     const updateLocation: any = await Driver.findOneAndUpdate(
   //       {
@@ -1212,7 +1212,7 @@ console.log('updating order....');
   //     );
 
   //     console.log("updateLocation", updateLocation  );
-      
+
   //   } catch (err: any) {
   //     console.log('err in live-location', err);
 
@@ -1236,7 +1236,6 @@ console.log('updating order....');
 
   // Event listener for socket disconnection
 
-  
   socket.on('disconnect', async () => {
     console.log(`Driver ${userId} disconnected !`);
 
@@ -1249,16 +1248,16 @@ console.log('updating order....');
     });
     try {
       // Update the driver's ride status to 'offline' upon socket disconnection
-  //     await Driver.updateOne(
-  //       {
-  //         //todo: change mobileNumber to _id in future
-  //         _id: _userId,
-  //         rideStatus: 'online',
-  //       },
-  //       {
-  //         rideStatus: 'offline',
-  //       },
-  //     );
+      //     await Driver.updateOne(
+      //       {
+      //         //todo: change mobileNumber to _id in future
+      //         _id: _userId,
+      //         rideStatus: 'online',
+      //       },
+      //       {
+      //         rideStatus: 'offline',
+      //       },
+      //     );
     } catch (err: any) {
       console.error('Error while updating driver status:', err);
     }
