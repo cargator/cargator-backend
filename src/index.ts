@@ -148,6 +148,18 @@ const sendOrderToDriverRoom: any = (data: any) => {
   }
 }
 
+const sendToAllRiders:any = (data: any) => {
+  try {
+    const dataNew= JSON.parse(data);
+    const driverSocket = getDriverSocket(dataNew.message.driverid)
+    if(driverSocket){
+      driverSocket.emit(dataNew.type, dataNew.message);
+    }
+  } catch (error: any) {
+    console.log("error :", error);
+  }
+}
+
 // Function to add the rider to a ride room and update their ride status
 const addRiderToRoom: any = (data: any) => {
   const updatedRide = JSON.parse(data);
@@ -1031,6 +1043,7 @@ subClient.subscribe('cancel-scheduled-ride-cron', cancelScheduledRideCron);
 
 //orders
 subClient.subscribe('join-drivers-to-orders', sendOrderToDriverRoom);
+subClient.subscribe('order-update-response', sendToAllRiders)
 
 
 // Log errors for publisher and subscriber clients
