@@ -88,7 +88,6 @@ export async function placeOrder(req: Request, res: Response) {
       throw new Error('error while placing order');
     }
 
-    console.log("riderDetails>>>>>>>", RiderDetails);
     
 
     await checkOrders(saveOrder);

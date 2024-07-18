@@ -705,6 +705,7 @@ const driverSocketConnected = async (
     let session: any;
     // todo: take driverId from token/ socket
     try {
+      
       session = await PlaceOrder.startSession();
       session.startTransaction();
 
@@ -868,6 +869,7 @@ const driverSocketConnected = async (
           },
         }),
       );
+console.log('order published to socket to all drivers');
 
       await session.commitTransaction();
     } catch (err: any) {
