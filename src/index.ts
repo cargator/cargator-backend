@@ -363,7 +363,7 @@ async function setUpCronJobs() {
     //   // console.log('Checking pre-book rides every minute !');
     //   // console.log('Checking pre-book rides every 15 seconds !');
     //   // checkPreBookRides();
-    //   checkOrders(undefined);
+      checkOrders(undefined);
     // });
   } catch (err) {
     console.log('err', err);
@@ -521,19 +521,20 @@ export const checkOrders = async (newOrder: any) => {
 
         pubClient.publish('join-drivers-to-orders', formatSocketResponse(data));
       }
-    } else {
-      const availableDrivers = await Driver.find({
-        rideStatus: 'online',
-        status: 'active',
-      })
-        .limit(20)
-        .lean();
+    } 
+    // else {
+    //   const availableDrivers = await Driver.find({
+    //     rideStatus: 'online',
+    //     status: 'active',
+    //   })
+    //     .limit(20)
+    //     .lean();
 
-      // console.log(`checkPreBookRides availableDrivers :>> `, availableDrivers);
-      const data = { newOrder, drivers: availableDrivers };
+    //   // console.log(`checkPreBookRides availableDrivers :>> `, availableDrivers);
+    //   const data = { newOrder, drivers: availableDrivers };
 
-      pubClient.publish('join-drivers-to-orders', formatSocketResponse(data));
-    }
+    //   pubClient.publish('join-drivers-to-orders', formatSocketResponse(data));
+    // }
   } catch (error: any) {
     console.log('Error while check orders', error.message);
   }

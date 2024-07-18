@@ -10,7 +10,6 @@ import {
   OrderStatusEnum,
 } from '../shared/enums/status.enum';
 import environmentVars from '../constantsVars';
-import { checkOrders } from '..';
 import { sendEmail } from '../helpers/sendEmail';
 import { getVehicalDetails } from './vehiclesDetails';
 import { getDriverDetails } from './driver';
@@ -88,7 +87,6 @@ export async function placeOrder(req: Request, res: Response) {
       throw new Error('error while placing order');
     }
 
-    await checkOrders(saveOrder);
     await sendEmail(req.body);
 
     if (RiderDetails.length > 0) {
