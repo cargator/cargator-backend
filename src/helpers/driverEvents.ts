@@ -41,6 +41,12 @@ const driverSocketConnected = async (
         message: 'Driver connected',
       }),
     );
+
+    const updatedDriver = await Driver.findOneAndUpdate(
+      { _id: _userId, rideStatus: { $ne: 'on-ride' } },
+      { rideStatus: 'online' },
+      { new: true },
+    );
   } catch (err: any) {
     socket.emit(
       'error',
@@ -129,7 +135,7 @@ const driverSocketConnected = async (
   });
 
   // Event listener fo r accepting a ride request
-  socket.emit('accept-ride',{});
+  socket.emit('accept-ride', {});
   socket.on('ride-accept', async (body) => {
     console.log('---- ride-accept ----');
 
@@ -188,7 +194,7 @@ const driverSocketConnected = async (
       // console.log('driver status onride', updateDriver);
       if (!updateDriver) {
         // If the driver update fails, emit a response indicating ride rejection
-        socket.emit('ride-accept-response', {message: 'ride rejected'});
+        socket.emit('ride-accept-response', { message: 'ride rejected' });
         throw new Error('Ride rejected');
       }
       //* Fetching Data of Driver using getDirections() Google API & storing in Rides-Collection.
@@ -307,7 +313,7 @@ const driverSocketConnected = async (
   });
 
   // Event listener for when the driver has reached the pickup location
-  socket.emit('reached-pickup',{}); //! ????
+  socket.emit('reached-pickup', {}); //! ????
   socket.on('reached-pickup-location', async (body) => {
     console.log('---- reached-pickup-location ----');
     try {
@@ -705,7 +711,6 @@ const driverSocketConnected = async (
     let session: any;
     // todo: take driverId from token/ socket
     try {
-      
       session = await PlaceOrder.startSession();
       session.startTransaction();
 
@@ -869,7 +874,7 @@ const driverSocketConnected = async (
           },
         }),
       );
-console.log('order published to socket to all drivers');
+      console.log('order published to socket to all drivers');
 
       await session.commitTransaction();
     } catch (err: any) {
