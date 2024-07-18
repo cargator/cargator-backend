@@ -68,7 +68,7 @@ $ docker run --network host -p 3001:3001 -d cargator-backend:latest
 
 # Deploying to Google Cloud Run with Docker
 
-### Prerequisites
+# Prerequisites
 
 - Google Cloud SDK: Ensure that you have the Google Cloud SDK installed on your machine.
 - Docker: Make sure Docker is installed and running on your machine.
@@ -88,7 +88,7 @@ $ docker run --network host -p 3001:3001 -d cargator-backend:latest
 - gcloud services enable cloudbuild.googleapis.com
 - gcloud services enable run.googleapis.com
 
-### Docker Setup and Deployment
+# Docker Setup and Deployment
 
 1. Build the Docker image:
 
@@ -108,6 +108,6 @@ $ docker push gcr.io/mystic-song-410112/sukam
 $ gcloud run deploy sukam --image gcr.io/mystic-song-410112/sukam:latest --platform managed --port 8080 --region asia-southeast1 --project mystic-song-410112
 ```
 
-### Notes
+# Notes
 
 Google Cloud Run assigns this environment variable automatically
