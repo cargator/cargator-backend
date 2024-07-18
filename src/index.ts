@@ -202,6 +202,8 @@ console.log('Object.values(driverSocket).length :>> ', Object.values(driverSocke
       const element: any = Object.values(driverSocket)[index];
       element.emit(dataNew.type, formatSocketResponse(dataNew.message));
       console.log(dataNew.type, 'emmited to :>> ', Object.keys(driverSocket)[index]);
+      console.log('emitted messsage :>>', formatSocketResponse(dataNew.message));
+      
     }
   } catch (error: any) {
     console.log('error :', error);
