@@ -363,7 +363,7 @@ async function setUpCronJobs() {
     //   // console.log('Checking pre-book rides every minute !');
     //   // console.log('Checking pre-book rides every 15 seconds !');
     //   // checkPreBookRides();
-      checkOrders(undefined);
+      checkOrders();
     // });
   } catch (err) {
     console.log('err', err);
@@ -494,12 +494,12 @@ const checkPreBookRides = async () => {
   }
 };
 
-export const checkOrders = async (newOrder: any) => {
+export const checkOrders = async () => {
   try {
     let endDate: any = new Date();
     endDate.setMinutes(endDate.getMinutes() - 10);
 
-    if (newOrder === undefined) {
+    // if (newOrder === undefined) {
       let orders: any = await PlaceOrder.find({
         createdAt: {
           $gte: endDate,
@@ -521,7 +521,7 @@ export const checkOrders = async (newOrder: any) => {
 
         pubClient.publish('join-drivers-to-orders', formatSocketResponse(data));
       }
-    } 
+    // } 
     // else {
     //   const availableDrivers = await Driver.find({
     //     rideStatus: 'online',
