@@ -7,13 +7,16 @@ import cors from 'cors';
 import express, { Request, Response, json } from 'express';
 import { createClient } from 'redis';
 import { Server, Socket } from 'socket.io';
-import environmentVars from './constantsVars'
-import { Types } from 'mongoose';
+import environmentVars from './constantsVars';
 // Files Imports
+import axios from 'axios';
 import mongoConnect from './config/mongo';
 import constants from './constantsVars';
 import { formatSocketResponse } from './helpers/common';
-import driverSocketConnected, { getAllSocket, getDriverSocket } from './helpers/driverEvents';
+import driverSocketConnected, {
+  getAllSocket,
+  getDriverSocket,
+} from './helpers/driverEvents';
 import riderSocketConnected, { getRiderSocket } from './helpers/riderEvents';
 import {
   adminLogin,
@@ -22,8 +25,23 @@ import {
   dashboardData,
   rideAssignedByAdmin,
 } from './main/admin';
+import {
+  createApp,
+  createDriverAppFlow,
+  getAppFlowMobile,
+  getAppValue,
+  getCurrentFlow,
+  upDateAppValue,
+  updateAppFlow,
+} from './main/app';
 import { handleLogin, verifyOtp } from './main/auth';
 import { chatGptApi } from './main/chatGpt';
+import {
+  createCountryCode,
+  deleteCountryCode,
+  getCountryCodeMobiles,
+  getCountryCodes,
+} from './main/countrycode';
 import {
   allActiveDrivers,
   createDriver,
@@ -39,9 +57,17 @@ import {
   updateFcmToken,
   updateLiveLocation,
 } from './main/driver';
+import { createFare, getFareValue, upDateFareValue } from './main/fare';
+import {
+  createBreakPoints,
+  deleteBreakingPoints,
+  getBreakPointOne,
+  getBreakingPoints,
+  getBreakingPointsMobile,
+  updateBreakPoints,
+} from './main/flows';
 import {
   addressFromCoordinates,
-  addressFromCoordinatesmapmyindia,
   coordinatesFromAddress,
   getAddressFromAutocomplete,
   getAddressFromAutocompleteOlaMaps,
@@ -49,6 +75,17 @@ import {
   getDirection,
   getDirectionmapmyindia,
 } from './main/map';
+import {
+  cancelTask,
+  getHistory,
+  getOrderById,
+  getOrderHistory,
+  getProgress,
+  orderAccept,
+  orderUpdate,
+  placeOrder,
+  trackOrderStatus,
+} from './main/order';
 import {
   cancelOrder,
   createOrder,
@@ -76,6 +113,13 @@ import {
   updateRiderStatus,
 } from './main/rider';
 import {
+  createSpot,
+  deleteSpot,
+  getActiveSpot,
+  getSpotList,
+  getSpotListVehicle,
+} from './main/spots';
+import {
   allAllVehicles,
   allAvailableVehicles,
   createVehicleData,
@@ -86,16 +130,18 @@ import {
   searchVehicles,
   updateVehicle,
 } from './main/vehiclesDetails';
-import { Driver, Orders, Payments, PlaceOrder, Rides, TrackOrderStatus, Utils, Vehicles } from './models';
-import axios from 'axios';
-import { handleWebhookPost, handleWebhookVerification } from './main/whatsAppChat';
-import { createVehicleType, deleteVehicleType, getVehicleOne, getVehicleType, updateVehicleType } from './main/vehicleType';
-import { createFare, getFareValue, upDateFareValue } from './main/fare';
-import { createApp, createDriverAppFlow, getAppFlowMobile, getAppValue, getCurrentFlow, upDateAppValue, updateAppFlow } from './main/app';
-import { createSpot, deleteSpot, getActiveSpot, getSpotList, getSpotListVehicle } from './main/spots';
-import { createCountryCode, deleteCountryCode, getCountryCodeMobiles, getCountryCodes } from './main/countrycode';
-import { createBreakPoints, deleteBreakingPoints, getBreakPointOne, getBreakingPoints, getBreakingPointsMobile, updateBreakPoints } from './main/flows';
-import { cancelTask, getHistory, getOrderById, getOrderHistory, getProgress, orderAccept, orderUpdate, placeOrder, trackOrderStatus } from './main/order';
+import {
+  createVehicleType,
+  deleteVehicleType,
+  getVehicleOne,
+  getVehicleType,
+  updateVehicleType,
+} from './main/vehicleType';
+import {
+  handleWebhookPost,
+  handleWebhookVerification,
+} from './main/whatsAppChat';
+import { Driver, Orders, Payments, PlaceOrder, Rides, Utils } from './models';
 import { OrderStatusEnum } from './shared/enums/status.enum';
 
 let utilsData: any;
@@ -108,7 +154,6 @@ const crypto = require('crypto');
 const Razorpay = require('razorpay');
 const cron = require('node-cron');
 const CronJob = require('cron').CronJob;
-
 
 AWS.config.update({
   region: environmentVars.AWS_REGION,
@@ -144,27 +189,24 @@ const sendOrderToDriverRoom: any = (data: any) => {
     });
     console.log('all drivers added to room');
   } catch (error: any) {
-    console.log("error :", error);
+    console.log('error :', error);
   }
-}
+};
 
-const sendToAllRiders:any = (data: any) => {
+const sendToAllRiders: any = (data: any) => {
   try {
-    const dataNew= JSON.parse(data);
-    const message = JSON.parse(dataNew.message)
-    const driverSocket = getAllSocket()
-    console.log("driverSocket length>>>>>", Object.values(driverSocket).length);
-    
+    const dataNew = JSON.parse(data);
+    const driverSocket = getAllSocket();
+
     for (let index = 0; index < Object.values(driverSocket).length; index++) {
       const element: any = Object.values(driverSocket)[index];
-      element.emit(dataNew.type, data);
-      console.log("event emitted to", message.driverId);
-      
+      element.emit(dataNew.type, formatSocketResponse(dataNew.message));
+      console.log('emmited to :>> ', Object.keys(driverSocket)[index]);
     }
   } catch (error: any) {
-    console.log("error :", error);
+    console.log('error :', error);
   }
-}
+};
 
 // Function to add the rider to a ride room and update their ride status
 const addRiderToRoom: any = (data: any) => {
@@ -316,9 +358,9 @@ async function setUpCronJobs() {
 
     cron.schedule('*/10 * * * * *', function () {
       // cron.schedule('*/15 * * * * *', function () {
-      console.log('Checking pre-book rides every minute !');
+      // console.log('Checking pre-book rides every minute !');
       // console.log('Checking pre-book rides every 15 seconds !');
-      checkPreBookRides();
+      // checkPreBookRides();
       checkOrders(undefined);
     });
   } catch (err) {
@@ -329,21 +371,20 @@ async function setUpCronJobs() {
 export async function setDriverOffline(req: any) {
   const driverId = req.decoded.user._id;
 
-  console.log("req.decoded.user._id",driverId);
-  
+  console.log('req.decoded.user._id', driverId);
 
   try {
-    // Update the driver's status to 'offline' 
-      const updateDriver = await Driver.updateOne(
-          {
-            //todo: change mobileNumber to _id in future
-            _id: driverId,
-            rideStatus: 'online',
-          },
-          {
-            rideStatus: 'offline',
-          },
-        );
+    // Update the driver's status to 'offline'
+    const updateDriver = await Driver.updateOne(
+      {
+        //todo: change mobileNumber to _id in future
+        _id: driverId,
+        rideStatus: 'online',
+      },
+      {
+        rideStatus: 'offline',
+      },
+    );
   } catch (err: any) {
     console.error('Error while updating driver status:', err);
   }
@@ -627,7 +668,6 @@ app.get('/getAppFlowMobile', getAppFlowMobile);
 app.get('/get-order-history', getOrderHistory);
 
 app.get('/get-order/:id', getOrderById);
-
 
 app.use(authorize);
 
@@ -1009,13 +1049,12 @@ app.get('/allAllVehicles', allAllVehicles);
 
 app.post('/chat-gpt-api', chatGptApi);
 
-
 // Country Code Crud
 
-app.post("/create-country-code", createCountryCode);
-app.get("/get-country-code", getCountryCodes);
+app.post('/create-country-code', createCountryCode);
+app.get('/get-country-code', getCountryCodes);
 // app.get("/get-country-code/:id", getCountryCodeOne);
-app.delete("/delete-country-code/:id", deleteCountryCode);
+app.delete('/delete-country-code/:id', deleteCountryCode);
 
 // redis clients
 // Redis pub/sub setup
@@ -1049,8 +1088,7 @@ subClient.subscribe('cancel-scheduled-ride-cron', cancelScheduledRideCron);
 
 //orders
 subClient.subscribe('join-drivers-to-orders', sendOrderToDriverRoom);
-subClient.subscribe('order-update-response', sendToAllRiders)
-
+subClient.subscribe('order-update-response', sendToAllRiders);
 
 // Log errors for publisher and subscriber clients
 pubClient.on('error', () => console.log(`Publisher Client Error`));
@@ -1084,12 +1122,9 @@ subClient.on('error', () => console.log(`Subscriber Client Error`));
 
     // Handle socket connections
     io.on('connection', async (socket: Socket) => {
-      // const userId: string = String(socket.handshake.query['userId']);
-      // const type: string = String(socket.handshake.query['type']);
       const Token: any = String(socket?.handshake.query?.['token']);
       // Validate user and type information from the socket handshake
       const data = decodeToken(Token);
-      console.log("data ====> ", JSON.stringify(data));
       const userId = data.user._id;
       const type = data.type;
       if (!userId || !type) {
@@ -1141,6 +1176,4 @@ const getUtils = (): any => {
   return utilsData;
 };
 
-export { access_token, refreshToken };
-export { getUtils };
-
+export { access_token, getUtils, refreshToken };
