@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose, { PipelineStage } from 'mongoose';
 import { Driver, PlaceOrder } from '../models';
 import { Earning } from '../models/earning.model';
 import { Request, Response } from 'express';
@@ -82,13 +82,11 @@ export async function placeOrder(req: Request, res: Response) {
         payment_status: req.body.order_details.paid,
       },
     });
-    const RiderDetails = await Driver.find({rideStatus: "online"}).lean();
+    const RiderDetails = await Driver.find({ rideStatus: 'online' }).lean();
 
     if (!saveOrder) {
       throw new Error('error while placing order');
     }
-
-    
 
     await checkOrders(saveOrder);
     await sendEmail(req.body);
@@ -729,40 +727,81 @@ async function getOrderCounts(userId: string) {
   }
 }
 
-export async function getOrderHistory(req: Request, res: Response) {
+export async function getOrderHistory(req: Request, res: Response): Promise<Response> {
   try {
-    const page: any = req?.query?.page;
-    const limit: any = req.query.limit;
-    const dataLimit = parseInt(limit);
-    const skip = (page - 1) * limit;
-    const orderHistory = await PlaceOrder.aggregate([
-      {
-        $facet: {
-          data: [
-            {
-              $sort: { createdAt: -1 },
-            },
-            {
-              $skip: skip,
-            },
-            {
-              $limit: dataLimit,
-            },
-          ],
-          count: [{ $count: 'totalcount' }],
-        },
+    const page: number = parseInt(req.query.page as string, 10) || 1;
+    const limit: number = parseInt(req.query.limit as string, 10) || 10;
+    const filter: string | undefined = req.query.filter as string | undefined;
+
+    console.log(
+      JSON.stringify({
+        method: 'getOrderHistory',
+        message: 'get Order History',
+        data: req.query,
+      }),
+    );
+
+    let status: any;
+    if (filter === 'completed') {
+      status = OrderStatusEnum.DELIVERED;
+    } else if (filter === 'current-order') {
+      status = [
+        OrderStatusEnum.ORDER_ALLOTTED,
+        OrderStatusEnum.DISPATCHED,
+        OrderStatusEnum.ORDER_ACCEPTED,
+        OrderStatusEnum.ARRIVED_CUSTOMER_DOORSTEP,
+      ];
+    } else if (filter === 'cancelled') {
+      status = OrderStatusEnum.ORDER_CANCELLED;
+    }
+
+    const dataLimit = limit;
+    const skip = (page - 1) * dataLimit;
+    const pipeline: PipelineStage[] = [];
+
+    if (status) {
+      if (typeof status === 'string') {
+        pipeline.push({
+          $match: {
+            status: status,
+          },
+        });
+      } else {
+        pipeline.push({
+          $match: {
+            status: { $in: status },
+          },
+        });
+      }
+    }
+
+    pipeline.push({
+      $facet: {
+        data: [
+          {
+            $sort: { createdAt: -1 },
+          },
+          {
+            $skip: skip,
+          },
+          {
+            $limit: dataLimit,
+          },
+        ],
+        count: [{ $count: 'totalcount' }],
       },
-    ]);
+    });
+    const orderHistory = await PlaceOrder.aggregate(pipeline);
+
     return res.status(200).json({
       message: 'Fetched all Orders',
       data: orderHistory,
     });
   } catch (error: any) {
     console.log('get all orderHistory error: ', error);
-    res.status(400).send({ error: error.message });
+    return res.status(400).send({ error: error.message });
   }
 }
-
 export async function getOrderById(req: Request, res: Response) {
   try {
     const { id } = req.params;
