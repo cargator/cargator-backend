@@ -175,28 +175,11 @@ export async function createVehicleData(req: Request, res: Response) {
     if (existingVehicle) {
       throw new Error('error while fetching vehicle, vehicle number invalid.');
     }
-    const getVehicalNumberFormat=(vehicalNumber:string)=>{
-      let number=vehicalNumber?.substring(0, 2)+" "+ vehicalNumber?.substring(2, 4)+" "
-      // let number="";
-      for(let i=4;i<vehicalNumber.length;i++)
-      {
-        if((vehicalNumber.charAt(i)>= 'A' && vehicalNumber.charAt(i) <= 'Z') || (vehicalNumber.charAt(i)>= 'a' && vehicalNumber.charAt(i) <= 'z')){
-          number=number+vehicalNumber.charAt(i)
-          console.log();
-          
-        }
-        else{
-          number=number+" "+vehicalNumber.substring(i);
-          break;
-        }
-      }
-      return number;
-      
-    }
+   
 
     const vehicle = Vehicles.create({
       vehicleName,
-      vehicleNumber: getVehicalNumberFormat(vehicleNumber).toUpperCase(),
+      vehicleNumber: vehicleNumber.toUpperCase(),
       vehicleType,
       vehicleMake,
       vehicleModel,
