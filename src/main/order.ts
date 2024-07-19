@@ -725,7 +725,10 @@ async function getOrderCounts(userId: string) {
   }
 }
 
-export async function getOrderHistory(req: Request, res: Response): Promise<Response> {
+export async function getOrderHistory(
+  req: Request,
+  res: Response,
+): Promise<Response> {
   try {
     const page: number = parseInt(req.query.page as string, 10) || 1;
     const limit: number = parseInt(req.query.limit as string, 10) || 10;
@@ -837,38 +840,32 @@ export async function getOrderById(req: Request, res: Response) {
   }
 }
 
-export async function getpendingOrders(res: Response) {
+export async function getpendingOrders(req: Request, res: Response) {
   try {
-    console.log(
-      JSON.stringify({
-        method: 'getpendingOrders',
-        message: 'get Pending Orders',
-      }),
-    );
-
-    let endDate: any = new Date();
-    endDate.setMinutes(new Date().getMinutes() - 10);
+    const endDate = new Date(Date.now() - 10 * 60 * 1000); // 10 minutes ago
     const response = await PlaceOrder.find({
       status: OrderStatusEnum.ORDER_ACCEPTED,
-      createdAt: {
-        $gte: endDate,
-      }
+      createdAt: { $gte: endDate },
     }).lean();
+
+    const message = response.length
+      ? 'Fetched All Pending Orders.'
+      : 'No Pending Orders';
 
     console.log(
       JSON.stringify({
         method: 'getpendingOrders',
-        message: 'get Pending Orders',
-        data : response
+        message,
+        data: response,
       }),
     );
-    
-    return res.status(200).send({
-      message: 'Fetched All Pending Orders. ',
+
+    res.send({
+      message,
       data: response,
     });
   } catch (error: any) {
-    console.log('get pending Orders error: ', error);
+    console.error('getPendingOrders error:', error);
     res.status(400).send({ error: error.message });
   }
 }
