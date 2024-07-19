@@ -840,7 +840,7 @@ export async function getOrderById(req: Request, res: Response) {
   }
 }
 
-export async function getpendingOrders(req: Request, res: Response) {
+export async function getpendingOrders(res: Response) {
   try {
     const endDate = new Date(Date.now() - 10 * 60 * 1000); // 10 minutes ago
     const response = await PlaceOrder.find({
@@ -848,20 +848,29 @@ export async function getpendingOrders(req: Request, res: Response) {
       createdAt: { $gte: endDate },
     }).lean();
 
-    const message = response.length
-      ? 'Fetched All Pending Orders.'
-      : 'No Pending Orders';
+    if (response.length === 0) {
+      console.log(
+        JSON.stringify({
+          method: 'getpendingOrders',
+          message: 'No Pending Orders',
+        }),
+      );
+      return res.send({
+        message: 'No Pending Orders',
+        data: [],
+      });
+    }
 
     console.log(
       JSON.stringify({
         method: 'getpendingOrders',
-        message,
+        message: 'Fetched All Pending Orders.',
         data: response,
       }),
     );
 
     res.send({
-      message,
+      message: 'Fetched All Pending Orders.',
       data: response,
     });
   } catch (error: any) {
