@@ -802,8 +802,7 @@ const driverSocketConnected = async (
               type: 'accept-order-response',
               message: {
                 message: `Order Not Found!`,
-                driverId: userId,
-                order: updatedOrder,
+                order: {orderId: body.id},
               },
             },
           }),
