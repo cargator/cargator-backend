@@ -174,7 +174,7 @@ export async function createDriver(req: Request, res: Response) {
       { session: session },
     );
     if (existingDriver) {
-      throw new Error('error while fetching drivers, mobile number invalid');
+      throw new Error('Mobile number already exists !');
     }
 
     const random = Math.floor(Math.random() * 9000 + 1000);

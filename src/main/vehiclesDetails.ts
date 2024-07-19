@@ -179,7 +179,11 @@ export async function createVehicleData(req: Request, res: Response) {
 
     const vehicle = Vehicles.create({
       vehicleName,
+<<<<<<< Updated upstream
       vehicleNumber: vehicleNumber.toUpperCase(),
+=======
+      vehicleNumber:vehicleNumber.toUpperCase(),
+>>>>>>> Stashed changes
       vehicleType,
       vehicleMake,
       vehicleModel,
