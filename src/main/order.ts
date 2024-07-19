@@ -800,6 +800,7 @@ export async function getOrderHistory(req: Request, res: Response): Promise<Resp
     return res.status(400).send({ error: error.message });
   }
 }
+
 export async function getOrderById(req: Request, res: Response) {
   try {
     const { id } = req.params;
@@ -832,6 +833,42 @@ export async function getOrderById(req: Request, res: Response) {
     });
   } catch (error: any) {
     console.log('getOrderById error: ', error);
+    res.status(400).send({ error: error.message });
+  }
+}
+
+export async function getpendingOrders(res: Response) {
+  try {
+    console.log(
+      JSON.stringify({
+        method: 'getpendingOrders',
+        message: 'get Pending Orders',
+      }),
+    );
+
+    let endDate: any = new Date();
+    endDate.setMinutes(new Date().getMinutes() - 10);
+    const response = await PlaceOrder.find({
+      status: OrderStatusEnum.ORDER_ACCEPTED,
+      createdAt: {
+        $gte: endDate,
+      }
+    }).lean();
+
+    console.log(
+      JSON.stringify({
+        method: 'getpendingOrders',
+        message: 'get Pending Orders',
+        data : response
+      }),
+    );
+    
+    return res.status(200).send({
+      message: 'Fetched All Pending Orders. ',
+      data: response,
+    });
+  } catch (error: any) {
+    console.log('get pending Orders error: ', error);
     res.status(400).send({ error: error.message });
   }
 }

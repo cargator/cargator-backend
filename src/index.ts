@@ -80,6 +80,7 @@ import {
   getHistory,
   getOrderById,
   getOrderHistory,
+  getpendingOrders,
   getProgress,
   orderAccept,
   orderUpdate,
@@ -679,7 +680,7 @@ app.get('/progress', getProgress);
 app.post(`/update-live-location`, updateLiveLocation);
 app.post('/update-FCM-token', updateFcmToken);
 
-// app.get("/get-new-orders", getNewOrders)
+app.get("/get-pending-orders", getpendingOrders)
 
 app.post('/order-accept', orderAccept);
 
