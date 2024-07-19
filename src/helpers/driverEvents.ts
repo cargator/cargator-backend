@@ -797,12 +797,13 @@ const driverSocketConnected = async (
         pubClient.publish(
           'order-update-response',
           formatSocketResponse({
-            type: 'accept-order-response',
+            type: 'order-update-response',
             message: {
+              type: 'accept-order-response',
               message: {
                 message: `Order Not Found!`,
                 driverId: userId,
-                status: 404,
+                order: updatedOrder,
               },
             },
           }),
