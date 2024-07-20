@@ -79,6 +79,10 @@ $ docker run --network host -p 3001:3001 -d cargator-backend:latest
 
 * gcloud auth login
 
+- ## Configure Docker to use the gcloud command-line tool to authenticate requests to GCR:
+
+* gcloud auth configure-docker
+
 - ## Set your project:
 
 * gcloud config set project mystic-song-410112
