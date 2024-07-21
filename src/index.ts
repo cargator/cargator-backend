@@ -359,6 +359,18 @@ async function setUpCronJobs() {
       refreshToken();
     });
 
+    // New cron job to set driver status to offline at 2 AM every day
+    cron.schedule('0 2 * * *', async () => {
+      try {
+        console.log('Setting driver status to offline at 2 AM:', new Date());
+        // Update driver status in the database
+        await Driver.updateMany({ status: 'online' }, { $set: { status: 'offline' } });
+        console.log('Driver status updated to offline');
+      } catch (err) {
+        console.error('Error updating driver status:', err);
+      }
+    });    
+
     // cron.schedule('*/10 * * * * *', function () {
     //   // cron.schedule('*/15 * * * * *', function () {
     //   // console.log('Checking pre-book rides every minute !');
