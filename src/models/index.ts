@@ -1,5 +1,29 @@
 // import { Vehicles } from './index';
 import mongoose, { Types } from 'mongoose';
+import customers from 'razorpay/dist/types/customers';
+
+const adminSchema = new mongoose.Schema(
+  {
+    name: String,
+    email: {
+      type: String,
+      unique: true,
+    },
+    mobile_Number:{
+      type:String,
+      unique:true
+    },
+    password: String,
+
+  },
+  {
+    timestamps: true,
+    collection: 'admins',
+  },
+);
+
+
+// Login Session Schema
 
 const loginSessionSchema = new mongoose.Schema({
   loginTime: Date,
@@ -320,6 +344,8 @@ const placeOrder = new mongoose.Schema(
       },
     },
     status: { type: String },
+    riderPathToPickUp: Array,
+    pickupToDrop: Array,
     driver_details: {
       driver_id: String,
       name: String,

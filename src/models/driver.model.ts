@@ -1,11 +1,12 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
-const driverSchema = new mongoose.Schema({
+const driverSchema = new mongoose.Schema(
+  {
     // todo: geolocation index
     liveLocation: Array,
     mobileNumber: {
-        type: String,
-        unique: true,
+      type: String,
+      unique: true,
     },
     driverId: String,
     firstName: String,
@@ -17,23 +18,25 @@ const driverSchema = new mongoose.Schema({
     vehicleNumber: String,
     vehicleType: String,
     rideStatus: {
-        type: String,
-        enum: ['offline', 'online', 'on-ride'],
-        default: 'offline',
+      type: String,
+      enum: ['offline', 'online', 'on-ride'],
+      default: 'offline',
     },
     // admin can make driver active or inactive
     status: {
-        type: String,
-        enum: ['active', 'inactive'],
-        default: 'active',
+      type: String,
+      enum: ['active', 'inactive'],
+      default: 'active',
     },
     otp: String,
     otpExpirationTime: Date,
     totalRidesCompleted: { type: Number, default: 0 },
-}, {
+    deviceToken: String,
+  },
+  {
     timestamps: true,
     collection: 'drivers',
-},
+  },
 );
 driverSchema.index({ liveLocation: '2d' });
 

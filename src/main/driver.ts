@@ -2,7 +2,7 @@ import { Vehicles } from '../models';
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { getUtilsData } from '../services/utilsService';
-import environmentVars from '../constantsVars'
+import environmentVars from '../constantsVars';
 import { Driver } from '../models/driver.model';
 const AWS = require('aws-sdk');
 AWS.config.update({
@@ -138,6 +138,30 @@ export async function searchDrivers(req: Request, res: Response) {
   }
 }
 
+const createDriverRecord = async (data: any, session: any) => {
+  return await Driver.create([data], { session: session });
+};
+
+const updateVehicleStatus = async (
+  vehicleNumber: string,
+  driverId: string,
+  session: any,
+) => {
+  return await Vehicles.findOneAndUpdate(
+    { vehicleNumber: vehicleNumber.toUpperCase(), vehicleStatus: 'available' },
+    { vehicleStatus: 'unavailable', vehicleAssignedToId: driverId },
+    { session: session, new: true },
+  );
+};
+
+const handleError = (res: Response, error: any, session: any) => {
+  res.status(400).json({ success: false, message: error.message });
+  if (session) {
+    session.abortTransaction();
+  }
+  console.error('Error:', error);
+};
+
 export async function createDriver(req: Request, res: Response) {
   let session: any;
   try {
@@ -153,7 +177,7 @@ export async function createDriver(req: Request, res: Response) {
       documentsKey,
     } = req.body;
 
-    console.log("1234567890", vehicleNumber, vehicleType, vehicleName)
+    console.log('Vehicle Details:', vehicleNumber, vehicleType, vehicleName);
     session.startTransaction();
 
     const checkStatus = await Vehicles.findOne(
@@ -175,89 +199,43 @@ export async function createDriver(req: Request, res: Response) {
       { session: session },
     );
     if (existingDriver) {
-      throw new Error('error while fetching drivers, mobile number invalid');
+      throw new Error('Mobile number already exists!');
     }
 
-    const random = Math.floor(Math.random() * 9000 + 1000);
+    const randomDriverId = Math.floor(Math.random() * 9000 + 1000);
+    const driverData = {
+      driverId: randomDriverId,
+      firstName,
+      lastName,
+      vehicleNumber:
+        vehicleNumber === 'none' ? '' : vehicleNumber.toUpperCase(),
+      vehicleType: vehicleNumber === 'none' ? '' : vehicleType,
+      vehicleName: vehicleNumber === 'none' ? '' : vehicleName,
+      mobileNumber: `91${mobileNumber}`,
+      profileImageKey,
+      documentsKey,
+    };
 
-    // console.log(random);
+    const driver: any = await createDriverRecord(driverData, session);
+    if (driver.length === 0) {
+      throw new Error('Error while creating driver');
+    }
 
-    // console.log('object 2:>> ', existingDriver);
-    if (vehicleNumber === "none") {
-      const driver = await Driver.create(
-        [
-          {
-            driverId: random,
-            firstName,
-            lastName,
-            vehicleNumber: "",
-            vehicleType: "",
-            vehicleName: "",
-            mobileNumber: `91${mobileNumber}`,
-            profileImageKey,
-            documentsKey,
-          },
-        ],
-        { session: session },
+    if (vehicleNumber !== 'none') {
+      const vehicle = await updateVehicleStatus(
+        vehicleNumber,
+        driver[0]._id,
+        session,
       );
-
-      console.log('driver data :>> ', driver);
-      // throw new Error('Error while creating driver');
-
-      if (driver.length == 0) {
-        throw new Error('Error while creating driver');
-      }
-    } else {
-      const driver = await Driver.create(
-        [
-          {
-            driverId: random,
-            firstName,
-            lastName,
-            vehicleNumber: vehicleNumber.toUpperCase(),
-            vehicleType,
-            vehicleName,
-            mobileNumber: `91${mobileNumber}`,
-            profileImageKey,
-            documentsKey,
-          },
-        ],
-        { session: session },
-      );
-      console.log('driver data :>> ', driver);
-      // throw new Error('Error while creating driver');
-
-      if (driver.length == 0) {
-        throw new Error('Error while creating driver');
-      }
-
-      const vehicle = await Vehicles.findOneAndUpdate(
-        {
-          vehicleNumber: vehicleNumber.toUpperCase(),
-          vehicleStatus: 'available',
-        },
-        { vehicleStatus: 'unavailable', vehicleAssignedToId: driver[0]._id },
-        { session: session, new: true },
-      );
-
-      console.log('object vehicle :>> ', vehicle);
-
       if (!vehicle) {
         throw new Error('Error while updating vehicle');
       }
     }
 
-
     await session.commitTransaction();
-    res.status(200).send({
-      message: ' Driver data saved.',
-    });
+    res.status(200).send({ message: 'Driver data saved.' });
   } catch (error: any) {
-    res.status(400).json({ success: false, message: error.message });
-    if (session) {
-      await session.abortTransaction();
-    }
-    console.log('err :>> ', error);
+    handleError(res, error, session);
   } finally {
     if (session) {
       await session.endSession();
@@ -269,7 +247,7 @@ export async function deleteDriver(req: Request, res: Response) {
   let session: any;
 
   try {
-    console.log("---------------------")
+    console.log('---------------------');
     const s3 = new AWS.S3();
     session = await mongoose.startSession();
     // const id = req.params.uid;
@@ -350,7 +328,7 @@ export async function updateDriver(req: Request, res: Response) {
     const id = req.params.uid;
     session.startTransaction();
 
-    if (vehicleNumber !== "none") {
+    if (vehicleNumber !== 'none') {
       const vehicle = await Vehicles.findOneAndUpdate(
         { vehicleNumber: vehicleNumber.toUpperCase() },
         { vehicleStatus: 'unavailable', vehicleAssignedToId: id },
@@ -362,7 +340,7 @@ export async function updateDriver(req: Request, res: Response) {
       }
     }
 
-    if (vehicleNumber === "none") {
+    if (vehicleNumber === 'none') {
       const driver = await Driver.findOneAndUpdate(
         {
           _id: id,
@@ -372,9 +350,9 @@ export async function updateDriver(req: Request, res: Response) {
         {
           firstName: firstName,
           lastName: lastName,
-          vehicleType: "",
-          vehicleNumber: "",
-          vehicleName: "",
+          vehicleType: '',
+          vehicleNumber: '',
+          vehicleName: '',
           mobileNumber: `91${mobileNumber}`,
           profileImageKey: profileImageKey,
           documentsKey: documentsKey,
@@ -391,7 +369,10 @@ export async function updateDriver(req: Request, res: Response) {
         );
       }
 
-      if (driver.vehicleNumber !== vehicleNumber.toUpperCase() && driver.vehicleNumber !== "") {
+      if (
+        driver.vehicleNumber !== vehicleNumber.toUpperCase() &&
+        driver.vehicleNumber !== ''
+      ) {
         await Vehicles.findOneAndUpdate(
           {
             vehicleNumber: driver.vehicleNumber,
@@ -401,7 +382,6 @@ export async function updateDriver(req: Request, res: Response) {
           { session: session },
         );
       }
-
     } else {
       const driver = await Driver.findOneAndUpdate(
         {
@@ -443,8 +423,6 @@ export async function updateDriver(req: Request, res: Response) {
         );
       }
     }
-
-
 
     await session.commitTransaction();
 
@@ -613,7 +591,8 @@ export async function nearBydriver(req: Request, res: Response) {
     // const nearbyDriversDistanceInKm: any =getUtilsDataa().nearbyDriversDistanceInKm
     // console.log('nearbyDriversDistanceInKm',nearbyDriversDistanceInKm )
     const utilsdata = getUtilsData();
-    const nearbyDriversDistanceInKm: any = (await utilsdata).nearbyDriversDistanceInKm;
+    const nearbyDriversDistanceInKm: any = (await utilsdata)
+      .nearbyDriversDistanceInKm;
     if (!nearbyDriversDistanceInKm) {
       throw new Error('nearbyDriversDistanceInKm is required');
     }
@@ -643,4 +622,58 @@ export async function nearBydriver(req: Request, res: Response) {
     console.log('Fair error: ', err);
     res.status(400).send({ error: err.message });
   }
+}
+
+export async function updateLiveLocation(req: any, res: Response) {
+  try {
+    const driverId = req.decoded.user._id;
+    const { coordinates } = req.body.coordinates;
+
+    /// Update the driver's live location in the database
+    const updateLocation: any = await Driver.findOneAndUpdate(
+      {
+        _id: driverId,
+      },
+      {
+        liveLocation: coordinates,
+      },
+    );
+    // console.log("response>>>>>>>>",updateLocation);
+
+    return res.status(200).send({
+      message: 'Driver-location updated successfully.',
+    });
+  } catch (err: any) {
+    console.log('err in live-location', err);
+  }
+}
+
+export async function updateFcmToken(req: any, res: Response) {
+  try {
+    const token = req.body.token;
+    const userId = req.decoded.user._id;
+
+    console.log('fcm token>>>>>>', token);
+
+    if (!token) {
+      throw new Error('device Token not found.');
+    }
+
+    const response = await Driver.findOneAndUpdate(
+      { _id: userId },
+      {
+        deviceToken: token,
+      },
+    ).lean();
+
+    res.status(200).send({
+      message: 'FCM Token updated successfully',
+    });
+  } catch (error: any) {
+    console.log('error while update FCM Token', error);
+  }
+}
+
+export function getDriverDetails(req: any) {
+  return Driver.findOne(req).lean();
 }

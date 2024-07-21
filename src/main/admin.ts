@@ -1,3 +1,4 @@
+import { Driver, Rides, Admin, PlaceOrder } from '../models';
 import { Request, Response } from 'express';
 const jwt = require('jsonwebtoken');
 const _ = require('lodash');
@@ -5,6 +6,7 @@ import environmentVars from '../constantsVars'
 import { Admin } from '../models/admin.model';
 import { Driver } from '../models/driver.model';
 import { Orders } from '../models';
+import { placeOrder } from './order';
 
 export async function adminLogin(req: Request, res: Response) {
   try {
@@ -47,23 +49,27 @@ export async function adminRegister(req: Request, res: Response) {
   try {
     // console.log(`admin-login API >> body :>> `, req.body);
     const body = req.body;
-    const { name, email, password, confirmPassword } = body;
+    const { name, email,mobile_Number} = body;
+    
+    
 
-    if (!name || !email || !password || !confirmPassword) {
+    if (!name || !email || ! mobile_Number) {
       throw new Error(`Invalid data provided !`);
     }
+    const password=(mobile_Number+"").slice(-4);
 
-    if (password !== confirmPassword) {
-      throw new Error(`Passwords do not match !`);
-    }
+    // if (password !== confirmPassword) {
+    //   throw new Error(`Passwords do not match !`);
+    // }
 
-    let adminDoc: any = await Admin.create({
+     await Admin.create({
       name,
       email,
+      mobile_Number,
       password,
-      confirmPassword,
+      // confirmPassword,
     });
-    // console.log(`admin-register >> adminDoc :>> `, adminDoc);
+    
 
     // Generate a JWT token
     const token = jwt.sign({ email }, environmentVars.PUBLIC_KEY, {
@@ -130,7 +136,7 @@ export async function changePassword(req: Request, res: Response) {
 
 export async function dashboardData(req: Request, res: Response) {
   try {
-    const resp = await Orders.aggregate([
+    const resp = await PlaceOrder.aggregate([
       {
         $facet: {
           ongoing: [
@@ -138,11 +144,10 @@ export async function dashboardData(req: Request, res: Response) {
               $match: {
                 status: {
                   $in: [
-                    'pending-accept',
-                    'pending-arrival',
-                    'ride-started',
-                    'pending-otp',
-                    'pending-payment',
+                    'ALLOTTED',
+                    'ARRIVED',
+                    'DISPATCHED',
+                    'ARRIVED_CUSTOMER_DOORSTEP',
                   ],
                 },
               },
@@ -150,14 +155,15 @@ export async function dashboardData(req: Request, res: Response) {
             { $count: 'Pending' },
           ],
           completed: [
-            { $match: { status: { $in: ['completed'] } } },
+            { $match: { status: { $in: ['DELIVERED'] } } },
             { $count: 'completed' },
           ],
         },
       },
     ]);
-    const ongoingRidesCount = resp[0]['ongoing'][0] ? resp[0]['ongoing'][0]['Pending'] : 0;
-    const completedRidesCount = resp[0]['completed'][0] ? resp[0]['completed'][0]['completed'] : 0;
+    const ongoingOrderCount = resp[0]['ongoing'][0]?resp[0]['ongoing'][0]['Pending']:0;
+    
+    const completedRidesCount = resp[0]['completed'][0]?resp[0]['completed'][0]['completed']:0;
 
     const response = await Driver.aggregate([
       {
@@ -174,7 +180,7 @@ export async function dashboardData(req: Request, res: Response) {
     const totalDriversCount = response[0]['totalDrivers'][0] ? response[0]['totalDrivers'][0]['total'] : 0;
 
     const data = {
-      ongoingRidesCount,
+      ongoingOrderCount,
       completedRidesCount,
       onlineDriversCount,
       totalDriversCount,

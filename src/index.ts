@@ -2,40 +2,554 @@
 
 import express, { Request, Response, json } from 'express';
 import cors from 'cors';
-import jwt from 'jsonwebtoken';
 import environmentVars from './constantsVars';
 import mongoConnect from './config/mongo';
-import { setUpCronJobs } from './services/cronJobs';
-import { getUtilsData } from './services/utilsService';
-import * as adminHandlers from './main/admin';
-import * as authHandlers from './main/auth';
-import * as driverHandlers from './main/driver';
-import * as mapHandlers from './main/map';
-import * as paymentHandlers from './main/payment';
-import * as vehicleHandlers from './main/vehiclesDetails';
-import * as appHandlers from './main/app';
-import * as countryCodeHandlers from './main/countrycode';
-import * as orderHandlers from './main/order';
-import { getSignedUrl, deleteObjectFromS3 } from './config/aws.config';
-import { initializeSocketServer } from './config/socket';
+import constants from './constantsVars';
+import { formatSocketResponse } from './helpers/common';
+import driverSocketConnected, {
+  getAllSocket,
+  getDriverSocket,
+} from './helpers/driverEvents';
+import riderSocketConnected, { getRiderSocket } from './helpers/riderEvents';
+import { adminLogin, adminRegister } from './main/admin';
+import {
+  createApp,
+  createDriverAppFlow,
+  getAppFlowMobile,
+  getAppValue,
+  getCurrentFlow,
+  upDateAppValue,
+  updateAppFlow,
+} from './main/app';
+import { handleLogin, verifyOtp } from './main/auth';
+import { chatGptApi } from './main/chatGpt';
+import {
+  createCountryCode,
+  deleteCountryCode,
+  getCountryCodeMobiles,
+  getCountryCodes,
+} from './main/countrycode';
+import {
+  allActiveDrivers,
+  createDriver,
+  nearBydriver,
+  onlineDrivers,
+  paginatedDriverData,
+  searchDrivers,
+  updateDriver,
+  updateDriverStatus,
+  updateFcmToken,
+  updateLiveLocation,
+} from './main/driver';
+import { createFare, getFareValue, upDateFareValue } from './main/fare';
+import {
+  createBreakPoints,
+  deleteBreakingPoints,
+  getBreakPointOne,
+  getBreakingPoints,
+  getBreakingPointsMobile,
+  updateBreakPoints,
+} from './main/flows';
+import {
+  addressFromCoordinates,
+  coordinatesFromAddress,
+  getAddressFromAutocomplete,
+  getAddressFromAutocompleteOlaMaps,
+  // getAddressFromAutocompletemapmyindia,
+  getDirection,
+  getDirectionmapmyindia,
+} from './main/map';
+import {
+  cancelTask,
+  getHistory,
+  getOrderById,
+  getOrderHistory,
+  getpendingOrders,
+  getProgress,
+  orderAccept,
+  orderUpdate,
+  placeOrder,
+  trackOrderStatus,
+} from './main/order';
+import {
+  cancelScheduledRide,
+  createCustomRides,
+  getRidesByFilters,
+  searchRide,
+  updateRides,
+} from './main/ride';
+import {
+  addProfileDetails,
+  deleteRider,
+  getRiderById,
+  searchRidersByName,
+  updateRiderStatus,
+} from './main/rider';
+import {
+  createSpot,
+  deleteSpot,
+  getActiveSpot,
+  getSpotList,
+  getSpotListVehicle,
+} from './main/spots';
+import {
+  allAllVehicles,
+  allAvailableVehicles,
+  createVehicleData,
+  deleteVehicle,
+  getVehicleById,
+  getVehicleData,
+  paginatedVehicleData,
+  searchVehicles,
+  updateVehicle,
+} from './main/vehiclesDetails';
+import {
+  createVehicleType,
+  deleteVehicleType,
+  getVehicleOne,
+  getVehicleType,
+  updateVehicleType,
+} from './main/vehicleType';
+import {
+  handleWebhookPost,
+  handleWebhookVerification,
+} from './main/whatsAppChat';
+import { PlaceOrder, Utils } from './models';
+import { OrderStatusEnum } from './shared/enums/status.enum';
+import { Driver } from './models/driver.model';
+let utilsData: any;
 
+const AWS = require('aws-sdk');
+const jwt = require('jsonwebtoken');
 const app = express();
+const Razorpay = require('razorpay');
+const cron = require('node-cron');
+const CronJob = require('cron').CronJob;
 
+AWS.config.update({
+  region: environmentVars.AWS_REGION,
+  accessKeyId: environmentVars.AWS_ACCESS_KEY_ID,
+  secretAccessKey: environmentVars.AWS_SECRET_ACCESS_KEY,
+});
+
+// Function to add available drivers to a ride room and notify them about a new ride request
+const addDriversToRoom: any = (data: any) => {
+  const { ride, drivers } = JSON.parse(data);
+  drivers.forEach((driver: any) => {
+    let tempDriverId = driver._id.toString();
+    const driversSocket = getDriverSocket(tempDriverId);
+    if (driversSocket) {
+      driversSocket.join(`${ride._id.toString()}-ride-room-pre`);
+      driversSocket.emit('ride-request', formatSocketResponse([ride]));
+      // driversSocket.emit('reached-pickup');
+    }
+  });
+  console.log('all drivers added to room');
+};
+
+const sendOrderToDriverRoom: any = (data: any) => {
+  try {
+    const { newOrder, drivers } = JSON.parse(data);
+    drivers.forEach((driver: any) => {
+      let tempDriverId = driver._id.toString();
+      const driversSocket = getDriverSocket(tempDriverId);
+      if (driversSocket) {
+        driversSocket.join(`${newOrder._id.toString()}-ride-room-pre`);
+        driversSocket.emit('order-request', [newOrder]);
+      }
+    });
+    console.log('all drivers added to room');
+  } catch (error: any) {
+    console.log('error :', error);
+  }
+};
+
+const sendToAllRiders: any = (data: any) => {
+  try {
+    const dataNew = JSON.parse(data);
+    const driverSocket = getAllSocket();
+    console.log(
+      'Object.values(driverSocket).length :>> ',
+      Object.values(driverSocket).length,
+    );
+    for (let index = 0; index < Object.values(driverSocket).length; index++) {
+      const element: any = Object.values(driverSocket)[index];
+      element.emit(dataNew.type, formatSocketResponse(dataNew.message));
+      console.log(
+        dataNew.type,
+        'emmited to :>> ',
+        Object.keys(driverSocket)[index],
+      );
+      console.log(
+        'emitted messsage :>>',
+        formatSocketResponse(dataNew.message),
+      );
+    }
+  } catch (error: any) {
+    console.log('error :', error);
+  }
+};
+
+// Function to add the rider to a ride room and update their ride status
+const addRiderToRoom: any = (data: any) => {
+  const updatedRide = JSON.parse(data);
+  const riderSockets = getRiderSocket(updatedRide.riderId);
+  if (riderSockets) {
+    riderSockets.emit(
+      'ride-status',
+      formatSocketResponse({ data: updatedRide }),
+    );
+    riderSockets.join(`${updatedRide._id.toString()}-ride-room`);
+    console.log('ride-status sent to ', updatedRide.riderId);
+  } else {
+    console.log('addRiderToRoom :>> riderSocket not found!');
+  }
+};
+
+const addRiderToRoomForScheduled = (data: any) => {
+  const ride = JSON.parse(data);
+  const riderSockets = getRiderSocket(ride.riderId);
+  if (riderSockets) {
+    riderSockets.join(`${ride._id.toString()}-ride-room-pre`);
+    riderSockets.emit(
+      'ride-request-response',
+      formatSocketResponse({
+        message: 'Ride requested',
+        data: ride,
+      }),
+    );
+    console.log('ride-status sent to ', ride.riderId);
+  } else {
+    console.log('addRiderToRoomForScheduled :>> riderSocket not found!');
+  }
+};
+const cancelScheduledRideCron: any = async (data: any) => {
+  const updatedRide = JSON.parse(data);
+  const riderSocket = getRiderSocket(updatedRide.riderId);
+
+  if (riderSocket) {
+    await riderSocket.join(`${updatedRide._id.toString()}-ride-room-pre`);
+
+    io.to(`${updatedRide._id.toString()}-ride-room-pre`).emit(
+      'cancel-ride',
+      formatSocketResponse({
+        message: `Cancelled scheduled-ride as no drivers found!`,
+        rideId: updatedRide._id,
+      }),
+    );
+    //! check if this below statement is deleting room or not.
+    io.in(`${updatedRide._id}-ride-room-pre`).socketsLeave(
+      `${updatedRide._id}-ride-room-pre`,
+    );
+  } else {
+    console.log('cancelScheduledRideCron :>> riderSocket not found!');
+  }
+};
+
+let io: Server;
+
+// Configure Express app with necessary middleware
 app.use(cors());
 app.use(json());
+const razorpay = new Razorpay({
+  key_id: environmentVars.DEV_RAZORPAY_KEY_ID
+    ? environmentVars.DEV_RAZORPAY_KEY_ID
+    : '',
+  key_secret: environmentVars.DEV_RAZORPAY_KEY_SECRET
+    ? environmentVars.DEV_RAZORPAY_KEY_SECRET
+    : '',
+});
 
+let access_token = '';
+const refreshToken = async () => {
+  try {
+    // Make a request to obtain a new token (assuming you have the necessary API endpoint)
+    const data = {
+      grant_type: 'client_credentials',
+      client_id: `${environmentVars.REFRESH_TOKEN_CLIENT_ID}`,
+      client_secret: `${environmentVars.REFRESH_TOKEN_CLIENT_SECRET}`,
+    };
+
+    const token: any = await axios.post(
+      `${environmentVars.REFRESH_TOKEN_URL}`,
+      data,
+      {
+        headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      },
+    );
+    if (!token) {
+      throw new Error('Token is not generated due to server error');
+    }
+    // console.log('token', token)
+    access_token = token.data.access_token;
+    console.log('Token for MapMyIndia refreshed successfully:', access_token);
+  } catch (error) {
+    console.error('Token refresh failed:', error);
+  }
+};
+// let flag = false;
+async function setUpCronJobs() {
+  try {
+    // if (flag) {
+    //   return;
+    // }
+    // flag = true;
+    utilsData = await Utils.findOne();
+    if (!utilsData) {
+      utilsData = {
+        georange: '0.015',
+        nearbyDriversDistanceInKm: 5,
+        baseFare: 15,
+        debounceTime: 500,
+      };
+    }
+    await refreshToken();
+    // Define your cron job schedule (runs every 15 minutes)
+    const cronExpression = '0 */15 * * * *';
+
+    // Create a new cron job
+    const job = new CronJob(cronExpression, async () => {
+      // This function will be executed when the cron job runs every 15 minutes
+      try {
+        console.log('Cron job executed at:', new Date());
+
+        utilsData = await Utils.findOne();
+      } catch {
+        utilsData = {
+          georange: '0.015',
+          nearbyDriversDistanceInKm: 5,
+          baseFare: 15,
+          debounceTime: 500,
+          preBookRideTime: 20,
+          scheduleRideInterval: 5,
+        };
+      }
+    });
+
+    // Start the cron job
+    job.start();
+
+    //  console.log('access_token', access_token)
+    // Schedule the cron job to run every 23 hours (or any desired interval)
+    cron.schedule('0 0 */23 * * *', () => {
+      // This cron job will run every 23 hours (adjust as needed).
+      // You can change the timing or interval based on your requirements.
+      // Call the refreshToken function to update the token
+      refreshToken();
+    });
+
+    // cron.schedule('*/10 * * * * *', function () {
+    //   // cron.schedule('*/15 * * * * *', function () {
+    //   // console.log('Checking pre-book rides every minute !');
+    //   // console.log('Checking pre-book rides every 15 seconds !');
+    //   // checkPreBookRides();
+    //   checkOrders(undefined);
+    // });
+  } catch (err) {
+    console.log('err', err);
+  }
+}
+
+export async function setDriverOffline(req: any) {
+  const driverId = req.decoded.user._id;
+
+  console.log('req.decoded.user._id', driverId);
+
+  try {
+    // Update the driver's status to 'offline'
+    const updateDriver = await Driver.updateOne(
+      {
+        //todo: change mobileNumber to _id in future
+        _id: driverId,
+        rideStatus: 'online',
+      },
+      {
+        rideStatus: 'offline',
+      },
+    );
+  } catch (err: any) {
+    console.error('Error while updating driver status:', err);
+  }
+}
+
+const checkPreBookRides = async () => {
+  try {
+    let utilsData = getUtils();
+    let startDate: any = new Date();
+    let endDate: any = new Date();
+    //! confirm if this below statement is changing hour in corner cases.
+    endDate.setMinutes(endDate.getMinutes() + utilsData.preBookRideTime);
+    // console.log({ startDate, endDate });
+
+    let preBookedRides: any = await Rides.find({
+      status: 'pending-accept',
+      bookingTime: {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate),
+      },
+    });
+
+    for (const ride of preBookedRides) {
+      const bookingTime: any = new Date(ride.bookingTime);
+      const minutesTillBookingTime = (bookingTime - startDate) / (60 * 1000);
+
+      // let preBookTime = bookingTime.getMinutes();
+      // console.log({ bookingTime, minutesTillBookingTime });
+      // console.log(`ELSE Condition :>> `, Math.round(minutesTillBookingTime % utilsData.scheduleRideInterval))
+
+      // Cancel currrent Scheduled-Ride if not accepted by any driver in last 10-minutes of 'bookingTime'.
+      // if (endDate.getMinutes() - bookingTime.getMinutes() <= 10) {
+      if (minutesTillBookingTime <= 10) {
+        const updatedRide: any = await Rides.findByIdAndUpdate(
+          ride._id,
+          {
+            status: 'cancelled',
+            cancelBy: {
+              // id: ride.riderId,
+              // type: 'rider',
+              reason: 'No drivers found for scheduled-ride',
+            },
+          },
+          { new: true },
+        );
+
+        if (!updatedRide) {
+          throw new Error(
+            'Ride document not found while cancelling scheduled-ride by cron!',
+          );
+        }
+
+        console.log(
+          'Cancelled Scheduled-Ride as not accepted by any driver in last 10-minutes of bookingTime',
+        );
+
+        await pubClient.publish(
+          'cancel-scheduled-ride-cron',
+          formatSocketResponse(updatedRide),
+        );
+
+        // console.log('cancel ride event emitting ');
+        // } else if ((preBookTime - startDate.getMinutes()) % utilsData.scheduleRideInterval === 0) {
+        // } else {
+      } else if (
+        Math.round(minutesTillBookingTime % utilsData.scheduleRideInterval) == 0
+      ) {
+        // Find available drivers for the new ride within a certain radius
+        const nearbyDriversDistanceInKm: any = await Utils.findOne({
+          _id: '64c8b0909850db70747e62b9',
+        });
+
+        const nearbyDriversDistanceInRadians =
+          nearbyDriversDistanceInKm.nearbyDriversDistanceInKm / 111.12; // Note: One degree is approximately 111.12 kilometers.
+
+        // find drivers available to accept new ride
+        const availableDrivers = await Driver.find({
+          rideStatus: 'online', // is acceptingRides(online) or not (offline)
+          status: 'active', // drivers current ride status i.e if on a ride(on-ride) or free(active)
+          liveLocation: {
+            // $near: [72.9656312, 19.1649861],
+            $near: [ride.pickUpLocation[1], ride.pickUpLocation[0]],
+            $maxDistance: nearbyDriversDistanceInRadians,
+          },
+        })
+          .limit(20)
+          .lean();
+
+        // console.log(`checkPreBookRides availableDrivers :>> `, availableDrivers);
+        const data = { ride, drivers: availableDrivers };
+
+        // Publish a message to join available drivers to a room
+        pubClient.publish(
+          'join-availableDrivers-to-room',
+          formatSocketResponse(data),
+        );
+        pubClient.publish(
+          'join-rider-to-room-for-scheduled-ride',
+          formatSocketResponse(ride),
+        );
+      }
+    }
+  } catch (error: any) {
+    console.log('checkPreBookRides error', error?.message);
+  }
+};
+
+export const checkOrders = async (newOrder: any) => {
+  try {
+    let endDate: any = new Date();
+    endDate.setMinutes(endDate.getMinutes() - 10);
+
+    if (newOrder === undefined) {
+      let orders: any = await PlaceOrder.find({
+        createdAt: {
+          $gte: endDate,
+        },
+        status: OrderStatusEnum.ORDER_ACCEPTED,
+      });
+
+      for (const newOrder of orders) {
+        // find drivers available to accept new ride
+        const availableDrivers = await Driver.find({
+          rideStatus: 'online',
+          status: 'active',
+        })
+          .limit(20)
+          .lean();
+
+        // console.log(`checkPreBookRides availableDrivers :>> `, availableDrivers);
+        const data = { newOrder, drivers: availableDrivers };
+
+        pubClient.publish('join-drivers-to-orders', formatSocketResponse(data));
+      }
+    } else {
+      const availableDrivers = await Driver.find({
+        rideStatus: 'online',
+        status: 'active',
+      })
+        .limit(20)
+        .lean();
+
+      // console.log(`checkPreBookRides availableDrivers :>> `, availableDrivers);
+      const data = { newOrder, drivers: availableDrivers };
+
+      pubClient.publish('join-drivers-to-orders', formatSocketResponse(data));
+    }
+  } catch (error: any) {
+    console.log('Error while check orders', error.message);
+  }
+};
+
+// container health check endpoint
+app.get('/', (req: Request, res: Response) => {
+  res.send('success');
+});
+
+//whatsAppChatBot
+
+app.get('/webhook', handleWebhookVerification);
+
+app.post('/webhook', handleWebhookPost);
+
+// Middleware function to authorize requests with a JWT token
 const authorize = async (req: any, res: Response, next: any) => {
   try {
     const token = req?.headers?.authorization?.split(' ')[1];
     if (token) {
-      jwt.verify(token, environmentVars.PUBLIC_KEY, (err: any, decoded: any) => {
-        if (err) {
-          throw new Error('Invalid token');
-        } else {
-          req.decoded = decoded;
-          next();
-        }
-      });
+      // Verify the JWT token
+      jwt.verify(
+        token,
+        environmentVars.PUBLIC_KEY,
+        (err: any, decoded: any) => {
+          if (err) {
+            throw new Error('Invalid token');
+            // res.status(401).send({ message: 'Token invalid' });
+            // res.json({ success: false, message: "Token invalid" }); // Token has expired or is invalid
+          } else {
+            req.decoded = decoded; // Assign to req. variable to be able to use it in next() route ('/me' route)
+            next(); // Required to leave middleware
+          }
+        },
+      );
     } else {
       res.status(401).send({ success: false, message: 'No token provided' });
     }
@@ -44,13 +558,21 @@ const authorize = async (req: any, res: Response, next: any) => {
   }
 };
 
-app.get('/', (req: Request, res: Response) => {
-  res.send('success');
-});
+const decodeToken = (token: any) => {
+  try {
+    const data = jwt.verify(token, environmentVars.PUBLIC_KEY);
+    // return JSON.parse(data);
+    return data;
+  } catch (error) {
+    return false;
+  }
+};
 
-app.post('/login', authHandlers.handleLogin);
-app.get('/getCountryCodeMobile', countryCodeHandlers.getCountryCodeMobiles);
-app.post('/verifyOtp', authHandlers.verifyOtp);
+// Route for user login with OTP generation
+app.post('/login', handleLogin);
+app.get('/getCountryCodeMobile', getCountryCodeMobiles);
+// Route for verifying OTP and generating authentication token
+app.post('/verifyOtp', verifyOtp);
 
 app.get('/debounceTimeApi', async (req: Request, res: Response) => {
   try {
@@ -96,32 +618,65 @@ app.post('/presignedurl', async (req, res) => {
   }
 });
 
-app.post('/admin-login', adminHandlers.adminLogin);
-app.get('/onlineDrivers', driverHandlers.onlineDrivers);
-app.post('/admin-register', adminHandlers.adminRegister);
-app.post("/place-order", orderHandlers.placeOrder);
-app.put("/track-order-status", orderHandlers.trackOrderStatus);
-app.put("/cancel-task", orderHandlers.cancelTask);
-app.get("/getAppFlowMobile", appHandlers.getAppFlowMobile);
-app.get("/get-order-history", orderHandlers.getOrderHistory);
+// Route for admin login
+app.post('/admin-login', adminLogin);
+
+// Route for admin register
+app.post('/admin-register', adminRegister);
+
+// PetPooja API's--------------------
+
+app.post('/place-order', placeOrder);
+
+app.put('/track-order-status', trackOrderStatus);
+
+app.put('/cancel-task', cancelTask);
+
+app.get('/getAppFlowMobile', getAppFlowMobile);
+
+app.get('/get-order-history', getOrderHistory);
+
+app.get('/get-order/:id', getOrderById);
 
 app.use(authorize);
 
-app.post("/get-history", orderHandlers.getHistory);
-app.get("/progress", orderHandlers.getProgress);
-app.post('/order-accept', orderHandlers.orderAccept);
-app.post('/order-update', orderHandlers.orderUpdate);
+app.post('/set-driver-offline', setDriverOffline);
+app.post('/get-history', getHistory);
+app.get('/progress', getProgress);
+app.post(`/update-live-location`, updateLiveLocation);
+app.post('/update-FCM-token', updateFcmToken);
+
+app.get('/get-pending-orders', getpendingOrders);
+
+app.post('/order-accept', orderAccept);
+
+app.post('/order-update', orderUpdate);
+
+app.post('/add-profile-details', addProfileDetails);
 
 if (environmentVars.MAP_MY_INDIA === 'false') {
-  app.post('/get-address-from-autocomplete', mapHandlers.getAddressFromAutocomplete);
+  app.post(
+    '/get-address-from-autocomplete',
+    mapHandlers.getAddressFromAutocomplete,
+  );
   app.post('/get-directions', mapHandlers.getDirection);
   app.post('/get-address-from-coordinates', mapHandlers.addressFromCoordinates);
   app.post('/get-coordinates-from-address', mapHandlers.coordinatesFromAddress);
 } else {
-  app.post('/get-address-from-autocomplete', mapHandlers.getAddressFromAutocompleteOlaMaps);
-  app.post('/get-address-from-coordinates', mapHandlers.addressFromCoordinates);
-  app.post('/get-directions', mapHandlers.getDirectionmapmyindia);
-  app.post('/get-coordinates-from-address', mapHandlers.coordinatesFromAddress);
+  app.post('/get-address-from-autocomplete', getAddressFromAutocompleteOlaMaps);
+
+  // app.post(
+  //   '/get-address-from-autocomplete',
+  //   getAddressFromAutocompletemapmyindia,
+  // );
+  // app.post('/get-address-from-autocomplete', getAddressFromAutocomplete);
+
+  app.post('/get-address-from-coordinates', addressFromCoordinates);
+  // app.post('/get-address-from-coordinates', addressFromCoordinatesmapmyindia);
+
+  app.post('/get-directions', getDirectionmapmyindia);
+
+  app.post('/get-coordinates-from-address', coordinatesFromAddress);
 }
 
 app.post('/get-fare', paymentHandlers.getFare);
@@ -137,24 +692,267 @@ app.post('/delete-object-from-s3', async (req, res) => {
   try {
     const { key } = req.body;
     if (!key) {
-      return res.status(400).json({ success: false, message: 'Key is required' });
+      return res
+        .status(400)
+        .json({ success: false, message: 'Key is required' });
     }
     const data = await deleteObjectFromS3('cargator', key);
     console.log('Object deleted successfully', data);
 
     res.status(200).send({ message: 'Object deleted successfully', data });
   } catch (error: any) {
-    console.error('Error deleting object:', error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(400).json({ success: false, message: error.message });
   }
 });
 
-const server = app.listen(environmentVars.PORT || 3000, () => {
-  console.log('Server is running at ', environmentVars.PORT);
-  mongoConnect();
-  setUpCronJobs();
+app.get('/get-rides-by-filter', getRidesByFilters);
 
-  initializeSocketServer(server);
-  console.log("here ====> ");
+app.get('/onlineDrivers', onlineDrivers);
 
+app.get('/allActiveDrivers', allActiveDrivers);
+
+//pagination api for driver data
+app.get('/paginatedDriverData', paginatedDriverData);
+
+app.get('/search-drivers', searchDrivers);
+
+app.get('/search-riders-by-name', searchRidersByName);
+
+// driver crud
+app.post('/create-driver', createDriver);
+
+app.delete('/deleteRider/:uid', deleteRider);
+
+app.get(`/getRiderById/:id`, getRiderById);
+
+app.patch('/updateDriver/:uid', updateDriver);
+
+app.patch('/update-driver-status/:uid', updateDriverStatus);
+
+app.patch('/update-rider-status', updateRiderStatus);
+
+app.get('/get-vehicle-data', getVehicleData);
+
+// vehicleType
+
+app.post('/create-vehicle-type', createVehicleType);
+
+app.get('/get-vehicle-type', getVehicleType);
+
+app.delete('/delete-vehicle-type/:id', deleteVehicleType);
+
+app.get('/get-vehicle-type-id/:id', getVehicleOne);
+
+app.patch('/updateVehicleType/:uid', updateVehicleType);
+
+// fare
+
+app.post('/add-fare', createFare);
+
+app.get('/get-fare', getFareValue);
+
+app.patch('/update-fare/:uid', upDateFareValue);
+
+// spots crud
+app.post('/create-spot', createSpot);
+
+app.get('/get-spot-list', getSpotList);
+
+app.delete('/delete-spot/:id', deleteSpot);
+
+app.get('/get-active-spot', getActiveSpot);
+app.get('/get-spot-list-vehicle', getSpotListVehicle);
+
+// appName and Image
+
+app.post('/create-app', createApp);
+
+app.get('/get-app', getAppValue);
+
+app.patch('/update-app/:uid', upDateAppValue);
+
+// flows crud
+app.post('/create-break-points', createBreakPoints);
+
+app.get('/get-breaking-points', getBreakingPoints);
+
+app.get('/get-breaking-points-mobile', getBreakingPointsMobile);
+
+app.delete('/delete-breakingPoints/:id', deleteBreakingPoints);
+
+app.patch('/update-break-points/:id', updateBreakPoints);
+
+app.get('/get-break-point-id/:id', getBreakPointOne);
+
+// driverAppFlow
+
+app.post('/create-app-flow', createDriverAppFlow);
+
+app.get('/get-app-flow', getCurrentFlow);
+
+app.patch('/update-app-flow/:id', updateAppFlow);
+
+// app.post('/login-time', loginTime);
+
+// app.post('/logout-time', logoutTime)
+
+// custom rides crud -----------------------------
+
+app.post('/createRide', createCustomRides);
+
+app.patch('/updateRide', updateRides);
+
+// vehicle crud
+
+app.post('/create-vehicle', createVehicleData);
+
+app.post('/cancel-scheduled-ride', cancelScheduledRide);
+
+app.patch('/updateVehicle/:uid', updateVehicle);
+
+app.get('/paginatedVehicleData', paginatedVehicleData);
+
+app.get('/search-ride', searchRide);
+
+app.get('/search-vehicles', searchVehicles);
+
+app.get('/getVehicleById/:id', getVehicleById);
+
+app.post('/nearBydriver', nearBydriver);
+
+app.post('/ride-assigned-by-admin', rideAssignedByAdmin);
+
+app.get('/allAvailableVehicles', allAvailableVehicles);
+
+app.get('/allAllVehicles', allAllVehicles);
+
+app.post('/chat-gpt-api', chatGptApi);
+
+// Country Code Crud
+
+app.post('/create-country-code', createCountryCode);
+app.get('/get-country-code', getCountryCodes);
+// app.get("/get-country-code/:id", getCountryCodeOne);
+app.delete('/delete-country-code/:id', deleteCountryCode);
+
+// redis clients
+// Redis pub/sub setup
+export const pubClient = createClient({
+  url:
+    environmentVars.REDIS_URL ||
+    'redis://default:Titandevil@12@redis-19288.c212.ap-south-1-1.ec2.cloud.redislabs.com:19288',
 });
+export const subClient = pubClient.duplicate();
+
+// Log publisher and subscriber connection status
+pubClient.on('ready', () => {
+  console.log({
+    message: 'Publisher connected to redis and ready to use',
+  });
+});
+subClient.on('ready', () => {
+  console.log({
+    message: 'Subscriber connected to redis and ready to use',
+  });
+});
+
+// Subscribe to specific channels for handling socket events
+subClient.subscribe('join-availableDrivers-to-room', addDriversToRoom);
+subClient.subscribe('join-rider-to-room', addRiderToRoom);
+subClient.subscribe(
+  'join-rider-to-room-for-scheduled-ride',
+  addRiderToRoomForScheduled,
+);
+subClient.subscribe('cancel-scheduled-ride-cron', cancelScheduledRideCron);
+
+//orders
+subClient.subscribe('join-drivers-to-orders', sendOrderToDriverRoom);
+subClient.subscribe('order-update-response', sendToAllRiders);
+
+// Log errors for publisher and subscriber clients
+pubClient.on('error', () => console.log(`Publisher Client Error`));
+subClient.on('error', () => console.log(`Subscriber Client Error`));
+
+// Main server setup and initialization
+(async () => {
+  //wait for mongo to connect
+  try {
+    await mongoConnect();
+
+    // Connect Redis publisher and subscriber clients
+    await Promise.all([pubClient.connect(), subClient.connect()]);
+
+    // Start the Express app server
+    const server = app.listen(constants.PORT, () => {
+      console.log('server listening on port ', constants.PORT);
+    });
+
+    //  ` setup
+    io = new Server(server, {
+      transports: ['websocket'],
+      cors: {
+        credentials: true,
+        origin: '*',
+      },
+      // maxHttpBufferSize: 1e9,
+    });
+
+    io.adapter(createAdapter(pubClient, subClient));
+
+    // Handle socket connections
+    io.on('connection', async (socket: Socket) => {
+      const Token: any = String(socket?.handshake.query?.['token']);
+      // Validate user and type information from the socket handshake
+      const data = decodeToken(Token);
+      const userId = data.user._id;
+      const type = data.type;
+      if (!userId || !type) {
+        socket.emit(
+          'error',
+          formatSocketResponse({ message: 'please attach userId and type' }),
+        );
+        socket.disconnect();
+        console.log('Socket Disconnected ! userId or type not found');
+        return;
+      }
+      try {
+        if (type == 'driver') {
+          await driverSocketConnected(socket, userId, io);
+        } else if (type == 'rider') {
+          await riderSocketConnected(socket, userId, io);
+        }
+      } catch (error: any) {
+        socket.emit(
+          'error',
+          formatSocketResponse({
+            message: error.message,
+          }),
+        );
+        socket.disconnect();
+      }
+    });
+    setUpCronJobs();
+    // Enable Socket.IO admin panel for development
+    instrument(io, {
+      auth: false,
+      mode: 'development',
+    });
+    //! app.listen should be here
+  } catch (error) {
+    console.error('Error is occured and the error is : ', error);
+  }
+})();
+
+// cron.schedule('*/15 * * * *', function () {
+//   FetchPayments();
+// });
+
+// cron.schedule('*/15 * * * *', function () {
+//   console.log('running a task every 15 minutes');
+//   FetchPayments();
+// });
+const getUtils = (): any => {
+  return utilsData;
+};
+
+export { access_token, getUtils, refreshToken };

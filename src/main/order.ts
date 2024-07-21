@@ -1,11 +1,17 @@
+import { PipelineStage } from 'mongoose';
 import { PlaceOrder } from '../models';
 import { Earning } from '../models/earning.model';
 import { Request, Response } from 'express';
 import axios from 'axios';
 import { getDirections } from '../helpers/common';
-import { OrderStatusEnum } from '../shared/enums/status.enum';
+import {
+  OrderStatusEnum,
+} from '../shared/enums/status.enum';
 import environmentVars from '../constantsVars';
-import { checkOrders } from '../helpers/orderEvents';
+import { sendEmail } from '../helpers/sendEmail';
+import { getVehicalDetails } from './vehiclesDetails';
+import { getDriverDetails } from './driver';
+import { sendOrderNotification } from '../config/firebase-admin';
 import { Driver } from '../models/driver.model';
 
 const petpoojaAcknowledge = async (data: any) => {
@@ -18,6 +24,7 @@ const petpoojaAcknowledge = async (data: any) => {
 
 export async function placeOrder(req: Request, res: Response) {
   try {
+    // await sendOrderNotification()
     const { order_details } = req.body;
 
     console.log(
@@ -33,18 +40,26 @@ export async function placeOrder(req: Request, res: Response) {
       status: OrderStatusEnum.ORDER_ACCEPTED,
       order_details: {
         ...req.body.order_details,
-        payment_status: req.body.order_details.paid
-      }
+        payment_status: req.body.order_details.paid,
+      },
     });
+    const RiderDetails = await Driver.find({ rideStatus: 'online' }).lean();
 
     if (!saveOrder) {
       throw new Error('error while placing order');
     }
 
-    await checkOrders(saveOrder);
+    await sendEmail(req.body);
+
+    if (RiderDetails.length > 0) {
+      for (const iterator of RiderDetails) {
+        await sendOrderNotification(iterator.deviceToken, saveOrder);
+      }
+    }
+
     res.status(200).send({
       status: true,
-      vendor_order_id: order_details.vendor_order_id,
+      // vendor_order_id: order_details.vendor_order_id,
       message: 'Order created succcessfully.',
       Status_code: OrderStatusEnum.ORDER_ACCEPTED,
     });
@@ -53,7 +68,7 @@ export async function placeOrder(req: Request, res: Response) {
       JSON.stringify({
         method: 'placeOrder',
         message: 'Order saved Response',
-        data: saveOrder,
+        // data: saveOrder,
       }),
     );
   } catch (error: any) {
@@ -198,7 +213,7 @@ export async function orderUpdate(req: any, res: Response) {
           method: 'orderUpdate',
           message: 'Driver is not Found!',
           data: {
-            driverId
+            driverId,
           },
         }),
       );
@@ -267,7 +282,6 @@ export async function orderUpdate(req: any, res: Response) {
       message: ' orders updated successfully.',
       data: { response, driverDataFromCurrLocationToPickup },
     });
-
   } catch (error: any) {
     console.log(
       JSON.stringify({
@@ -528,6 +542,12 @@ export async function getHistory(req: any, res: Response) {
 export async function getProgress(req: any, res: Response) {
   const userId = req.decoded.user._id;
   try {
+    console.log(
+      JSON.stringify({
+        method: 'getProgress',
+        message: 'get Progress body.',
+      }),
+    );
     const getOrderCount = await getOrderCounts(userId);
 
     const response = {
@@ -550,6 +570,15 @@ export async function getProgress(req: any, res: Response) {
         },
       },
     };
+
+    console.log(
+      JSON.stringify({
+        method: 'getProgress',
+        message: 'get Progress body.',
+        data: response,
+      }),
+    );
+
     res.send(response).status(200);
   } catch (error: any) {
     console.log(
@@ -658,36 +687,147 @@ async function getOrderCounts(userId: string) {
   }
 }
 
-export async function getOrderHistory(req: Request, res: Response) {
+export async function getOrderHistory(
+  req: Request,
+  res: Response,
+): Promise<Response> {
   try {
-    const page: any = req?.query?.page;
-    const limit: any = req.query.limit;
-    const dataLimit = parseInt(limit);
-    const skip = (page - 1) * limit;
-    const orderHistory = await PlaceOrder.aggregate([
-      {
-        $facet: {
-          data: [
-            {
-              $sort: { sequenceNo: -1 },
-            },
-            {
-              $skip: skip,
-            },
-            {
-              $limit: dataLimit,
-            },
-          ],
-          count: [{ $count: "totalcount" }],
-        },
+    const page: number = parseInt(req.query.page as string, 10) || 1;
+    const limit: number = parseInt(req.query.limit as string, 10) || 10;
+    const filter: string | undefined = req.query.filter as string | undefined;
+
+    console.log(
+      JSON.stringify({
+        method: 'getOrderHistory',
+        message: 'get Order History',
+        data: req.query,
+      }),
+    );
+
+    let status: any;
+    if (filter === 'completed') {
+      status = OrderStatusEnum.DELIVERED;
+    } else if (filter === 'current-order') {
+      status = [
+        OrderStatusEnum.ORDER_ALLOTTED,
+        OrderStatusEnum.DISPATCHED,
+        OrderStatusEnum.ORDER_ACCEPTED,
+        OrderStatusEnum.ARRIVED_CUSTOMER_DOORSTEP,
+      ];
+    } else if (filter === 'cancelled') {
+      status = OrderStatusEnum.ORDER_CANCELLED;
+    }
+
+    const dataLimit = limit;
+    const skip = (page - 1) * dataLimit;
+    const pipeline: PipelineStage[] = [];
+
+    if (status) {
+      if (typeof status === 'string') {
+        pipeline.push({
+          $match: {
+            status: status,
+          },
+        });
+      } else {
+        pipeline.push({
+          $match: {
+            status: { $in: status },
+          },
+        });
+      }
+    }
+
+    pipeline.push({
+      $facet: {
+        data: [
+          {
+            $sort: { createdAt: -1 },
+          },
+          {
+            $skip: skip,
+          },
+          {
+            $limit: dataLimit,
+          },
+        ],
+        count: [{ $count: 'totalcount' }],
       },
-    ]);
+    });
+    const orderHistory = await PlaceOrder.aggregate(pipeline);
+
     return res.status(200).json({
-      message: "Fetched all Orders",
+      message: 'Fetched all Orders',
       data: orderHistory,
     });
   } catch (error: any) {
-    console.log("get all orderHistory error: ", error);
+    console.log('get all orderHistory error: ', error);
+    return res.status(400).send({ error: error.message });
+  }
+}
+
+export async function getOrderById(req: Request, res: Response) {
+  try {
+    const { id } = req.params;
+
+    const orderDetails: any = await PlaceOrder.findOne({
+      'order_details.vendor_order_id': id,
+    }).lean();
+
+    if (!orderDetails) {
+      return res.status(404).send({ error: 'Order not found' });
+    }
+
+    const driverData: any = await getDriverDetails({
+      driver_id: orderDetails.driver_id,
+    });
+
+    if (!driverData) {
+      return res.status(404).send({ error: 'Driver not found' });
+    }
+
+    const response = {
+      ...orderDetails,
+      vehicleNumber: driverData.vehicleNumber,
+      vehicleName: driverData.vehicleName,
+    };
+
+    return res.status(200).send({
+      message: 'Fetched Order details successfully.',
+      data: response,
+    });
+  } catch (error: any) {
+    console.log('getOrderById error: ', error);
+    res.status(400).send({ error: error.message });
+  }
+}
+
+export async function getpendingOrders(req: Request, res: Response) {
+  try {
+    const endDate = new Date(Date.now() - 10 * 60 * 1000); // 10 minutes ago
+    const response = await PlaceOrder.find({
+      status: OrderStatusEnum.ORDER_ACCEPTED,
+      createdAt: { $gte: endDate },
+    }).lean();
+
+    const message = response.length
+      ? 'Fetched All Pending Orders.'
+      : 'No Pending Orders';
+
+    console.log(
+      JSON.stringify({
+        method: 'getpendingOrders',
+        message,
+        data: response,
+      }),
+    );
+
+    res.send({
+      message,
+      data: response,
+    });
+  } catch (error: any) {
+    console.error('getPendingOrders error:', error);
     res.status(400).send({ error: error.message });
   }
 }

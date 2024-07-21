@@ -1,15 +1,21 @@
 import { Types } from 'mongoose';
 import { Server, Socket } from 'socket.io';
-import { PlaceOrder } from '../models';
+import { Orders, PlaceOrder } from '../models';
 import { formatSocketResponse, getDirections } from './common';
 import { OrderStatusEnum } from '../shared/enums/status.enum';
 import { Driver } from '../models/driver.model';
+import { pubClient } from '..';
+import { ObjectId, ObjectIdLike } from 'bson';
 
 const driversSocket: Record<string, Socket> = {};
 
 // Function to get the socket of a driver based on their userId
 const getDriverSocket = (userId: string): Socket => {
   return driversSocket[userId];
+};
+
+const getAllSocket = () => {
+  return { ...driversSocket };
 };
 
 // Function to set the socket of a driver based on their userId
@@ -47,6 +53,12 @@ const driverSocketConnected = async (
         message: 'Driver connected',
       }),
     );
+
+    const updatedDriver = await Driver.findOneAndUpdate(
+      { _id: _userId, rideStatus: { $ne: 'on-ride' } },
+      { rideStatus: 'online' },
+      { new: true },
+    );
   } catch (err: any) {
     socket.emit(
       'error',
@@ -55,6 +67,104 @@ const driverSocketConnected = async (
       }),
     );
   }
+
+  // Event listener for when a payment is completed
+  // ask
+  socket.on('payment-completed', async (body: { rideId: string | number | ObjectId | Uint8Array | ObjectIdLike | undefined; }) => {
+    console.log('---- payment-completed ----');
+
+    let session;
+
+    try {
+      session = await Orders.startSession();
+      // Update the ride status to 'completed' upon successful payment completion
+      session.startTransaction();
+      let updatedRide: any = await Orders.findOneAndUpdate(
+        {
+          _id: new Types.ObjectId(body.rideId),
+          status: 'pending-payment',
+          paymentMode: 'Cash',
+        },
+        {
+          status: 'completed',
+        },
+        { session: session, new: true },
+      ).lean();
+
+      if (!updatedRide) {
+        //! throw error on socket.
+        throw new Error('Document not found while completing payment.');
+      }
+
+      // Emit a ride-status event to the ride room to indicate completed payment and ride
+      io.to(`${updatedRide._id.toString()}-ride-room`).emit(
+        'ride-status',
+        formatSocketResponse({
+          message: `payment-completed`,
+          data: updatedRide,
+          status: 200,
+        }),
+      );
+
+      // Update the driver's ride status to 'online' after ride completion & increment 'totalRidesCompleted' count.
+      const updateDriver = await Driver.updateOne(
+        { _id: updatedRide.driverId, rideStatus: 'on-ride' },
+        {
+          rideStatus: 'online',
+        },
+        { session: session, new: true },
+      ).lean();
+
+      if (!updateDriver) {
+        throw new Error('Driver not found while payment-completion.');
+      }
+
+      // Increment the riders's 'totalRidesCompleted' count.
+      const updateRider = await Orders.findByIdAndUpdate(
+        updatedRide.riderId,
+        {
+          $inc: { totalRidesCompleted: 1 },
+        },
+        { new: true },
+      ).lean();
+
+      if (!updateRider) {
+        throw new Error('Rider not found while payment-completion.');
+      }
+
+      // Empty the Socket Room by making all members leave
+      await io
+        .in(`${updatedRide._id.toString()}-ride-room`)
+        .fetchSockets()
+        .then((allRoomMembers: any[]) => {
+          allRoomMembers.forEach((member: { leave: (arg0: string) => void; }) => {
+            member.leave(`${updatedRide._id.toString()}-ride-room`);
+          });
+        })
+        .catch((error: any) => {
+          // Handle errors here
+          console.log(error);
+        });
+
+      await session.commitTransaction();
+    } catch (err: any) {
+      console.log('err in payment-completed', err);
+      socket.emit(
+        'error',
+        formatSocketResponse({
+          event: 'payment-completed',
+          message: err.message,
+        }),
+      );
+      if (session) {
+        await session.abortTransaction();
+      }
+    } finally {
+      if (session) {
+        await session.endSession();
+      }
+    }
+  });
 
   /////////////// PetPooja Socket Implementation ////////////////////////////////////////////
   // accept-order event---------
@@ -66,7 +176,7 @@ const driverSocketConnected = async (
       session.startTransaction();
 
       const driver_location = body.driverLoc;
-      console.log("accept order request", body);
+
       if (!body.id) {
         throw new Error('OrderId is not found.');
       }
@@ -75,13 +185,40 @@ const driverSocketConnected = async (
         { _id: _userId, rideStatus: 'on-ride' },
         { new: true },
       ).lean();
+
       if (checkDriver) {
+        pubClient.publish(
+          'order-update-response',
+          formatSocketResponse({
+            type: 'order-update-response',
+            message: {
+              message: {
+                message: `Already on a ongoing order`,
+                driverId: userId,
+                status: 404,
+              },
+            },
+          }),
+        );
         return;
       }
 
       const driverData = await Driver.findOne({ _id: _userId }).lean();
 
       if (!driverData) {
+        pubClient.publish(
+          'order-update-response',
+          formatSocketResponse({
+            type: 'order-update-response',
+            message: {
+              message: {
+                message: `Driver is not Found!`,
+                driverId: userId,
+                status: 404,
+              },
+            },
+          }),
+        );
         console.log(
           JSON.stringify({
             method: 'orderAccept',
@@ -89,6 +226,7 @@ const driverSocketConnected = async (
             data: _userId,
           }),
         );
+        return;
       }
 
       const driverDetails = {
@@ -109,25 +247,27 @@ const driverSocketConnected = async (
         },
         {
           status: OrderStatusEnum.ORDER_ALLOTTED,
-          statusUpdates: newStatusUpdate,
+          $push: { statusUpdates: newStatusUpdate },
           driver_details: driverDetails,
         },
         { session, new: true },
       ).lean();
 
       if (updatedOrder == null) {
-        // If the order is not available for acceptance, emit an error response
-        socket.emit(
-          'ride-accept-response',
+        pubClient.publish(
+          'order-update-response',
           formatSocketResponse({
-            message: 'order not available',
-            status: 404,
-            driverId: userId,
-            order: updatedOrder,
+            type: 'order-update-response',
+            message: {
+              type: 'accept-order-response',
+              message: {
+                message: `Order Not Found!`,
+                order: { orderId: body.id },
+              },
+            },
           }),
         );
-
-        throw new Error('order-accept event error: Order not found!');
+        return;
       }
 
       // Update the driver's order status to 'ongoing-order'
@@ -138,11 +278,21 @@ const driverSocketConnected = async (
         },
         { session, new: true },
       ).lean();
-      // console.log('driver status ongoing-order', updateDriver);
+
       if (!updateDriver) {
-        // If the driver update fails, emit a response indicating ride rejection
-        socket.emit('order-accept-response', 'order rejected');
-        throw new Error('Order rejected');
+        pubClient.publish(
+          'order-update-response',
+          formatSocketResponse({
+            message: {
+              message: {
+                message: `Order rejected!`,
+                driverId: userId,
+                status: 404,
+              },
+            },
+          }),
+        );
+        return;
       }
       //* Fetching Data of Driver using getDirections() Google API & storing in Rides-Collection.
       const driverLocation = {
@@ -159,66 +309,36 @@ const driverSocketConnected = async (
         pickupLocation,
       );
 
-      io.to(`${updatedOrder._id.toString()}-ride-room-pre`).emit(
-        'accept-order-response',
+      updatedOrder = await PlaceOrder.findOneAndUpdate(
+        {
+          _id: new Types.ObjectId(body.id),
+          status: OrderStatusEnum.ORDER_ALLOTTED,
+        },
+        {
+          riderPathToPickUp: driverDataFromCurrLocationToPickup?.coords,
+        },
+        { session, new: true },
+      ).lean();
+
+      pubClient.publish(
+        'order-update-response',
         formatSocketResponse({
-          message: `order accepted`,
-          driverId: userId,
-          order: updatedOrder,
-          path: driverDataFromCurrLocationToPickup,
+          type: 'order-update-response',
+          message: {
+            type: 'accept-order-response',
+            message: {
+              message: `Order Accepted!`,
+              driverId: userId,
+              order: updatedOrder,
+              path: driverDataFromCurrLocationToPickup,
+            },
+          },
         }),
       );
-
-      // socket.join(`${body.id.toString()}-ride-room`);
-      // pubClient.publish(
-      //   'join-rider-to-room',
-      //   formatSocketResponse(updatedOrder),
-      // );
-      let retries = 0;
-      let maxRetries = 3;
-      async function fetchSocketsWithRetry() {
-        try {
-          const allDrivers = await io
-            .in(`${updatedOrder._id.toString()}-ride-room-pre`)
-            .fetchSockets();
-
-          // Use allDrivers here
-          allDrivers.forEach((element) => {
-            element.leave(`${updatedOrder._id.toString()}-ride-room-pre`);
-          });
-          // throw new Error("failed to fetch socket")
-        } catch (error) {
-          if (retries < maxRetries) {
-            console.log('Error fetching sockets. Retrying...');
-            retries++;
-            setTimeout(fetchSocketsWithRetry, 1000); // Retry after 1 second
-          } else {
-            // updatedRide = await Rides.findOneAndUpdate(
-            //   { _id: new Types.ObjectId(body.id) },
-            //   {
-            //     driverId: _userId,
-            //     status: 'cancelled',
-            //   },
-            //   { new: true },
-            // ).lean();
-            console.log('Max retries reached. Unable to fetch sockets.');
-            // io.to(`${updatedRide._id.toString()}-ride-room-pre`).emit(
-            //   'cancel-ride',
-            //   formatSocketResponse({
-            //     message: `Ride cancelled by server`,
-            //     ride: updatedRide,
-            //   }),
-            // );
-          }
-        }
-      }
-
-      await fetchSocketsWithRetry();
+      console.log('order published to socket to all drivers');
 
       await session.commitTransaction();
     } catch (err: any) {
-      console.log('err in ride-accept', err);
-
       //! add proper error message. Or you can add status codes for every error message and handle frontend based on this errorcodes create enum for this.
       socket.emit(
         'error',
@@ -235,18 +355,19 @@ const driverSocketConnected = async (
 
   socket.on('payment-status', async (body: any) => {
     // console.log("payment-status");
-    console.log("Paymont done");
+    console.log('Paymont done');
     const order = await PlaceOrder.findByIdAndUpdate(
       body._id,
       { 'order_details.payment_status': true },
-      { new: true } // This option returns the modified document
+      { new: true }, // This option returns the modified document
     );
-  })
+    // console.log(order);
+  });
 
   // update order --------
   socket.on('update-order-status', async (body: any) => {
     let session: any;
-    let driverDataFromCurrLocationToPickup;
+    let driverDataFromPickupToDrop;
     try {
       const { id, status } = body;
 
@@ -268,7 +389,7 @@ const driverSocketConnected = async (
       // console.log("checkCancelledOrder>>>>",checkCancelledOrder);
 
       if (checkCancelledOrder.status === OrderStatusEnum.ORDER_CANCELLED) {
-        let updateDriver = await Driver.findOneAndUpdate(
+        await Driver.findOneAndUpdate(
           { _id: _userId, rideStatus: 'on-ride' },
           {
             rideStatus: 'online',
@@ -276,12 +397,17 @@ const driverSocketConnected = async (
           { session, new: true },
         ).lean();
 
-        socket.emit(
+        pubClient.publish(
           'order-update-response',
           formatSocketResponse({
-            message: 'order cancelled by customer',
-            status: 405,
-            driverId: userId,
+            type: 'order-update-response',
+            message: {
+              message: {
+                message: 'order cancelled by customer',
+                status: 405,
+                driverId: userId,
+              },
+            },
           }),
         );
         await session.commitTransaction();
@@ -299,26 +425,28 @@ const driverSocketConnected = async (
         },
         {
           status: status,
-          statusUpdates: newStatusUpdate,
+          $push: { statusUpdates: newStatusUpdate },
         },
         { session, new: true },
       ).lean();
 
-      // console.log('updated order>>>>>>>>>', updateOrder);
-
       if (updateOrder == null) {
         // If the order is not available for acceptance, emit an error response
-        socket.emit(
+        pubClient.publish(
           'order-update-response',
           formatSocketResponse({
-            message: 'order not updated',
-            status: 404,
-            driverId: userId,
-            order: updateOrder,
+            type: 'order-update-response',
+            message: {
+              message: {
+                message: 'order not found',
+                status: 404,
+                driverId: userId,
+                order: updateOrder,
+              },
+            },
           }),
         );
-
-        throw new Error('order-accept event error: Order not found!');
+        return;
       }
 
       if (status === OrderStatusEnum.DELIVERED) {
@@ -331,8 +459,22 @@ const driverSocketConnected = async (
           },
           { session, new: true },
         ).lean();
+
         if (!updateDriver) {
-          socket.emit('order-update-response', 'driver not updated');
+          // If the driver update fails, emit a response indicating ride rejection
+          pubClient.publish(
+            'order-update-response',
+            formatSocketResponse({
+              type: 'order-update-response',
+              message: {
+                message: {
+                  message: 'driver status not updated',
+                  status: 404,
+                  driverId: userId,
+                },
+              },
+            }),
+          );
           throw new Error('Order rejected');
         }
       }
@@ -347,19 +489,35 @@ const driverSocketConnected = async (
           longitude: updateOrder.drop_details.longitude,
         };
 
-        driverDataFromCurrLocationToPickup = await getDirections(
+        driverDataFromPickupToDrop = await getDirections(
           pickupLocation,
           dropLocation,
         );
+
+        updateOrder = await PlaceOrder.findOneAndUpdate(
+          {
+            _id: new Types.ObjectId(body.id),
+          },
+          {
+            pickupToDrop: driverDataFromPickupToDrop?.coords,
+          },
+          { session, new: true },
+        ).lean();
       }
 
-      socket.emit(
+      pubClient.publish(
         'order-update-response',
         formatSocketResponse({
-          message: `order updated`,
-          driverId: userId,
-          order: updateOrder,
-          path: driverDataFromCurrLocationToPickup,
+          type: 'order-update-response',
+          message: {
+            type: 'order-update-response',
+            message: {
+              message: `order updated`,
+              driverId: userId,
+              order: updateOrder,
+              path: driverDataFromPickupToDrop,
+            },
+          },
         }),
       );
 
@@ -381,32 +539,16 @@ const driverSocketConnected = async (
     }
   });
 
-  // Event listener for socket disconnection
   socket.on('disconnect', async () => {
     console.log(`Driver ${userId} disconnected !`);
     delete driversSocket[userId];
 
     // Leave all rooms associated with the current socket
-    socket.rooms.forEach((room) => {
+    socket.rooms.forEach((room: any) => {
       socket.leave(room);
     });
-    try {
-      // Update the driver's ride status to 'offline' upon socket disconnection
-      await Driver.updateOne(
-        {
-          //todo: change mobileNumber to _id in future
-          _id: _userId,
-          rideStatus: 'online',
-        },
-        {
-          rideStatus: 'offline',
-        },
-      );
-    } catch (err: any) {
-      console.error('Error while updating driver status:', err);
-    }
   });
 };
 // Exporting functions and the event listener for reuse
 export default driverSocketConnected;
-export { getDriverSocket, setDriverSocket };
+export { getAllSocket, getDriverSocket, setDriverSocket };
