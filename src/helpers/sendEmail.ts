@@ -118,7 +118,7 @@ export async function sendEmail(orderData: any) {
     const mailOptions: MailOptions = {
       from: 'noreply@gmail.com',
       to: [
-        // 'manish@cargator.org',
+        'manish@cargator.org',
         // 'Kanav@crepe-fe.com',
         // 'kuldeep.mane@code-b.dev',
         "9nath.parte@gmail.com"
