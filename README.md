@@ -14,21 +14,21 @@ This repository contains the Socket Server for the CarGator application, providi
 
 1. Clone the Socket Server repository:
 
-    ```bash
-    $ git clone https://github.com/cargator/cargator-backend
-    $ cd cargator-backend
-    ```
+   ```bash
+   $ git clone https://github.com/cargator/cargator-backend
+   $ cd cargator-backend
+   ```
 
 2. Install dependencies:
 
-    ```bash
-    $ npm install
-    ```
+   ```bash
+   $ npm install
+   ```
 
 3. Configuration:
 
-    - Create a `.env` file in the root directory by copying the contents from `sample.env`.
-    - Customize the variables in the `.env` file based on your specific requirements.
+   - Create a `.env` file in the root directory by copying the contents from `sample.env`.
+   - Customize the variables in the `.env` file based on your specific requirements.
 
 ### Start Redis and Mongodb locally
 
@@ -65,3 +65,53 @@ $ docker build -t cargator-backend .
 # run command
 $ docker run --network host -p 3001:3001 -d cargator-backend:latest
 ```
+
+# Deploying to Google Cloud Run with Docker
+
+## Prerequisites
+
+- Google Cloud SDK: Ensure that you have the Google Cloud SDK installed on your machine.
+- Docker: Make sure Docker is installed and running on your machine.
+
+# Google Cloud Setup
+
+- ## Authenticate with Google Cloud:
+
+* gcloud auth login
+
+- ## Configure Docker to use the gcloud command-line tool to authenticate requests to GCR:
+
+* gcloud auth configure-docker
+
+- ## Set your project:
+
+* gcloud config set project mystic-song-410112
+
+- ## Enable the necessary services:
+
+* gcloud services enable cloudbuild.googleapis.com
+* gcloud services enable run.googleapis.com
+
+# Docker Setup and Deployment
+
+- ## Build the Docker image:
+
+```bash
+$ docker build --no-cache -t gcr.io/mystic-song-410112/sukam .
+```
+
+- ## Push the Docker image to Google Container Registry:
+
+```bash
+$ docker push gcr.io/mystic-song-410112/sukam
+```
+
+- ## Deploy the Docker image to Google Cloud Run:
+
+```bash
+$ gcloud run deploy sukam --image gcr.io/mystic-song-410112/sukam:latest --platform managed --port 8080 --region asia-southeast1 --project mystic-song-410112
+```
+
+# Notes
+
+Google Cloud Run assigns this environment variable automatically
