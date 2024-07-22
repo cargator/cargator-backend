@@ -732,6 +732,7 @@ const driverSocketConnected = async (
           formatSocketResponse({
             type: 'order-update-response',
             message: {
+              type: 'accept-order-response',
               message: {
                 message: `Already on a ongoing order`,
                 driverId: userId,
@@ -751,6 +752,7 @@ const driverSocketConnected = async (
           formatSocketResponse({
             type: 'order-update-response',
             message: {
+              type: 'accept-order-response',
               message: {
                 message: `Driver is not Found!`,
                 driverId: userId,
@@ -943,6 +945,7 @@ const driverSocketConnected = async (
           formatSocketResponse({
             type: 'order-update-response',
             message: {
+              type: 'order-update-response',
               message: {
                 message: 'order cancelled by customer',
                 status: 405,
