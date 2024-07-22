@@ -172,7 +172,7 @@ export async function createDriver(req: Request, res: Response) {
       { session }
     );
     if (existingDriver) {
-      throw new Error('A driver with this mobile number already exists.');
+      throw new Error('A Rider with this mobile number already exists.');
     }
     const driverId = Math.floor(Math.random() * 9000 + 1000);
 
@@ -211,8 +211,8 @@ export async function createDriver(req: Request, res: Response) {
     if (session) {
       await session.abortTransaction();
     }
+    console.error('Error:', error.message);
     res.status(400).json({ success: false, message: error.message });
-    console.error('Error:', error);
   } finally {
     if (session) {
       await session.endSession();
@@ -395,7 +395,19 @@ export async function updateDriver(req: Request, res: Response) {
     res.status(200).send({ message: 'Updated driver data successfully' });
   } catch (error: any) {
     await session.abortTransaction();
-    res.status(400).json({ success: false, message: error.message });
+
+    if (error.code === 11000) {
+      // Handle duplicate key error
+      res.status(400).json({
+        success: false,
+        message: 'Mobile number already exists.',
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
   } finally {
     session.endSession();
   }
