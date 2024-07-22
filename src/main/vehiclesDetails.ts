@@ -169,31 +169,53 @@ export async function createVehicleData(req: Request, res: Response) {
       profileImageKey,
       documentsKey,
     } = req.body;
+
+    // Validate required fields
+    if (!vehicleName || !vehicleNumber || !vehicleType) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vehicle name, number, and type are required.',
+      });
+    }
+
+    // Check if the vehicle number already exists
     const existingVehicle = await Vehicles.findOne({
       vehicleNumber: vehicleNumber.toUpperCase(),
     });
     if (existingVehicle) {
-      throw new Error('error while fetching vehicle, vehicle number invalid.');
+      return res.status(400).json({
+        success: false,
+        message: 'Vehicle number already exists.',
+      });
     }
 
-    const vehicle = Vehicles.create({
+    // Create a new vehicle
+    const newVehicle = await Vehicles.create({
       vehicleName,
       vehicleNumber: vehicleNumber.toUpperCase(),
       vehicleType,
       vehicleMake,
       vehicleModel,
-      profileImageKey: profileImageKey,
-      documentsKey: documentsKey,
+      profileImageKey,
+      documentsKey,
     });
 
-    res.status(200).send({
-      message: ' Vehicle data saved.',
+    // Send success response
+    res.status(201).send({
+      message: 'Vehicle data saved successfully.',
+      data: newVehicle,
     });
   } catch (error: any) {
-    res.status(400).json({ success: false, message: error.message });
+    // Send error response
+    res.status(500).json({
+      success: false,
+      message: 'An unexpected error occurred. Please try again later.',
+    });
+
+    // Log detailed error for debugging
+    console.error('Error creating vehicle data:', error.message);
   }
 }
-
 export async function deleteVehicle(req: Request, res: Response) {
   try {
     const s3 = new AWS.S3();
