@@ -144,6 +144,7 @@ import {
 } from './main/whatsAppChat';
 import { Driver, Orders, Payments, PlaceOrder, Rides, Utils } from './models';
 import { OrderStatusEnum } from './shared/enums/status.enum';
+import { CronExpressions } from './shared/enums/CronExpressions';
 
 let utilsData: any;
 
@@ -311,10 +312,6 @@ const refreshToken = async () => {
 // let flag = false;
 async function setUpCronJobs() {
   try {
-    // if (flag) {
-    //   return;
-    // }
-    // flag = true;
     utilsData = await Utils.findOne();
     if (!utilsData) {
       utilsData = {
@@ -324,16 +321,14 @@ async function setUpCronJobs() {
         debounceTime: 500,
       };
     }
+
     await refreshToken();
-    // Define your cron job schedule (runs every 15 minutes)
-    const cronExpression = '0 */15 * * * *';
 
     // Create a new cron job
-    const job = new CronJob(cronExpression, async () => {
+    const job = new CronJob(CronExpressions.EVERY_15_MINUTES, async () => {
       // This function will be executed when the cron job runs every 15 minutes
       try {
         console.log('Cron job executed at:', new Date());
-
         utilsData = await Utils.findOne();
       } catch {
         utilsData = {
@@ -360,16 +355,19 @@ async function setUpCronJobs() {
     });
 
     // New cron job to set driver status to offline at 2 AM every day
-    cron.schedule('0 2 * * *', async () => {
+    cron.schedule(CronExpressions.EVERY_DAY_2_AM, async () => {
       try {
         console.log('Setting driver status to offline at 2 AM:', new Date());
-        // Update driver status in the database
-        await Driver.updateMany({ status: 'online' }, { $set: { status: 'offline' } });
+        await Driver.updateMany(
+          { rideStatus: 'online' },
+          { $set: { rideStatus: 'offline' } },
+        );
+
         console.log('Driver status updated to offline');
       } catch (err) {
         console.error('Error updating driver status:', err);
       }
-    });    
+    });
 
     // cron.schedule('*/10 * * * * *', function () {
     //   // cron.schedule('*/15 * * * * *', function () {
@@ -692,7 +690,7 @@ app.get('/progress', getProgress);
 app.post(`/update-live-location`, updateLiveLocation);
 app.post('/update-FCM-token', updateFcmToken);
 
-app.get("/get-pending-orders", getpendingOrders)
+app.get('/get-pending-orders', getpendingOrders);
 
 app.post('/order-accept', orderAccept);
 

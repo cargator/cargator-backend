@@ -1,0 +1,16 @@
+export enum CronExpressions {
+  EVERY_MINUTE = '* * * * *',
+  EVERY_5_MINUTES = '*/5 * * * *',
+  EVERY_10_MINUTES = '*/10 * * * *',
+  EVERY_15_MINUTES = '0 */15 * * * *',
+  EVERY_30_MINUTES = '*/30 * * * *',
+  EVERY_HOUR = '0 * * * *',
+  EVERY_2_HOURS = '0 */2 * * *',
+  EVERY_4_HOURS = '0 */4 * * *',
+  EVERY_DAY_AT_MIDNIGHT = '0 0 * * *',
+  EVERY_SUNDAY_AT_MIDNIGHT = '0 0 * * 0',
+  EVERY_MONTH_FIRST_DAY_AT_MIDNIGHT = '0 0 1 * *',
+  EVERY_YEAR_FIRST_DAY_AT_MIDNIGHT = '0 0 1 1 *',
+  EVERY_DAY_2_AM = '0 2 * * *',
+  EVERY_DAY_AT_1PM = '0 13 * * *',
+}
