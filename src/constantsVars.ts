@@ -7,6 +7,7 @@ const environmentVars: any = {
   GOOGLE_API_KEY: process.env.GOOGLE_API_KEY,
   OLA_MAPS_API_KEY: process.env.OLA_MAPS_API_KEY,
   REDIS_URL: process.env.REDIS_URL,
+  REDIS_PASSWORD: process.env.REDIS_PASSWORD,
   NODE_ENV: process.env.NODE_ENV,
   PUBLIC_KEY: process.env.PUBLIC_KEY,
   DEV_RAZORPAY_KEY_ID: process.env.DEV_RAZORPAY_KEY_ID,
@@ -33,7 +34,7 @@ const environmentVars: any = {
   EMAIL_PASS: process.env.EMAIL_PASS,
   CLIENT_EMAIL: process.env.CLIENT_EMAIL,
   PRIVATE_KEY: process.env.PRIVATE_KEY,
-  PROJECT_ID: process.env.PROJECT_ID
+  PROJECT_ID: process.env.PROJECT_ID,
 };
 
 (() => {
