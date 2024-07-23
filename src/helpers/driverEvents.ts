@@ -762,20 +762,6 @@ const driverSocketConnected = async (
 
       if (!driverData) {
         // pubClient.publish(
-        //   'order-update-response',
-        //   formatSocketResponse({
-        //     type: 'order-update-response',
-        //     message: {
-        //       type: 'accept-order-response',
-        //       message: {
-        //         message: `Driver is not Found!`,
-        //         driverId: userId,
-        //         status: 404,
-        //       },
-        //     },
-        //   }),
-        // );
-
         socket.emit(
           'order-update-response',
           formatSocketResponse({
@@ -856,9 +842,11 @@ const driverSocketConnected = async (
         socket.emit(
           'order-update-response',
           formatSocketResponse({
+            type: 'order-update-response',
             message: {
+              type: 'accept-order-response',
               message: {
-                message: `Order rejected!`,
+                message: `Order rejected!!`,
                 driverId: userId,
                 status: 404,
               },
