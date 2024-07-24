@@ -1141,6 +1141,8 @@ subClient.on('error', () => console.log(`Subscriber Client Error`));
 
     //  ` setup
     io = new Server(server, {
+      pingInterval: 50000,
+      pingTimeout: 20000,
       transports: ['websocket'],
       cors: {
         credentials: true,
