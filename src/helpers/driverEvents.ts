@@ -727,21 +727,7 @@ const driverSocketConnected = async (
       ).lean();
 
       if (checkDriver) {
-        // pubClient.publish(
-        //   'order-update-response',
-        //   formatSocketResponse({
-        //     type: 'order-update-response',
-        //     message: {
-        //       type: 'accept-order-response',
-        //       message: {
-        //         message: `Already on a ongoing order`,
-        //         driverId: userId,
-        //         status: 404,
-        //       },
-        //     },
-        //   }),
-        // );
-        socket.emit(
+        pubClient.publish(
           'order-update-response',
           formatSocketResponse({
             type: 'order-update-response',
@@ -761,8 +747,7 @@ const driverSocketConnected = async (
       const driverData = await Driver.findOne({ _id: _userId }).lean();
 
       if (!driverData) {
-        // pubClient.publish(
-        socket.emit(
+        pubClient.publish(
           'order-update-response',
           formatSocketResponse({
             type: 'order-update-response',
@@ -776,7 +761,6 @@ const driverSocketConnected = async (
             },
           }),
         );
-
         console.log(
           JSON.stringify({
             method: 'orderAccept',
@@ -819,8 +803,8 @@ const driverSocketConnected = async (
             message: {
               type: 'accept-order-response',
               message: {
-                message: `This order is already alloted to someone!! `,
-                order: { orderId: body.id },
+                message: `Order Not Found!`,
+                order: {orderId: body.id},
               },
             },
           }),
@@ -838,15 +822,12 @@ const driverSocketConnected = async (
       ).lean();
 
       if (!updateDriver) {
-        // pubClient.publish(
-        socket.emit(
+        pubClient.publish(
           'order-update-response',
           formatSocketResponse({
-            type: 'order-update-response',
             message: {
-              type: 'accept-order-response',
               message: {
-                message: `Order rejected!!`,
+                message: `Order rejected!`,
                 driverId: userId,
                 status: 404,
               },
@@ -959,8 +940,7 @@ const driverSocketConnected = async (
           { session, new: true },
         ).lean();
 
-        // pubClient.publish(
-        socket.emit(
+        pubClient.publish(
           'order-update-response',
           formatSocketResponse({
             type: 'order-update-response',
@@ -996,8 +976,7 @@ const driverSocketConnected = async (
 
       if (updateOrder == null) {
         // If the order is not available for acceptance, emit an error response
-        // pubClient.publish(
-        socket.emit(
+        pubClient.publish(
           'order-update-response',
           formatSocketResponse({
             type: 'order-update-response',
@@ -1027,8 +1006,7 @@ const driverSocketConnected = async (
 
         if (!updateDriver) {
           // If the driver update fails, emit a response indicating ride rejection
-          // pubClient.publish(
-          socket.emit(
+          pubClient.publish(
             'order-update-response',
             formatSocketResponse({
               type: 'order-update-response',
@@ -1071,8 +1049,7 @@ const driverSocketConnected = async (
         ).lean();
       }
 
-      // pubClient.publish(
-      socket.emit(
+      pubClient.publish(
         'order-update-response',
         formatSocketResponse({
           type: 'order-update-response',
