@@ -34,6 +34,8 @@ const driverSocketConnected = async (
     // Set the driver's socket in the driversSocket object
     driversSocket[userId] = socket;
 
+    console.log("Socket connected successfully!");
+    
     socket.emit(
       'driver-online',
       formatSocketResponse({
