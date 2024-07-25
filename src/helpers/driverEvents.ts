@@ -798,6 +798,7 @@ const driverSocketConnected = async (
       ).lean();
 
       if (updatedOrder == null) {
+        console.log("already accepted by another");
         pubClient.publish(
           'order-update-response',
           formatSocketResponse({
@@ -863,6 +864,9 @@ const driverSocketConnected = async (
         },
         { session, new: true },
       ).lean();
+
+      console.log("order accepted successfully");
+      
 
       pubClient.publish(
         'order-update-response',
