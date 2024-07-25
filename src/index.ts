@@ -1,7 +1,6 @@
 'use strict';
 
 // Library Imports
-import { instrument } from '@socket.io/admin-ui';
 import { createAdapter } from '@socket.io/redis-adapter';
 import cors from 'cors';
 import express, { Request, Response, json } from 'express';
@@ -1141,9 +1140,8 @@ subClient.on('error', () => console.log(`Subscriber Client Error`));
 
     //  ` setup
     io = new Server(server, {
-      pingInterval: 2000,
-      pingTimeout: 5000,
-      transports: ['websocket','polling'],
+      pingInterval: 10000,
+      pingTimeout: 10000,
       cors: {
         credentials: true,
         origin: '*',
@@ -1187,10 +1185,10 @@ subClient.on('error', () => console.log(`Subscriber Client Error`));
     });
     setUpCronJobs();
     // Enable Socket.IO admin panel for development
-    instrument(io, {
-      auth: false,
-      mode: 'development',
-    });
+    // instrument(io, {
+    //   auth: false,
+    //   mode: 'development',
+    // });
     //! app.listen should be here
   } catch (error) {
     console.error('Error is occured and the error is : ', error);
