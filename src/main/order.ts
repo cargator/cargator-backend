@@ -592,6 +592,7 @@ export async function getProgress(req: any, res: Response) {
       JSON.stringify({
         method: 'getProgress',
         message: 'get Progress Started',
+        userId
       }),
     );
     const getOrderCount = await getOrderCounts(userId);
@@ -622,6 +623,7 @@ export async function getProgress(req: any, res: Response) {
         method: 'getProgress',
         message: 'get Progress response',
         data: response,
+        userId
       }),
     );
 
