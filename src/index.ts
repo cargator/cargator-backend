@@ -83,6 +83,7 @@ import {
   getProgress,
   orderAccept,
   orderUpdate,
+  orderUpdateStatus,
   placeOrder,
   trackOrderStatus,
 } from './main/order';
@@ -697,6 +698,7 @@ app.post('/get-history', getHistory);
 app.get('/progress', getProgress);
 app.post(`/update-live-location`, updateLiveLocation);
 app.post('/update-FCM-token', updateFcmToken);
+app.post('/update-order-status', orderUpdateStatus);
 
 app.get('/get-pending-orders', getpendingOrders);
 

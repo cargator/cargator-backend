@@ -1,4 +1,4 @@
-import mongoose, { PipelineStage } from 'mongoose';
+import mongoose, { Types, PipelineStage } from 'mongoose';
 import { Driver, PlaceOrder } from '../models';
 import { Earning } from '../models/earning.model';
 import { Request, Response } from 'express';
@@ -829,8 +829,8 @@ export async function getOrderById(req: Request, res: Response) {
     console.log(
       JSON.stringify({
         method: 'getOrderById',
-        message: "get Order By Id started",
-        data: id
+        message: 'get Order By Id started',
+        data: id,
       }),
     );
 
@@ -859,8 +859,8 @@ export async function getOrderById(req: Request, res: Response) {
     console.log(
       JSON.stringify({
         method: 'getOrderById',
-        message: "get Order By Id response",
-        data: response
+        message: 'get Order By Id response',
+        data: response,
       }),
     );
 
@@ -879,7 +879,7 @@ export async function getpendingOrders(req: Request, res: Response) {
     console.log(
       JSON.stringify({
         method: 'getpendingOrders',
-        message: "get Pending Orders started"
+        message: 'get Pending Orders started',
       }),
     );
 
@@ -908,5 +908,104 @@ export async function getpendingOrders(req: Request, res: Response) {
   } catch (error: any) {
     console.error('getPendingOrders error:', error);
     res.status(400).send({ error: error.message });
+  }
+}
+
+export async function orderUpdateStatus(req: any, res: Response) {
+  let session: any;
+  try {
+    session = await PlaceOrder.startSession();
+    session.startTransaction();
+    const userId = req.decoded.user._id;
+    const { id, status } = req.body;
+
+    if (!id) {
+      throw new Error('OrderId is not found.');
+    }
+
+    if (!Object.values(OrderStatusEnum).includes(status)) {
+      throw new Error('Invalid order status');
+    }
+
+    const order = await PlaceOrder.findById(new Types.ObjectId(id)).session(session).lean();
+    if (!order) {
+      await session.abortTransaction();
+      return res.status(404).send({ message: 'Order not found' });
+    }
+
+    console.log("order.status", order.status);
+    
+
+    if (order.status === OrderStatusEnum.ORDER_CANCELLED) {
+      const cancelOrderData = await Driver.findOneAndUpdate(
+        { _id: userId, rideStatus: 'on-ride' },
+        { rideStatus: 'online' },
+        { session, new: true }
+      ).lean();
+
+      await session.commitTransaction();
+      return res.status(405).send({
+        message: 'Order cancelled by customer',
+        data: { driverId: userId, cancelOrderData }
+      });
+    }
+
+    const newStatusUpdate = {
+      status,
+      time: new Date(),
+    };
+
+    let updateOrder: any = await PlaceOrder.findByIdAndUpdate(
+      new Types.ObjectId(id),
+      {
+        status,
+        $push: { statusUpdates: newStatusUpdate }
+      },
+      { session, new: true }
+    ).lean();
+
+    if (status === OrderStatusEnum.DELIVERED) {
+      const updateDriver = await Driver.findOneAndUpdate(
+        { _id: userId, rideStatus: 'on-ride' },
+        { rideStatus: 'online' },
+        { session, new: true }
+      ).lean();
+
+      if (!updateDriver) {
+        await session.abortTransaction();
+        return res.status(404).send({ message: 'Driver status not updated' });
+      }
+    }
+
+    if (status === OrderStatusEnum.DISPATCHED) {
+      const pickupLocation = {
+        latitude: updateOrder.pickup_details.latitude,
+        longitude: updateOrder.pickup_details.longitude,
+      };
+      const dropLocation = {
+        latitude: updateOrder.drop_details.latitude,
+        longitude: updateOrder.drop_details.longitude,
+      };
+      const driverDataFromPickupToDrop = await getDirections(pickupLocation, dropLocation);
+
+      await PlaceOrder.findByIdAndUpdate(
+        new Types.ObjectId(id),
+        { pickupToDrop: driverDataFromPickupToDrop?.coords },
+        { session, new: true }
+      ).lean();
+    }
+
+    await session.commitTransaction();
+    return res.status(200).send({
+      message: 'Order status updated',
+      data: { order: updateOrder }
+    });
+
+  } catch (error: any) {
+    console.error('orderUpdateStatus error:', error);
+    await session.abortTransaction();
+    return res.status(400).send({ error: error.message });
+  } finally {
+    session.endSession();
   }
 }
