@@ -559,6 +559,14 @@ export async function getHistory(req: any, res: Response) {
       });
     }
 
+    console.log(
+      JSON.stringify({
+        method: 'fetchedAllOrderHistory!',
+        message: 'Fetched all Order History Response',
+        data: resposne,
+      }),
+    );
+
     res
       .send({
         message: 'Fetched all Order History!',
@@ -583,7 +591,7 @@ export async function getProgress(req: any, res: Response) {
     console.log(
       JSON.stringify({
         method: 'getProgress',
-        message: 'get Progress body.',
+        message: 'get Progress Started',
       }),
     );
     const getOrderCount = await getOrderCounts(userId);
@@ -594,17 +602,17 @@ export async function getProgress(req: any, res: Response) {
         today: {
           earning: 0,
           loginHours: 0,
-          orders: getOrderCount.todayCount,
+          orders: getOrderCount?.todayCount || 0,
         },
         week: {
           earning: 0,
           loginHours: 0,
-          orders: getOrderCount.weekCount,
+          orders: getOrderCount?.weekCount || 0,
         },
         month: {
           earning: 0,
           loginHours: 0,
-          orders: getOrderCount.monthCount,
+          orders: getOrderCount?.monthCount || 0,
         },
       },
     };
@@ -612,7 +620,7 @@ export async function getProgress(req: any, res: Response) {
     console.log(
       JSON.stringify({
         method: 'getProgress',
-        message: 'get Progress body.',
+        message: 'get Progress response',
         data: response,
       }),
     );
@@ -737,7 +745,7 @@ export async function getOrderHistory(
     console.log(
       JSON.stringify({
         method: 'getOrderHistory',
-        message: 'get Order History',
+        message: 'get Order History Started',
         data: req.query,
       }),
     );
@@ -794,6 +802,14 @@ export async function getOrderHistory(
     });
     const orderHistory = await PlaceOrder.aggregate(pipeline);
 
+    console.log(
+      JSON.stringify({
+        method: 'getOrderHistory',
+        message: 'get Order History Response',
+        data: req.query,
+      }),
+    );
+
     return res.status(200).json({
       message: 'Fetched all Orders',
       data: orderHistory,
@@ -807,6 +823,14 @@ export async function getOrderHistory(
 export async function getOrderById(req: Request, res: Response) {
   try {
     const { id } = req.params;
+
+    console.log(
+      JSON.stringify({
+        method: 'getOrderById',
+        message: "get Order By Id started",
+        data: id
+      }),
+    );
 
     const orderDetails: any = await PlaceOrder.findOne({
       'order_details.vendor_order_id': id,
@@ -830,6 +854,14 @@ export async function getOrderById(req: Request, res: Response) {
       vehicleName: driverData.vehicleName,
     };
 
+    console.log(
+      JSON.stringify({
+        method: 'getOrderById',
+        message: "get Order By Id response",
+        data: response
+      }),
+    );
+
     return res.status(200).send({
       message: 'Fetched Order details successfully.',
       data: response,
@@ -842,6 +874,13 @@ export async function getOrderById(req: Request, res: Response) {
 
 export async function getpendingOrders(req: Request, res: Response) {
   try {
+    console.log(
+      JSON.stringify({
+        method: 'getpendingOrders',
+        message: "get Pending Orders started"
+      }),
+    );
+
     const endDate = new Date(Date.now() - 10 * 60 * 1000); // 10 minutes ago
     const response = await PlaceOrder.find({
       status: OrderStatusEnum.ORDER_ACCEPTED,
