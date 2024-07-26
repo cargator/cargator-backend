@@ -1148,6 +1148,7 @@ subClient.on('error', () => console.log(`Subscriber Client Error`));
         credentials: true,
         origin: '*',
       },
+      transports: ['websocket', 'polling'],
       // maxHttpBufferSize: 1e9,
     });
 
@@ -1155,6 +1156,7 @@ subClient.on('error', () => console.log(`Subscriber Client Error`));
 
     // Handle socket connections
     io.on('connection', async (socket: Socket) => {
+      // console.log('socket.conn.transport ==> ',socket.conn.transport);
       const Token: any = String(socket?.handshake.query?.['token']);
       // Validate user and type information from the socket handshake
       const data = decodeToken(Token);
