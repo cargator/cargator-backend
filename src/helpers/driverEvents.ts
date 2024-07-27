@@ -34,8 +34,8 @@ const driverSocketConnected = async (
     // Set the driver's socket in the driversSocket object
     driversSocket[userId] = socket;
 
-    console.log("Socket connected successfully!", userId);
-    
+    console.log('Socket connected successfully!', userId);
+
     socket.emit(
       'driver-online',
       formatSocketResponse({
@@ -713,40 +713,21 @@ const driverSocketConnected = async (
     let session: any;
     // todo: take driverId from token/ socket
     try {
+      if (!body.id) {
+        // If order ID is missing in the request, handle the error
+        throw new Error('OrderId is not found.');
+      }
+
       session = await PlaceOrder.startSession();
       session.startTransaction();
 
       const driver_location = body.driverLoc;
 
-      if (!body.id) {
-        // If order ID is missing in the request, handle the error
-        throw new Error('OrderId is not found.');
-      }
       // check if order is available for this driver
-      const checkDriver: any = await Driver.findOne(
-        { _id: _userId, rideStatus: 'on-ride' },
+      const driverData: any = await Driver.findOne(
+        { _id: _userId },
         { new: true },
       ).lean();
-
-      if (checkDriver) {
-        pubClient.publish(
-          'order-update-response',
-          formatSocketResponse({
-            type: 'order-update-response',
-            message: {
-              type: 'accept-order-response',
-              message: {
-                message: `Already on a ongoing order`,
-                driverId: userId,
-                status: 404,
-              },
-            },
-          }),
-        );
-        return;
-      }
-
-      const driverData = await Driver.findOne({ _id: _userId }).lean();
 
       if (!driverData) {
         pubClient.publish(
@@ -763,11 +744,22 @@ const driverSocketConnected = async (
             },
           }),
         );
-        console.log(
-          JSON.stringify({
-            method: 'orderAccept',
-            message: 'Driver is not Found!',
-            data: _userId,
+        return;
+      }
+
+      if (driverData.rideStatus === 'on-ride') {
+        pubClient.publish(
+          'order-update-response',
+          formatSocketResponse({
+            type: 'order-update-response',
+            message: {
+              type: 'accept-order-response',
+              message: {
+                message: `Already on a ongoing order`,
+                driverId: userId,
+                status: 404,
+              },
+            },
           }),
         );
         return;
@@ -798,7 +790,6 @@ const driverSocketConnected = async (
       ).lean();
 
       if (updatedOrder == null) {
-        console.log("already accepted by another");
         pubClient.publish(
           'order-update-response',
           formatSocketResponse({
@@ -806,8 +797,8 @@ const driverSocketConnected = async (
             message: {
               type: 'accept-order-response',
               message: {
-                message: `Order Not Found!`,
-                order: {orderId: body.id},
+                message: `Order Already Assigned To Someone!`,
+                order: { orderId: body.id },
               },
             },
           }),
@@ -830,7 +821,7 @@ const driverSocketConnected = async (
           formatSocketResponse({
             message: {
               message: {
-                message: `Order rejected!`,
+                message: `Order Not Accepted!`,
                 driverId: userId,
                 status: 404,
               },
@@ -865,8 +856,7 @@ const driverSocketConnected = async (
         { session, new: true },
       ).lean();
 
-      console.log("order accepted successfully");
-      
+      console.log('order accepted successfully');
 
       pubClient.publish(
         'order-update-response',

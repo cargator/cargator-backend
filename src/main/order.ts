@@ -1,19 +1,14 @@
-import mongoose, { Types, PipelineStage } from 'mongoose';
+import axios from 'axios';
+import { Request, Response } from 'express';
+import { PipelineStage, Types } from 'mongoose';
+import { sendOrderNotification } from '../config/firebase-admin';
+import environmentVars from '../constantsVars';
+import { getDirections } from '../helpers/common';
+import { sendEmail } from '../helpers/sendEmail';
 import { Driver, PlaceOrder } from '../models';
 import { Earning } from '../models/earning.model';
-import { Request, Response } from 'express';
-import axios from 'axios';
-import { error } from 'console';
-import { getDirections } from '../helpers/common';
-import {
-  NotificationMessageEnum,
-  OrderStatusEnum,
-} from '../shared/enums/status.enum';
-import environmentVars from '../constantsVars';
-import { sendEmail } from '../helpers/sendEmail';
-import { getVehicalDetails } from './vehiclesDetails';
+import { OrderStatusEnum } from '../shared/enums/status.enum';
 import { getDriverDetails } from './driver';
-import { sendOrderNotification } from '../config/firebase-admin';
 
 const petpoojaAcknowledge = async (data: any) => {
   try {
@@ -592,7 +587,7 @@ export async function getProgress(req: any, res: Response) {
       JSON.stringify({
         method: 'getProgress',
         message: 'get Progress Started',
-        userId
+        userId,
       }),
     );
     const getOrderCount = await getOrderCounts(userId);
@@ -623,7 +618,7 @@ export async function getProgress(req: any, res: Response) {
         method: 'getProgress',
         message: 'get Progress response',
         data: response,
-        userId
+        userId,
       }),
     );
 
@@ -911,6 +906,23 @@ export async function getpendingOrders(req: Request, res: Response) {
   }
 }
 
+export async function getDriversPendingOrders(req: any, res: Response) {
+  try {
+    const response = await PlaceOrder.findOne({
+      'driver_details.driver_id': req.decoded.user._id,
+      status: {
+        $nin: [OrderStatusEnum.ORDER_CANCELLED, OrderStatusEnum.DELIVERED],
+      },
+    }).lean();
+    return res.send({
+      message: response ? 'Fetched My Pending Orders.' : 'No Pending Orders',
+      data: response,
+    });
+  } catch (error: any) {
+    return res.status(400).send({ error: error.message });
+  }
+}
+
 export async function orderUpdateStatus(req: any, res: Response) {
   let session: any;
   try {
@@ -927,26 +939,27 @@ export async function orderUpdateStatus(req: any, res: Response) {
       throw new Error('Invalid order status');
     }
 
-    const order = await PlaceOrder.findById(new Types.ObjectId(id)).session(session).lean();
+    const order = await PlaceOrder.findById(new Types.ObjectId(id))
+      .session(session)
+      .lean();
     if (!order) {
       await session.abortTransaction();
       return res.status(404).send({ message: 'Order not found' });
     }
 
-    console.log("order.status", order.status);
-    
+    console.log('order.status', order.status);
 
     if (order.status === OrderStatusEnum.ORDER_CANCELLED) {
       const cancelOrderData = await Driver.findOneAndUpdate(
         { _id: userId, rideStatus: 'on-ride' },
         { rideStatus: 'online' },
-        { session, new: true }
+        { session, new: true },
       ).lean();
 
       await session.commitTransaction();
       return res.status(405).send({
         message: 'Order cancelled by customer',
-        data: { driverId: userId, cancelOrderData }
+        data: { driverId: userId, cancelOrderData },
       });
     }
 
@@ -959,16 +972,16 @@ export async function orderUpdateStatus(req: any, res: Response) {
       new Types.ObjectId(id),
       {
         status,
-        $push: { statusUpdates: newStatusUpdate }
+        $push: { statusUpdates: newStatusUpdate },
       },
-      { session, new: true }
+      { session, new: true },
     ).lean();
 
     if (status === OrderStatusEnum.DELIVERED) {
       const updateDriver = await Driver.findOneAndUpdate(
         { _id: userId, rideStatus: 'on-ride' },
         { rideStatus: 'online' },
-        { session, new: true }
+        { session, new: true },
       ).lean();
 
       if (!updateDriver) {
@@ -986,21 +999,23 @@ export async function orderUpdateStatus(req: any, res: Response) {
         latitude: updateOrder.drop_details.latitude,
         longitude: updateOrder.drop_details.longitude,
       };
-      const driverDataFromPickupToDrop = await getDirections(pickupLocation, dropLocation);
+      const driverDataFromPickupToDrop = await getDirections(
+        pickupLocation,
+        dropLocation,
+      );
 
       await PlaceOrder.findByIdAndUpdate(
         new Types.ObjectId(id),
         { pickupToDrop: driverDataFromPickupToDrop?.coords },
-        { session, new: true }
+        { session, new: true },
       ).lean();
     }
 
     await session.commitTransaction();
     return res.status(200).send({
       message: 'Order status updated',
-      data: { order: updateOrder }
+      data: { order: updateOrder },
     });
-
   } catch (error: any) {
     console.error('orderUpdateStatus error:', error);
     await session.abortTransaction();
