@@ -926,8 +926,6 @@ export async function getDriversPendingOrders(req: any, res: Response) {
 export async function orderUpdateStatus(req: any, res: Response) {
   let session: any;
   try {
-    session = await PlaceOrder.startSession();
-    session.startTransaction();
     const userId = req.decoded.user._id;
     const { id, status } = req.body;
 
@@ -939,6 +937,8 @@ export async function orderUpdateStatus(req: any, res: Response) {
       throw new Error('Invalid order status');
     }
 
+    session = await PlaceOrder.startSession();
+    session.startTransaction();
     const order = await PlaceOrder.findById(new Types.ObjectId(id))
       .session(session)
       .lean();
@@ -947,9 +947,7 @@ export async function orderUpdateStatus(req: any, res: Response) {
       return res.status(404).send({ message: 'Order not found' });
     }
 
-    console.log('order.status', order.status);
-
-    if (order.status === OrderStatusEnum.ORDER_CANCELLED) {
+    if (status === OrderStatusEnum.ORDER_CANCELLED) {
       const cancelOrderData = await Driver.findOneAndUpdate(
         { _id: userId, rideStatus: 'on-ride' },
         { rideStatus: 'online' },
