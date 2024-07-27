@@ -1,8 +1,7 @@
 import axios from 'axios';
-import { Driver, Riders } from '../models';
-import environmentVars from '../constantsVars'
 import { Request, Response } from 'express';
-import { CloudWatchLogs } from 'aws-sdk';
+import environmentVars from '../constantsVars';
+import { Driver, Riders } from '../models';
 const jwt = require('jsonwebtoken');
 const _ = require('lodash');
 
@@ -14,20 +13,26 @@ export async function handleLogin(req: Request, res: Response) {
     if (req.body.type == 'driver') {
       const liveLocation = req.body.liveLocation;
       const mobileNumber = req.body.mobileNumber;
-      console.log("object", mobileNumber)
+      console.log('object', mobileNumber);
       if (!mobileNumber) {
         throw new Error(`Invalid Mobile Number!`);
       }
 
-        // Validate liveLocation format
-        if (!Array.isArray(liveLocation) || liveLocation.length !== 2 || typeof liveLocation[0] !== 'number' || typeof liveLocation[1] !== 'number') {
-          console.log(liveLocation[0],liveLocation[1])
-          throw new Error('Invalid liveLocation format. Expected [longitude, latitude].');
-        }
+      // Validate liveLocation format
+      if (
+        !Array.isArray(liveLocation) ||
+        liveLocation.length !== 2 ||
+        typeof liveLocation[0] !== 'number' ||
+        typeof liveLocation[1] !== 'number'
+      ) {
+        console.log(liveLocation[0], liveLocation[1]);
+        throw new Error(
+          'Invalid liveLocation format. Expected [longitude, latitude].',
+        );
+      }
 
-  
       let driver = await Driver.findOne({
-        mobileNumber: `91${mobileNumber}` ,
+        mobileNumber: `91${mobileNumber}`,
         status: 'active',
       }).lean();
       if (!driver) {
@@ -37,7 +42,7 @@ export async function handleLogin(req: Request, res: Response) {
       const driverDoc = await Driver.findOneAndUpdate(
         { mobileNumber: `91${mobileNumber}` },
         { $set: { liveLocation } }, // assuming liveLocation is correctly formatted [longitude, latitude]
-        { upsert: true, new: true }
+        { upsert: true, new: true },
       ).lean();
 
       let otp: any = Math.floor(1000 + Math.random() * 9000); // Generate a 6-digit OTP
@@ -185,7 +190,6 @@ export async function verifyOtp(req: Request, res: Response) {
       // Handle driver OTP verification
       const otp = req.body.otp;
       const mobileNumber = req.body.mobileNumber;
-      
 
       // Check if OTP and mobile number are provided
       if (!otp) {
@@ -198,7 +202,7 @@ export async function verifyOtp(req: Request, res: Response) {
 
       // Find the driver based on the provided mobile number
       let user: any = await Driver.findOne({
-         mobileNumber: `91${mobileNumber}` 
+        mobileNumber: `91${mobileNumber}`,
       }).lean();
       let profileImageKey = user.profileImageKey;
 
@@ -207,18 +211,28 @@ export async function verifyOtp(req: Request, res: Response) {
         // res.status(400).send({ message: 'Mobile number is not registered' });
         throw new Error(`Mobile number is not registered`);
       }
-      
 
       // Verify OTP
-      if ((otp == user.otp) || mobileNumber === '9876543210') {
+      if (otp == user.otp || mobileNumber === '9876543210') {
         // Select relevant user fields and generate a JWT token
-        user = _.pick(user, ['_id', 'mobileNumber', 'documentsKey', 'firstName']);
+        user = _.pick(user, [
+          '_id',
+          'mobileNumber',
+          'documentsKey',
+          'firstName',
+        ]);
         const token = jwt.sign(
           { user, type: 'driver' },
           environmentVars.PUBLIC_KEY,
           {
             expiresIn: '7d',
           },
+        );
+        await Driver.findOneAndUpdate(
+          {
+            mobileNumber: `91${mobileNumber}`,
+          },
+          { rideStatus: 'online' },
         );
         return res.json({
           user: { ...user, profileImageKey },
@@ -230,7 +244,6 @@ export async function verifyOtp(req: Request, res: Response) {
         // res.status(400).send({ message: 'Invalid OTP' });
         throw new Error(`Invalid otp Driver`);
       }
-      
     } else {
       // Handle rider OTP verification (similar logic as driver)
       const otp = req.body.otp;
@@ -247,7 +260,7 @@ export async function verifyOtp(req: Request, res: Response) {
 
       // Find the rider based on the provided mobile number
       let user: any = await Riders.findOne({
-         mobileNumber: `91${mobileNumber}` 
+        mobileNumber: `91${mobileNumber}`,
       }).lean();
       let userData = user;
       // Check if the rider is registered
@@ -257,7 +270,7 @@ export async function verifyOtp(req: Request, res: Response) {
       }
 
       // Verify OTP
-      if ((otp == user.otp)  || mobileNumber === '9876543210') {
+      if (otp == user.otp || mobileNumber === '9876543210') {
         // Select relevant user fields and generate a JWT token
         user = _.pick(user, ['_id', 'mobileNumber']);
         const token = jwt.sign(
