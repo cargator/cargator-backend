@@ -259,6 +259,28 @@ export async function setDriverOffline(req: any) {
   }
 }
 
+export async function setDriverOnline(req: any) {
+  const driverId = req.decoded.user._id;
+
+  console.log('req.decoded.user._id', driverId);
+
+  try {
+    // Update the driver's status to 'offline'
+    await Driver.updateOne(
+      {
+        //todo: change mobileNumber to _id in future
+        _id: driverId,
+        rideStatus: 'offline',
+      },
+      {
+        rideStatus: 'online',
+      },
+    );
+  } catch (err: any) {
+    console.error('Error while updating driver status:', err);
+  }
+}
+
 // container health check endpoint
 app.get('/', (req: Request, res: Response) => {
   res.send('success');
@@ -374,6 +396,8 @@ app.get('/get-order/:id', getOrderById);
 app.use(authorize);
 
 app.post('/set-driver-offline', setDriverOffline);
+app.post('/set-driver-online', setDriverOnline);
+
 app.post('/get-history', getHistory);
 app.get('/progress', getProgress);
 app.post(`/update-live-location`, updateLiveLocation);
