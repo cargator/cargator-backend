@@ -81,6 +81,7 @@ import {
   orderUpdateStatus,
   placeOrder,
   trackOrderStatus,
+  updatePaymentStatusOfOrder,
 } from './main/order';
 import {
   cancelScheduledRide,
@@ -406,6 +407,7 @@ app.post('/update-order-status', orderUpdateStatus);
 
 app.get('/get-pending-orders', getpendingOrders);
 app.get('/get-my-pending-order', getDriversPendingOrders);
+app.post('/update-payment-status-of-order', updatePaymentStatusOfOrder);
 
 app.post('/add-profile-details', addProfileDetails);
 

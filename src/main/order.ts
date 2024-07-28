@@ -910,13 +910,37 @@ export async function getDriversPendingOrders(req: any, res: Response) {
   try {
     const response = await PlaceOrder.findOne({
       'driver_details.driver_id': req.decoded.user._id,
-      status: {
-        $nin: [OrderStatusEnum.ORDER_CANCELLED, OrderStatusEnum.DELIVERED],
-      },
+      $or: [
+        {
+          status: {
+            $nin: [OrderStatusEnum.ORDER_CANCELLED, OrderStatusEnum.DELIVERED],
+          },
+        },
+        { 'order_details.payment_status': false },
+      ],
     }).lean();
     return res.send({
       message: response ? 'Fetched My Pending Orders.' : 'No Pending Orders',
       data: response,
+    });
+  } catch (error: any) {
+    return res.status(400).send({ error: error.message });
+  }
+}
+
+export async function updatePaymentStatusOfOrder(req: Request, res: Response) {
+  try {
+    const { id, status } = req.body;
+    if (!id) {
+      throw new Error('OrderId is not found.');
+    }
+
+    await PlaceOrder.findByIdAndUpdate(new Types.ObjectId(id), {
+      $set: { 'order_details.payment_status': status },
+    }).lean();
+
+    return res.status(200).send({
+      message: 'Order status updated',
     });
   } catch (error: any) {
     return res.status(400).send({ error: error.message });
