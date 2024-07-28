@@ -916,7 +916,7 @@ export async function getDriversPendingOrders(req: any, res: Response) {
             $nin: [OrderStatusEnum.ORDER_CANCELLED, OrderStatusEnum.DELIVERED],
           },
         },
-        { 'order_details.payment_status': false },
+        // { 'order_details.payment_status': false },
       ],
     }).lean();
     return res.send({
@@ -972,16 +972,16 @@ export async function orderUpdateStatus(req: any, res: Response) {
     }
 
     if (order.status === OrderStatusEnum.ORDER_CANCELLED) {
-      const cancelOrderData = await Driver.findOneAndUpdate(
+      await Driver.findOneAndUpdate(
         { _id: userId, rideStatus: 'on-ride' },
         { rideStatus: 'online' },
         { session, new: true },
       ).lean();
 
       await session.commitTransaction();
-      return res.status(405).send({
+      return res.send({
         message: 'Order cancelled by customer',
-        data: { driverId: userId, order: cancelOrderData },
+        data: { driverId: userId, order: order },
       });
     }
 
