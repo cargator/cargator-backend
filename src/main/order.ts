@@ -981,7 +981,7 @@ export async function orderUpdateStatus(req: any, res: Response) {
       await session.commitTransaction();
       return res.status(405).send({
         message: 'Order cancelled by customer',
-        data: { driverId: userId, cancelOrderData },
+        data: { driverId: userId, order: cancelOrderData },
       });
     }
 
