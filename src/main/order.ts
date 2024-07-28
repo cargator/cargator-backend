@@ -971,7 +971,7 @@ export async function orderUpdateStatus(req: any, res: Response) {
       return res.status(404).send({ message: 'Order not found' });
     }
 
-    if (status === OrderStatusEnum.ORDER_CANCELLED) {
+    if (order.status === OrderStatusEnum.ORDER_CANCELLED) {
       const cancelOrderData = await Driver.findOneAndUpdate(
         { _id: userId, rideStatus: 'on-ride' },
         { rideStatus: 'online' },
