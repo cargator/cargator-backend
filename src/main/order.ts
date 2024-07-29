@@ -897,8 +897,9 @@ export async function getDriversPendingOrders(req: any, res: Response) {
   }
 }
 
-export async function updatePaymentStatusOfOrder(req: Request, res: Response) {
+export async function updatePaymentStatusOfOrder(req: any, res: Response) {
   try {
+    const userId = req.decoded.user._id;
     const { id, status } = req.body;
     if (!id) {
       throw new Error('OrderId is not found.');
@@ -907,6 +908,11 @@ export async function updatePaymentStatusOfOrder(req: Request, res: Response) {
     await PlaceOrder.findByIdAndUpdate(new Types.ObjectId(id), {
       $set: { 'order_details.payment_status': status },
     }).lean();
+
+    await Driver.findOneAndUpdate(
+      { _id: userId, rideStatus: 'on-ride' },
+      { rideStatus: 'online' },
+    ).lean();
 
     return res.status(200).send({
       message: 'Order status updated',
@@ -968,7 +974,10 @@ export async function orderUpdateStatus(req: any, res: Response) {
       { session, new: true },
     ).lean();
 
-    if (status === OrderStatusEnum.DELIVERED) {
+    if (
+      status === OrderStatusEnum.DELIVERED &&
+      updateOrder.order_details.paid === true
+    ) {
       const updateDriver = await Driver.findOneAndUpdate(
         { _id: userId, rideStatus: 'on-ride' },
         { rideStatus: 'online' },
