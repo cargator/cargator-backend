@@ -152,6 +152,18 @@ const sendToAllRiders: any = (data: any) => {
   }
 };
 
+const sendNewOrderToAllRiders: any = (data: any) => {
+  try {
+    const driverSocket = getAllSocket();
+    for (let index = 0; index < Object.values(driverSocket).length; index++) {
+      const element: any = Object.values(driverSocket)[index];
+      element.emit('new-order', data);
+    }
+  } catch (error) {
+    console.log('error', error);
+  }
+};
+
 let io: Server;
 
 // Configure Express app with necessary middleware
@@ -639,6 +651,7 @@ subClient.on('ready', () => {
 
 //orders
 subClient.subscribe('order-update-response', sendToAllRiders);
+subClient.subscribe('new-order', sendNewOrderToAllRiders);
 
 // Log errors for publisher and subscriber clients
 pubClient.on('error', () => console.log(`Publisher Client Error`));

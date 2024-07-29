@@ -1,8 +1,8 @@
-import { Driver, Vehicles } from '../models';
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { getUtils } from '..';
 import environmentVars from '../constantsVars';
+import { Driver, Vehicles } from '../models';
 const AWS = require('aws-sdk');
 AWS.config.update({
   region: environmentVars.AWS_REGION,
@@ -156,9 +156,12 @@ export async function createDriver(req: Request, res: Response) {
     // Check if the vehicle is available
     if (vehicleNumber !== 'none') {
       const vehicle = await Vehicles.findOne(
-        { vehicleNumber: vehicleNumber.toUpperCase(), vehicleStatus: 'unavailable' },
+        {
+          vehicleNumber: vehicleNumber.toUpperCase(),
+          vehicleStatus: 'unavailable',
+        },
         null,
-        { session }
+        { session },
       );
       if (vehicle) {
         throw new Error('Vehicle is already assigned to someone.');
@@ -169,7 +172,7 @@ export async function createDriver(req: Request, res: Response) {
     const existingDriver = await Driver.findOne(
       { mobileNumber: `91${mobileNumber}` },
       null,
-      { session }
+      { session },
     );
     if (existingDriver) {
       throw new Error('A Rider with this mobile number already exists.');
@@ -180,7 +183,8 @@ export async function createDriver(req: Request, res: Response) {
       driverId,
       firstName,
       lastName,
-      vehicleNumber: vehicleNumber === 'none' ? '' : vehicleNumber.toUpperCase(),
+      vehicleNumber:
+        vehicleNumber === 'none' ? '' : vehicleNumber.toUpperCase(),
       vehicleType: vehicleNumber === 'none' ? '' : vehicleType,
       vehicleName: vehicleNumber === 'none' ? '' : vehicleName,
       mobileNumber: `91${mobileNumber}`,
@@ -196,9 +200,12 @@ export async function createDriver(req: Request, res: Response) {
     // Update vehicle status if a vehicle is assigned
     if (vehicleNumber !== 'none') {
       const vehicle = await Vehicles.findOneAndUpdate(
-        { vehicleNumber: vehicleNumber.toUpperCase(), vehicleStatus: 'available' },
+        {
+          vehicleNumber: vehicleNumber.toUpperCase(),
+          vehicleStatus: 'available',
+        },
         { vehicleStatus: 'unavailable', vehicleAssignedToId: driver[0]._id },
-        { session, new: true }
+        { session, new: true },
       );
       if (!vehicle) {
         throw new Error('Error while updating vehicle');
@@ -323,7 +330,7 @@ export async function getDriverById(req: Request, res: Response) {
 export async function updateDriver(req: Request, res: Response) {
   const session = await mongoose.startSession();
   session.startTransaction();
-  
+
   try {
     const {
       firstName,
@@ -340,29 +347,34 @@ export async function updateDriver(req: Request, res: Response) {
     let driver = await Driver.findOne({
       _id: id,
       status: 'active',
-      rideStatus: { $ne: 'on-ride' }
+      rideStatus: { $ne: 'on-ride' },
     }).session(session);
 
     if (!driver) {
-      throw new Error('Driver not found, status is inactive or driver is on-ride');
+      throw new Error(
+        'Driver not found, status is inactive or driver is on-ride',
+      );
     }
 
     if (vehicleNumber !== 'none') {
       const vehicle = await Vehicles.findOneAndUpdate(
         { vehicleNumber: vehicleNumber.toUpperCase() },
         { vehicleStatus: 'unavailable', vehicleAssignedToId: id },
-        { session }
+        { session },
       );
 
       if (!vehicle) {
         throw new Error('Vehicle not found');
       }
 
-      if (driver.vehicleNumber && driver.vehicleNumber !== vehicleNumber.toUpperCase()) {
+      if (
+        driver.vehicleNumber &&
+        driver.vehicleNumber !== vehicleNumber.toUpperCase()
+      ) {
         await Vehicles.findOneAndUpdate(
           { vehicleNumber: driver.vehicleNumber, vehicleStatus: 'unavailable' },
           { vehicleStatus: 'available', vehicleAssignedToId: '' },
-          { session }
+          { session },
         );
       }
 
@@ -374,7 +386,7 @@ export async function updateDriver(req: Request, res: Response) {
         await Vehicles.findOneAndUpdate(
           { vehicleNumber: driver.vehicleNumber, vehicleStatus: 'unavailable' },
           { vehicleStatus: 'available', vehicleAssignedToId: '' },
-          { session }
+          { session },
         );
       }
 
@@ -623,16 +635,14 @@ export async function updateLiveLocation(req: any, res: Response) {
 
 export async function updateFcmToken(req: any, res: Response) {
   try {
-    const token  = req.body.token;
+    const token = req.body.token;
     const userId = req.decoded.user._id;
 
-    console.log("fcm token>>>>>>", token);
-    
     if (!token) {
       throw new Error('device Token not found.');
     }
 
-   const response =  await Driver.findOneAndUpdate(
+    await Driver.findOneAndUpdate(
       { _id: userId },
       {
         deviceToken: token,
@@ -640,7 +650,7 @@ export async function updateFcmToken(req: any, res: Response) {
     ).lean();
 
     res.status(200).send({
-      message: 'FCM Token updated successfully',  
+      message: 'FCM Token updated successfully',
     });
   } catch (error: any) {
     console.log('error while update FCM Token', error);

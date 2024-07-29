@@ -1,9 +1,10 @@
 import axios from 'axios';
 import { Request, Response } from 'express';
 import { PipelineStage, Types } from 'mongoose';
+import { pubClient } from '..';
 import { sendOrderNotification } from '../config/firebase-admin';
 import environmentVars from '../constantsVars';
-import { getDirections } from '../helpers/common';
+import { formatSocketResponse, getDirections } from '../helpers/common';
 import { sendEmail } from '../helpers/sendEmail';
 import { Driver, PlaceOrder } from '../models';
 import { Earning } from '../models/earning.model';
@@ -57,17 +58,6 @@ const petpoojaAcknowledge = async (data: any) => {
 
 export async function placeOrder(req: Request, res: Response) {
   try {
-    // await sendOrderNotification()
-    const { order_details } = req.body;
-
-    console.log(
-      JSON.stringify({
-        method: 'placeOrder',
-        message: 'place Order body.',
-        data: req.body,
-      }),
-    );
-
     const saveOrder = await PlaceOrder.create({
       ...req.body,
       status: OrderStatusEnum.ORDER_ACCEPTED,
@@ -84,6 +74,12 @@ export async function placeOrder(req: Request, res: Response) {
 
     await sendEmail(req.body);
 
+    pubClient.publish(
+      'new-order',
+      formatSocketResponse({
+        order: saveOrder,
+      }),
+    );
     if (RiderDetails.length > 0) {
       for (const iterator of RiderDetails) {
         await sendOrderNotification(iterator.deviceToken, saveOrder);
@@ -583,13 +579,6 @@ export async function getHistory(req: any, res: Response) {
 export async function getProgress(req: any, res: Response) {
   const userId = req.decoded.user._id;
   try {
-    console.log(
-      JSON.stringify({
-        method: 'getProgress',
-        message: 'get Progress Started',
-        userId,
-      }),
-    );
     const getOrderCount = await getOrderCounts(userId);
 
     const response = {
@@ -612,15 +601,6 @@ export async function getProgress(req: any, res: Response) {
         },
       },
     };
-
-    console.log(
-      JSON.stringify({
-        method: 'getProgress',
-        message: 'get Progress response',
-        data: response,
-        userId,
-      }),
-    );
 
     res.send(response).status(200);
   } catch (error: any) {
@@ -871,13 +851,6 @@ export async function getOrderById(req: Request, res: Response) {
 
 export async function getpendingOrders(req: Request, res: Response) {
   try {
-    console.log(
-      JSON.stringify({
-        method: 'getpendingOrders',
-        message: 'get Pending Orders started',
-      }),
-    );
-
     const endDate = new Date(Date.now() - 10 * 60 * 1000); // 10 minutes ago
     const response = await PlaceOrder.find({
       status: OrderStatusEnum.ORDER_ACCEPTED,
@@ -887,14 +860,6 @@ export async function getpendingOrders(req: Request, res: Response) {
     const message = response.length
       ? 'Fetched All Pending Orders.'
       : 'No Pending Orders';
-
-    console.log(
-      JSON.stringify({
-        method: 'getpendingOrders',
-        message,
-        data: response,
-      }),
-    );
 
     res.send({
       message,
