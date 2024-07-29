@@ -874,14 +874,18 @@ export async function getpendingOrders(req: Request, res: Response) {
 export async function getDriversPendingOrders(req: any, res: Response) {
   try {
     const response = await PlaceOrder.findOne({
-      'driver_details.driver_id': req.decoded.user._id,
       $or: [
         {
+          'driver_details.driver_id': req.decoded.user._id,
           status: {
             $nin: [OrderStatusEnum.ORDER_CANCELLED, OrderStatusEnum.DELIVERED],
           },
         },
-        // { 'order_details.payment_status': false },
+        {
+          'driver_details.driver_id': req.decoded.user._id,
+          status: OrderStatusEnum.DELIVERED,
+          'order_details.payment_status': false,
+        },
       ],
     }).lean();
     return res.send({
