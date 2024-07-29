@@ -224,7 +224,7 @@ export async function verifyOtp(req: Request, res: Response) {
           {
             mobileNumber: `91${mobileNumber}`,
           },
-          { rideStatus: 'online' },
+          { rideStatus: 'offline' },
         );
         return res.json({
           user: { ...user, profileImageKey },

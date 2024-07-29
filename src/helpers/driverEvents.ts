@@ -44,11 +44,11 @@ const driverSocketConnected = async (
       }),
     );
 
-    const updatedDriver = await Driver.findOneAndUpdate(
-      { _id: _userId, rideStatus: { $ne: 'on-ride' } },
-      { rideStatus: 'online' },
-      { new: true },
-    );
+    // const updatedDriver = await Driver.findOneAndUpdate(
+    //   { _id: _userId, rideStatus: { $ne: 'on-ride' } },
+    //   { rideStatus: 'online' },
+    //   { new: true },
+    // );
   } catch (err: any) {
     socket.emit(
       'error',
