@@ -22,6 +22,7 @@ import {
   adminRegister,
   changePassword,
   dashboardData,
+  getAllAdmins,
   rideAssignedByAdmin,
 } from './main/admin';
 import {
@@ -675,6 +676,9 @@ app.post('/admin-login', adminLogin);
 
 // Route for admin register
 app.post('/admin-register', adminRegister);
+
+//Route for get All Admin
+app.get('/get-all-admins',getAllAdmins)
 
 // PetPooja API's--------------------
 

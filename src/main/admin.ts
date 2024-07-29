@@ -74,7 +74,8 @@ export async function adminRegister(req: Request, res: Response) {
     const token = jwt.sign({ email }, environmentVars.PUBLIC_KEY, {
       expiresIn: '7d',
     });
-
+    console.log(token);
+    
     return res.status(200).send({
       message: 'success',
       data: { token },
@@ -228,5 +229,20 @@ export async function rideAssignedByAdmin(req: Request, res: Response) {
     if (session) {
       await session.endSession();
     }
+  }
+}
+
+export async function getAllAdmins(req: Request, res: Response){
+  try {
+    console.log("Api working");
+    
+    const adminsData= await Admin.find().sort().lean();
+    res.status(200).send({
+      message: 'Admin data retrieved successfully.',
+      data: adminsData,
+    });
+  } catch (error: any) {
+    res.status(400).json({ success: false, message: error.message });
+    console.error('Error:', error);
   }
 }
