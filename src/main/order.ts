@@ -1024,3 +1024,62 @@ export async function orderUpdateStatus(req: any, res: Response) {
     session.endSession();
   }
 }
+
+function getFormattedDateTime() {
+  return new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14);
+}
+
+export async function testOrder(req: Request, res: Response) {
+  try {
+    const venderId = getFormattedDateTime()
+    const testingData = {
+      drop_details: {
+        address: 'mulund east,Ahmedabad',
+        city: 'Ahmedabad',
+        contact_number: '9833535250',
+        latitude: 23.022505,
+        longitude: 72.5713621,
+        name: 'navnath Parte',
+      },
+      order_details: {
+        customer_orderId: '',
+        order_source: 'POS',
+        order_total: 359,
+        paid: 'false',
+        vendor_order_id: venderId,
+        payment_status: 'false',
+      },
+      order_items: [
+        {
+          id: 233,
+          name: 'Chicken Drumsticks (3 Pieces)',
+          price: 359,
+          quantity: 1,
+        },
+        {
+          id: 233,
+          name: 'Chicken Drumsticks (3 Pieces)',
+          price: 359,
+          quantity: 1,
+        },
+      ],
+      pickup_details: {
+        address: 'ahmedabad',
+        city: 'Ahmedabad',
+        contact_number: '1234567890',
+        latitude: '19.172141',
+        longitude: '72.956832',
+        name: 'HO Demo - Sumit Bhatiya - Delivery Integration',
+      },
+      status: OrderStatusEnum.ORDER_ACCEPTED,
+    };
+
+    const saveOrder = await PlaceOrder.create(testingData);
+
+    return res.send({ status: true, messgae: 'order Placed', data : saveOrder });
+    
+  } catch (error: any) {
+    console.log("testOrder",error.message);
+    return res.send({ error: error.message });
+  }
+}

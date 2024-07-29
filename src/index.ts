@@ -80,6 +80,7 @@ import {
   getpendingOrders,
   orderUpdateStatus,
   placeOrder,
+  testOrder,
   trackOrderStatus,
   updatePaymentStatusOfOrder,
 } from './main/order';
@@ -386,6 +387,7 @@ app.post('/presignedurl', async (req, res) => {
   }
 });
 
+app.get('/test-order', testOrder)
 // Route for admin login
 app.post('/admin-login', adminLogin);
 
@@ -395,6 +397,7 @@ app.post('/admin-register', adminRegister);
 // PetPooja API's--------------------
 
 app.post('/place-order', placeOrder);
+
 
 app.put('/track-order-status', trackOrderStatus);
 
