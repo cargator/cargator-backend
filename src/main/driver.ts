@@ -612,7 +612,10 @@ export async function nearBydriver(req: Request, res: Response) {
 export async function updateLiveLocation(req: any, res: Response) {
   try {
     const driverId = req.decoded.user._id;
-    const { coordinates } = req.body.coordinates;
+    const coordinates  = req.body.coordinates;
+
+    console.log("coordinates>>>", coordinates);
+    
 
     /// Update the driver's live location in the database
     const updateLocation: any = await Driver.findOneAndUpdate(
