@@ -251,47 +251,42 @@ async function setUpCronJobs() {
   }
 }
 
-export async function setDriverOffline(req: any) {
+export async function toggleDriverStatus(req: any, res: Response) {
+  console.log('i am here');
+
   const driverId = req.decoded.user._id;
-
-  console.log('req.decoded.user._id', driverId);
-
   try {
-    // Update the driver's status to 'offline'
-    const updateDriver = await Driver.updateOne(
-      {
-        //todo: change mobileNumber to _id in future
-        _id: driverId,
-        rideStatus: 'online',
-      },
-      {
-        rideStatus: 'offline',
-      },
-    );
-  } catch (err: any) {
-    console.error('Error while updating driver status:', err);
-  }
-}
-
-export async function setDriverOnline(req: any) {
-  const driverId = req.decoded.user._id;
-
-  console.log('req.decoded.user._id', driverId);
-
-  try {
-    // Update the driver's status to 'offline'
     await Driver.updateOne(
       {
-        //todo: change mobileNumber to _id in future
         _id: driverId,
-        rideStatus: 'offline',
       },
-      {
-        rideStatus: 'online',
-      },
+      [
+        {
+          $set: {
+            rideStatus: {
+              $switch: {
+                branches: [
+                  { case: { $eq: ['$rideStatus', 'online'] }, then: 'offline' },
+                  { case: { $eq: ['$rideStatus', 'offline'] }, then: 'online' },
+                ],
+                default: '',
+              },
+            },
+          },
+        },
+      ],
     );
+    res.status(200).send({
+      status: true,
+      // vendor_order_id: order_details.vendor_order_id,
+      message: 'Order created succcessfully.',
+    });
   } catch (err: any) {
-    console.error('Error while updating driver status:', err);
+    res.status(200).send({
+      status: true,
+      // vendor_order_id: order_details.vendor_order_id,
+      message: err.message,
+    });
   }
 }
 
@@ -387,7 +382,7 @@ app.post('/presignedurl', async (req, res) => {
   }
 });
 
-app.get('/test-order', testOrder)
+app.get('/test-order', testOrder);
 // Route for admin login
 app.post('/admin-login', adminLogin);
 
@@ -397,7 +392,6 @@ app.post('/admin-register', adminRegister);
 // PetPooja API's--------------------
 
 app.post('/place-order', placeOrder);
-
 
 app.put('/track-order-status', trackOrderStatus);
 
@@ -411,8 +405,7 @@ app.get('/get-order/:id', getOrderById);
 
 app.use(authorize);
 
-app.post('/set-driver-offline', setDriverOffline);
-app.post('/set-driver-online', setDriverOnline);
+app.post('/toggle-driver-status', toggleDriverStatus);
 
 app.post('/get-history', getHistory);
 app.get('/progress', getProgress);
