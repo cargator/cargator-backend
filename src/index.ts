@@ -18,7 +18,11 @@ import {
   adminRegister,
   changePassword,
   dashboardData,
+  deleteAdmin,
+  getAllAdmins,
+  makeSuperAdmin,
   rideAssignedByAdmin,
+  updateAdmin,
 } from './main/admin';
 import {
   createApp,
@@ -410,6 +414,12 @@ app.post('/admin-login', adminLogin);
 
 // Route for admin register
 app.post('/admin-register', adminRegister);
+
+//Route for get All Admin
+app.get('/get-all-admins',getAllAdmins)
+app.delete('/delete-admin/:id',deleteAdmin)
+app.patch('/update-to-super-admin/:id',makeSuperAdmin)
+app.put('/update-admin/:id', updateAdmin);
 
 // PetPooja API's--------------------
 

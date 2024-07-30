@@ -1,3 +1,4 @@
+import { PipelineStage } from 'mongoose';
 import { Driver, Rides, Admin, PlaceOrder } from '../models';
 import { Request, Response } from 'express';
 const jwt = require('jsonwebtoken');
@@ -17,14 +18,17 @@ export async function adminLogin(req: Request, res: Response) {
       throw new Error(`Invalid email or password !`);
     }
 
-    // Find the admin based on the provided credentials
     let adminDoc: any = await Admin.findOne({
       email,
       password,
     }).lean();
-    // console.log(`admin-login >> adminDoc :>> `, adminDoc);
-
-    // Check if the admin is registered
+    
+    // let adminDoc: any = await Admin.findOneAndUpdate(
+    //   { email, password }, 
+    //   { status: 'online' }, 
+    //   { new: true, lean: true }
+    // ).lean();
+ 
     if (!adminDoc) {
       throw new Error(`Invalid email or password !`);
     }
@@ -33,10 +37,13 @@ export async function adminLogin(req: Request, res: Response) {
     const token = jwt.sign({ email }, environmentVars.PUBLIC_KEY, {
       expiresIn: '7d',
     });
+    console.log(adminDoc);
+    const super_Admin=adminDoc.super_Admin;
+    
 
     return res.status(200).send({
       message: 'success',
-      data: { token },
+      data: { token ,super_Admin},
     });
   } catch (error: any) {
     console.log(`admin-login error :>> `, error);
@@ -49,6 +56,8 @@ export async function adminRegister(req: Request, res: Response) {
     // console.log(`admin-login API >> body :>> `, req.body);
     const body = req.body;
     const { name, email,mobile_Number} = body;
+    const super_Admin=false;
+    const status="active";
     
     
 
@@ -65,6 +74,8 @@ export async function adminRegister(req: Request, res: Response) {
       name,
       email,
       mobile_Number,
+      // status,
+      super_Admin,
       password,
       // confirmPassword,
     });
@@ -74,7 +85,8 @@ export async function adminRegister(req: Request, res: Response) {
     const token = jwt.sign({ email }, environmentVars.PUBLIC_KEY, {
       expiresIn: '7d',
     });
-
+    console.log(token);
+    
     return res.status(200).send({
       message: 'success',
       data: { token },
@@ -228,5 +240,126 @@ export async function rideAssignedByAdmin(req: Request, res: Response) {
     if (session) {
       await session.endSession();
     }
+  }
+}
+
+
+
+
+export async function getAllAdmins(req: Request, res: Response) {
+  try {
+    // Extract and validate query parameters
+    const page: number = parseInt(req.query.page as string) || 1;
+    const limit: number = parseInt(req.query.limit as string) || 10;
+    const dataLimit = limit;
+    const skip = (page - 1) * dataLimit;    const email = req.headers['email'] as string;
+
+    const user = await Admin.findOne({ email }).exec();
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const isSuperAdmin = user.super_Admin;
+
+    const pipeline: any[] = [
+      {
+        $facet: {
+          Admin: [
+            // Include or exclude super admins based on user's role
+            ...(isSuperAdmin ? [] : [{ $match: { super_Admin: false } }]),
+            { $sort: { updatedAt: -1 } },
+            { $skip: skip },
+            { $limit: dataLimit },
+          ],
+          totalAdmin: [{ $count: 'count' }],
+        },
+      },
+    ];
+   
+    const allAdmin = await Admin.aggregate(pipeline).exec();
+    
+    if (!allAdmin || allAdmin.length === 0) {
+      return res.status(404).json({ success: false, message: 'No admins found' });
+    }
+
+    const totalAdmin = allAdmin[0].totalAdmin[0]?.count || 0;
+
+    return res.status(200).json({
+      message: 'Admins fetched successfully',
+      data: allAdmin[0].Admin,
+      totalAdmin,
+    });
+  } catch (error: any) {
+    console.error(error); // Log error for debugging
+    res.status(500).json({ success: false, message: 'An error occurred while fetching admins' });
+  }
+}
+
+export async function deleteAdmin(req: Request, res: Response)
+{
+  try {
+    const _id = req.params.id;
+    const x=await Admin.findByIdAndDelete(_id);
+    if(x){
+      return res.status(200).json({
+        message: 'Admins deletetd successfully',
+      });
+    }
+  } catch (error) {
+    console.error(error); // Log error for debugging
+    res.status(500).json({ success: false, message: 'An error occurred while fetching admins' });
+  }
+}
+
+
+export async function makeSuperAdmin(req: Request, res: Response) {
+  try {
+    const _id = req.params.id;
+    const admin = await Admin.findByIdAndUpdate(_id, { super_Admin: true }, { new: true });
+
+    if (admin) {
+      return res.status(200).json({
+        message: 'Admin updated to Super Admin successfully',
+        admin: admin  // Optionally return the updated admin object
+      });
+    } else {
+      return res.status(404).json({
+        success: false,
+        message: 'Admin not found'
+      });
+    }
+  } catch (error) {
+    console.error(error); // Log error for debugging
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred while updating super admin'
+    });
+  }
+}
+
+export async function updateAdmin(req: Request, res: Response) {
+  try {
+    const _id = req.params.id;
+    const body = req.body;
+
+    const admin = await Admin.findByIdAndUpdate(_id,body,{ new: true });
+
+    if (admin) {
+      return res.status(200).json({
+        message: 'Admin updated successfully',
+        admin: admin  
+      });
+    } else {
+      return res.status(404).json({
+        success: false,
+        message: 'Admin not found'
+      });
+    }
+  } catch (error) {
+    console.error('Error updating admin:', error); 
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred while updating admin'
+    });
   }
 }

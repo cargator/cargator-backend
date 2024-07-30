@@ -13,8 +13,9 @@ const adminSchema = new mongoose.Schema(
       type:String,
       unique:true
     },
+    super_Admin:Boolean,
+    // status:String,
     password: String,
-
   },
   {
     timestamps: true,
