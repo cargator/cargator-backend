@@ -251,6 +251,27 @@ async function setUpCronJobs() {
   }
 }
 
+export async function getDriverStatus(req: any, res: Response){
+  const driverId = req.decoded.user._id;
+  try {
+    const getStatus = await Driver.findOne({
+      _id: driverId,
+    }).lean();
+
+    res.status(200).send({
+      status: true,
+      message: 'Status get succcessfully.',
+      data: getStatus,
+    });
+    
+  } catch (err: any) {
+    res.status(200).send({
+      status: true,
+      message: err.message,
+    });
+  }
+}
+
 export async function toggleDriverStatus(req: any, res: Response) {
   console.log('i am here');
 
@@ -259,6 +280,7 @@ export async function toggleDriverStatus(req: any, res: Response) {
     await Driver.updateOne(
       {
         _id: driverId,
+        rideStatus: {$ne: "on-ride"}
       },
       [
         {
@@ -266,8 +288,8 @@ export async function toggleDriverStatus(req: any, res: Response) {
             rideStatus: {
               $switch: {
                 branches: [
-                  { case: { $eq: ['$rideStatus', 'online'] }, then: 'offline' },
-                  { case: { $eq: ['$rideStatus', 'offline'] }, then: 'online' },
+                  { case: { $eq: ['$rideStatus', 'online']}, then: 'offline' },
+                  { case: { $eq: ['$rideStatus', 'offline']}, then: 'online' },
                 ],
                 default: '',
               },
@@ -406,6 +428,9 @@ app.get('/get-order/:id', getOrderById);
 app.use(authorize);
 
 app.post('/toggle-driver-status', toggleDriverStatus);
+
+app.get('/get-driver-status', getDriverStatus);
+
 
 app.post('/get-history', getHistory);
 app.get('/progress', getProgress);

@@ -66,11 +66,13 @@ export async function placeOrder(req: Request, res: Response) {
         payment_status: req.body.order_details.paid,
       },
     });
-    const RiderDetails = await Driver.find({ rideStatus: 'online' }).lean();
 
     if (!saveOrder) {
       throw new Error('error while placing order');
     }
+
+    const RiderDetails = await Driver.find({ rideStatus: 'online' }).lean();
+
 
     await sendEmail(req.body);
 
@@ -1075,6 +1077,26 @@ export async function testOrder(req: Request, res: Response) {
     };
 
     const saveOrder = await PlaceOrder.create(testingData);
+
+    const RiderDetails = await Driver.find({ rideStatus: 'online' }).lean();
+
+    if (!saveOrder) {
+      throw new Error('error while placing order');
+    }
+
+    await sendEmail(req.body);
+
+    pubClient.publish(
+      'new-order',
+      formatSocketResponse({
+        order: saveOrder,
+      }),
+    );
+    if (RiderDetails.length > 0) {
+      for (const iterator of RiderDetails) {
+        await sendOrderNotification(iterator.deviceToken, saveOrder);
+      }
+    }
 
     return res.send({ status: true, messgae: 'order Placed', data : saveOrder });
     
