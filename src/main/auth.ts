@@ -223,6 +223,7 @@ export async function verifyOtp(req: Request, res: Response) {
         await Driver.findOneAndUpdate(
           {
             mobileNumber: `91${mobileNumber}`,
+            rideStatus: { $ne: 'on-ride' },
           },
           { rideStatus: 'offline' },
         );
