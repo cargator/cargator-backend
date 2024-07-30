@@ -234,15 +234,37 @@ export async function rideAssignedByAdmin(req: Request, res: Response) {
 
 export async function getAllAdmins(req: Request, res: Response){
   try {
-    console.log("Api working");
+    console.log("Admin api working");
     
-    const adminsData= await Admin.find().sort().lean();
-    res.status(200).send({
-      message: 'Admin data retrieved successfully.',
-      data: adminsData,
+    const page: any = req?.query?.page;
+    const limit: any = req.query.limit;
+    const dataLimit = parseInt(limit);
+    const skip = (parseInt(page) - 1) * dataLimit;
+    const allAdmin = await Admin.aggregate([
+      {
+        $facet: {
+          Admin: [
+            { $sort: { updatedAt: -1 } },
+            { $skip: skip },
+            { $limit: dataLimit },
+          ],
+          totalAdmin: [{ $count: 'count' }],
+        },
+      },
+    ]);
+
+    const totalAdmin = allAdmin[0]['totalAdmin'][0]['count'];
+
+    if (!allAdmin || allAdmin.length === 0) {
+      throw new Error('Vehicles not found');
+    }
+
+    return res.status(200).json({
+      message: 'This vehicle is already assigned to you',
+      data: allAdmin[0]['Admin'],
+      totalAdmin,
     });
   } catch (error: any) {
     res.status(400).json({ success: false, message: error.message });
-    console.error('Error:', error);
   }
 }
