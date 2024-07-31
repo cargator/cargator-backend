@@ -1,4 +1,6 @@
-import { Driver, Rides, Admin, PlaceOrder } from '../models';
+import { Driver } from '../models/driver.model';
+import { Admin } from '../models/admin.model';
+import { PlaceOrder } from '../models/placeOrder.model';
 import { Request, Response } from 'express';
 const jwt = require('jsonwebtoken');
 const _ = require('lodash');
@@ -195,38 +197,3 @@ export async function dashboardData(req: Request, res: Response) {
   }
 }
 
-export async function rideAssignedByAdmin(req: Request, res: Response) {
-  const body = req.body;
-  const rideId = body.rideId;
-  const driverId = body.driverId;
-  let session;
-  try {
-    session = await Rides.startSession();
-    session.startTransaction();
-    if (!driverId && rideId) {
-      throw new Error('Both driverId and rideId are required.');
-    }
-    const updatedRide = await Rides.findOneAndUpdate(
-      { rideId },
-      { status: 'pending-arrival', driverId: driverId },
-      { session: session, new: true },
-    );
-
-    const updatedDriver = await Driver.findOneAndUpdate(
-      { driverId },
-      { rideStatus: 'on-ride' },
-      { session: session, new: true },
-    );
-    await session.commitTransaction();
-  } catch (err: any) {
-    if (session) {
-      await session.abortTransaction();
-    }
-    console.log('Fair error: ', err);
-    res.status(400).send({ error: err.message });
-  } finally {
-    if (session) {
-      await session.endSession();
-    }
-  }
-}

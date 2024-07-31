@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
 import axios from 'axios';
-import { Rides, Orders } from '../models'; // Assuming these models exist
 import environmentVars from '../constantsVars';
 import { getAppFLow } from './app';
 import { FlowTypeEnum } from '../shared/enums/status.enum';
+import { PlaceOrder } from '../models/placeOrder.model';
 
 const apiUrl: any = environmentVars.OPEN_AI_API_URL;
 
@@ -37,16 +37,10 @@ export async function chatGptApi(req: Request, res: Response) {
 
     let data;
     switch (flowType?.applicationFLow) {
-      case FlowTypeEnum.CARGATOR:
-        data = await Rides.find({
-          createdAt: { $gte: startDate, $lt: endDate },
-        })
-          .sort({ createdAt: -1 })
-          .select('-_id status fare paymentMode cancelBy.reason');
-        break;
+
 
       case FlowTypeEnum.PETPOOJA:
-        data = await Orders.find({
+        data = await PlaceOrder.find({
           createdAt: { $gte: startDate, $lt: endDate },
         })
           .sort({ createdAt: -1 })

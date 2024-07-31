@@ -2,7 +2,8 @@ import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { getUtils } from '..';
 import environmentVars from '../constantsVars';
-import { Driver, Vehicles } from '../models';
+import { Driver } from '../models/driver.model';
+import { Vehicles } from '../models';
 const AWS = require('aws-sdk');
 AWS.config.update({
   region: environmentVars.AWS_REGION,

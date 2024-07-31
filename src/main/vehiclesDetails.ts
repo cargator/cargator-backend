@@ -1,4 +1,5 @@
-import { Driver, Vehicles } from '../models';
+import { Vehicles } from '../models';
+import { Driver } from '../models/driver.model';
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import environmentVars from '../constantsVars'

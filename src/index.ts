@@ -18,7 +18,6 @@ import {
   adminRegister,
   changePassword,
   dashboardData,
-  rideAssignedByAdmin,
 } from './main/admin';
 import {
   createApp,
@@ -62,15 +61,6 @@ import {
   updateBreakPoints,
 } from './main/flows';
 import {
-  addressFromCoordinates,
-  coordinatesFromAddress,
-  getAddressFromAutocomplete,
-  getAddressFromAutocompleteOlaMaps,
-  // getAddressFromAutocompletemapmyindia,
-  getDirection,
-  getDirectionmapmyindia,
-} from './main/map';
-import {
   cancelTask,
   getDriversPendingOrders,
   getHistory,
@@ -109,8 +99,9 @@ import {
   getVehicleType,
   updateVehicleType,
 } from './main/vehicleType';
-import { Driver, Utils } from './models';
+import { Utils } from './models';
 import { CronExpressions } from './shared/enums/CronExpressions';
+import { Driver } from './models/driver.model';
 
 let utilsData: any;
 
@@ -431,24 +422,6 @@ app.get('/get-pending-orders', getpendingOrders);
 app.get('/get-my-pending-order', getDriversPendingOrders);
 app.post('/update-payment-status-of-order', updatePaymentStatusOfOrder);
 
-if (environmentVars.MAP_MY_INDIA == 'false') {
-  // Route for fetching address predictions from Google Places Autocomplete API
-  app.post('/get-address-from-autocomplete', getAddressFromAutocomplete);
-
-  app.post('/get-directions', getDirection);
-
-  app.post('/get-address-from-coordinates', addressFromCoordinates);
-
-  app.post('/get-coordinates-from-address', coordinatesFromAddress);
-} else {
-  app.post('/get-address-from-autocomplete', getAddressFromAutocompleteOlaMaps);
-
-  app.post('/get-address-from-coordinates', addressFromCoordinates);
-
-  app.post('/get-directions', getDirectionmapmyindia);
-
-  app.post('/get-coordinates-from-address', coordinatesFromAddress);
-}
 
 // app.get('/fetchPendingPayments', async (req: Request, res: Response) => {
 //   FetchPayments();
@@ -597,8 +570,6 @@ app.get('/search-vehicles', searchVehicles);
 app.get('/getVehicleById/:id', getVehicleById);
 
 app.post('/nearBydriver', nearBydriver);
-
-app.post('/ride-assigned-by-admin', rideAssignedByAdmin);
 
 app.get('/allAvailableVehicles', allAvailableVehicles);
 

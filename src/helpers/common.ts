@@ -1,10 +1,7 @@
 import axios from 'axios';
-import { Request, Response } from 'express';
 import { isEmpty } from 'lodash';
 import { decode } from '@mapbox/polyline';
 import constants from '../constantsVars';
-import { Driver, Rides } from '../models';
-import mongoose from 'mongoose';
 import { access_token } from '..';
 
 const token_type = 'bearer';

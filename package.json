@@ -13,6 +13,7 @@
   "license": "ISC",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.405.0",
+    "@aws-sdk/s3-request-presigner": "^3.621.0",
     "@mapbox/polyline": "^1.2.0",
     "@socket.io/admin-ui": "^0.5.1",
     "@socket.io/redis-adapter": "^8.2.1",
