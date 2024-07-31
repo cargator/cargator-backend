@@ -719,11 +719,7 @@ const driverSocketConnected = async (
       const driver_location = body.driverLoc;
 
       // check if order is available for this driver
-      const driverData: any = await Driver.findOne(
-        { _id: _userId },
-        { new: true },
-      ).lean();
-
+      const driverData: any = await Driver.findOne({ _id: _userId }).lean();
       if (!driverData) {
         pubClient.publish(
           'order-update-response',
