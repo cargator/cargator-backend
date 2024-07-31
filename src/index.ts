@@ -85,17 +85,6 @@ import {
   updatePaymentStatusOfOrder,
 } from './main/order';
 import {
-  cancelScheduledRide,
-  createCustomRides,
-  searchRide,
-  updateRides,
-} from './main/ride';
-import {
-  addProfileDetails,
-  deleteRider,
-  updateRiderStatus,
-} from './main/rider';
-import {
   createSpot,
   deleteSpot,
   getActiveSpot,
@@ -442,8 +431,6 @@ app.get('/get-pending-orders', getpendingOrders);
 app.get('/get-my-pending-order', getDriversPendingOrders);
 app.post('/update-payment-status-of-order', updatePaymentStatusOfOrder);
 
-app.post('/add-profile-details', addProfileDetails);
-
 if (environmentVars.MAP_MY_INDIA == 'false') {
   // Route for fetching address predictions from Google Places Autocomplete API
   app.post('/get-address-from-autocomplete', getAddressFromAutocomplete);
@@ -528,13 +515,9 @@ app.get('/search-drivers', searchDrivers);
 // driver crud
 app.post('/create-driver', createDriver);
 
-app.delete('/deleteRider/:uid', deleteRider);
-
 app.patch('/updateDriver/:uid', updateDriver);
 
 app.patch('/update-driver-status/:uid', updateDriverStatus);
-
-app.patch('/update-rider-status', updateRiderStatus);
 
 app.get('/get-vehicle-data', getVehicleData);
 
@@ -601,23 +584,13 @@ app.patch('/update-app-flow/:id', updateAppFlow);
 
 // app.post('/logout-time', logoutTime)
 
-// custom rides crud -----------------------------
-
-app.post('/createRide', createCustomRides);
-
-app.patch('/updateRide', updateRides);
-
 // vehicle crud
 
 app.post('/create-vehicle', createVehicleData);
 
-app.post('/cancel-scheduled-ride', cancelScheduledRide);
-
 app.patch('/updateVehicle/:uid', updateVehicle);
 
 app.get('/paginatedVehicleData', paginatedVehicleData);
-
-app.get('/search-ride', searchRide);
 
 app.get('/search-vehicles', searchVehicles);
 
