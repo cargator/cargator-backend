@@ -1,18 +1,15 @@
 import axios from 'axios';
-import { Request, Response } from 'express';
 import environmentVars from '../constantsVars';
+import { Request, Response } from 'express';
 import { Driver } from '../models/driver.model';
-const jwt = require('jsonwebtoken');
-const _ = require('lodash');
+import jwt from 'jsonwebtoken';
+import { pick } from 'lodash';
+import { sendOtpViaSms } from '../config/smsOtpService';
 
 export async function handleLogin(req: Request, res: Response) {
   try {
-    // console.log('login >> body :>> ', req.body);
-
-    // Handle driver login
-    if (req.body.type == 'driver') {
-      const mobileNumber = req.body.mobileNumber;
-      console.log('object', mobileNumber);
+    const { type, mobileNumber } = req.body;
+    if (type == 'driver') {
       if (!mobileNumber) {
         throw new Error(`Invalid Mobile Number!`);
       }
@@ -21,28 +18,26 @@ export async function handleLogin(req: Request, res: Response) {
         mobileNumber: `91${mobileNumber}`,
         status: 'active',
       }).lean();
+
       if (!driverDoc) {
         throw new Error('Please enter a registered mobile number.');
       }
 
-      let otp: any = Math.floor(1000 + Math.random() * 9000); // Generate a 6-digit OTP
+      let otp: any = Math.floor(1000 + Math.random() * 9000); // Generate a 4-digit OTP
       if (
         mobileNumber.toString().startsWith('7440214173') ||
         mobileNumber.toString().startsWith('9322310197')
       ) {
         otp = '0000';
-        const update = await Driver.findOneAndUpdate(
+        await Driver.findOneAndUpdate(
           { mobileNumber: `91${mobileNumber}` },
           {
             otp,
           },
         );
-        // console.log('update--->', update);
+
         return res.status(200).send({ message: `Otp is generated` });
       }
-      // let otp: any = '000000';
-
-      // // Update the driver document with the generated OTP
 
       if (
         !driverDoc.otp ||
@@ -71,14 +66,7 @@ export async function handleLogin(req: Request, res: Response) {
             .status(200)
             .send({ message: `OTP sent to mobile number 91${mobileNumber}.` });
         } else {
-          // const sendSmsRes = await axios.get(
-          //   // `http://sms.bulkssms.com/submitsms.jsp?user=icallsms&key=d1cd9d7799XX&mobile=${mobileNumber}&message=Welcome to Cargator! Your login OTP is ${otp}.This code is valid for 5 minutes only.&senderid=MiCALL&accusage=1&entityid=1201159179632441114&tempid=1507167275825310764`, // ! NOT WORKING.
-          //   `http://sms.bulkssms.com/submitsms.jsp?user=icallsms&key=d1cd9d7799XX&mobile=${mobileNumber}&message=Greetings from iCALL, Use this OTP ${otp} to complete your registration to iCALL's Chat services. Thank you.&senderid=MiCALL&accusage=1&entityid=1201159179632441114&tempid=1507167275825310764`, //! Change this message according to Cargator.
-          // );
-          // console.log(`sendSmsRes :>> `, sendSmsRes?.data);
-          const sendSmsRes = await axios.get(
-            `https://api.authkey.io/request?authkey=${environmentVars.AUTHKEY_OTP}&mobile=${mobileNumber}&country_code=91&sid=${environmentVars.OTP_SID}&otp=${otp}`,
-          );
+          const sendSmsRes = await sendOtpViaSms(mobileNumber, otp);
           console.log(`sendSmsRes :>> `, sendSmsRes?.data);
           return res
             .status(200)
@@ -128,25 +116,13 @@ export async function verifyOtp(req: Request, res: Response) {
       // Verify OTP
       if (otp == user.otp || mobileNumber === '9876543210') {
         // Select relevant user fields and generate a JWT token
-        user = _.pick(user, [
-          '_id',
-          'mobileNumber',
-          'documentsKey',
-          'firstName',
-        ]);
+        user = pick(user, ['_id', 'mobileNumber', 'documentsKey', 'firstName']);
         const token = jwt.sign(
           { user, type: 'driver' },
           environmentVars.PUBLIC_KEY,
           {
             expiresIn: '7d',
           },
-        );
-        await Driver.findOneAndUpdate(
-          {
-            mobileNumber: `91${mobileNumber}`,
-            rideStatus: { $ne: 'on-ride' },
-          },
-          { rideStatus: 'offline' },
         );
         return res.json({
           user: { ...user, profileImageKey },
@@ -165,4 +141,43 @@ export async function verifyOtp(req: Request, res: Response) {
     return res.status(400).send({ error: error.message });
     // return res.status(400).send(error.message);
   }
+}
+
+let access_token = 'string';
+export const refreshToken = async () => {
+  try {
+    const data = {
+      grant_type: 'client_credentials',
+      client_id: `${environmentVars.REFRESH_TOKEN_CLIENT_ID}`,
+      client_secret: `${environmentVars.REFRESH_TOKEN_CLIENT_SECRET}`,
+    };
+
+    const token: any = await axios.post(
+      `${environmentVars.REFRESH_TOKEN_URL}`,
+      data,
+      {
+        headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      },
+    );
+    if (!token) {
+      throw new Error('Token is not generated due to server error');
+    }
+    // console.log('token', token)
+    access_token = token.data.access_token;
+    console.log('Token for MapMyIndia refreshed successfully:', access_token);
+  } catch (error) {
+    console.error('Token refresh failed:', error);
+  }
+};
+
+export const decodeToken = (token: string) => {
+  try {
+    return jwt.verify(token, environmentVars.PUBLIC_KEY);
+  } catch (error) {
+    return false;
+  }
+};
+
+export function useAccessToken() {
+  return access_token;
 }
