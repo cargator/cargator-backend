@@ -102,23 +102,17 @@ import {
 import { Utils } from './models';
 import { CronExpressions } from './shared/enums/CronExpressions';
 import { Driver } from './models/driver.model';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { deleteObjectFromS3 } from './config/aws.config';
 
 let utilsData: any;
 
-const AWS = require('aws-sdk');
 const _ = require('lodash');
 const jwt = require('jsonwebtoken');
 const app = express();
-const crypto = require('crypto');
-const Razorpay = require('razorpay');
 const cron = require('node-cron');
 const CronJob = require('cron').CronJob;
 
-AWS.config.update({
-  region: environmentVars.AWS_REGION,
-  accessKeyId: environmentVars.AWS_ACCESS_KEY_ID,
-  secretAccessKey: environmentVars.AWS_SECRET_ACCESS_KEY,
-});
 
 const sendToAllRiders: any = (data: any) => {
   try {
@@ -150,14 +144,7 @@ let io: Server;
 // Configure Express app with necessary middleware
 app.use(cors());
 app.use(json());
-const razorpay = new Razorpay({
-  key_id: environmentVars.DEV_RAZORPAY_KEY_ID
-    ? environmentVars.DEV_RAZORPAY_KEY_ID
-    : '',
-  key_secret: environmentVars.DEV_RAZORPAY_KEY_SECRET
-    ? environmentVars.DEV_RAZORPAY_KEY_SECRET
-    : '',
-});
+
 
 let access_token = '';
 const refreshToken = async () => {
@@ -231,7 +218,7 @@ async function setUpCronJobs() {
   }
 }
 
-export async function getDriverStatus(req: any, res: Response){
+export async function getDriverStatus(req: any, res: Response) {
   const driverId = req.decoded.user._id;
   try {
     const getStatus = await Driver.findOne({
@@ -243,7 +230,6 @@ export async function getDriverStatus(req: any, res: Response){
       message: 'Status get succcessfully.',
       data: getStatus,
     });
-    
   } catch (err: any) {
     res.status(200).send({
       status: true,
@@ -260,7 +246,7 @@ export async function toggleDriverStatus(req: any, res: Response) {
     await Driver.updateOne(
       {
         _id: driverId,
-        rideStatus: {$ne: "on-ride"}
+        rideStatus: { $ne: 'on-ride' },
       },
       [
         {
@@ -268,8 +254,8 @@ export async function toggleDriverStatus(req: any, res: Response) {
             rideStatus: {
               $switch: {
                 branches: [
-                  { case: { $eq: ['$rideStatus', 'online']}, then: 'offline' },
-                  { case: { $eq: ['$rideStatus', 'offline']}, then: 'online' },
+                  { case: { $eq: ['$rideStatus', 'online'] }, then: 'offline' },
+                  { case: { $eq: ['$rideStatus', 'offline'] }, then: 'online' },
                 ],
                 default: '',
               },
@@ -344,43 +330,36 @@ app.post('/verifyOtp', verifyOtp);
 app.post('/presignedurl', async (req, res) => {
   try {
     const { key, contentType, type } = req.body;
-
-    const s3 = new AWS.S3();
-    let s3Params;
-    if (type == 'put') {
-      s3Params = {
-        Bucket: 'cargator',
-        Key: key,
-        Expires: 60 * 60,
-        ContentType: contentType,
-      };
-    } else {
-      s3Params = {
-        Bucket: 'cargator',
-        Key: key,
-        Expires: 60 * 60,
-        // ContentType: contentType,
-      };
+    console.log(">>>>>>>>>>>>>>>>>>",key , contentType, type);
+    if (!key || !type) {
+      return res.status(400).send({ error: 'Key and type are required' });
     }
 
-    // const url = await getPresignUrlPromiseFunction(s3, s3Params);
-    const url = await s3.getSignedUrl(
-      type == 'put' ? 'putObject' : 'getObject',
-      s3Params,
-    );
+    const s3Params: any = {
+      Bucket: 'cargator',
+      Key: key,
+      Expires: 60 * 60,
+    };
+
+    if (type === 'put') {
+      s3Params.ContentType = contentType;
+    }
+
+    console.log(">>>>>>>>>>>>>>>>>222");
+
+    const url = await getSignedUrl(type, s3Params);
+
+    console.log("this is a url", url);
+    
+
     if (!url) {
       throw new Error('URL not generated');
     }
-    // console.log('object url :>> ', url);
-    if (url) {
-      res.status(200).send({
-        message: 'URL recieved successfully',
-        url: url,
-      });
-    }
+
+    res.status(200).send({ message: 'URL received successfully', url: url });
   } catch (error: any) {
-    console.log('presignedurl error: ', error);
-    res.status(400).send({ error: error.message });
+    console.error('Presigned URL error:', error);
+    res.status(500).send({ error: error.message });
   }
 });
 
@@ -411,7 +390,6 @@ app.post('/toggle-driver-status', toggleDriverStatus);
 
 app.get('/get-driver-status', getDriverStatus);
 
-
 app.post('/get-history', getHistory);
 app.get('/progress', getProgress);
 app.post(`/update-live-location`, updateLiveLocation);
@@ -421,7 +399,6 @@ app.post('/update-order-status', orderUpdateStatus);
 app.get('/get-pending-orders', getpendingOrders);
 app.get('/get-my-pending-order', getDriversPendingOrders);
 app.post('/update-payment-status-of-order', updatePaymentStatusOfOrder);
-
 
 // app.get('/fetchPendingPayments', async (req: Request, res: Response) => {
 //   FetchPayments();
@@ -452,29 +429,19 @@ app.get('/dashboard-data', dashboardData);
 app.post('/delete-object-from-s3', async (req, res) => {
   try {
     const { key } = req.body;
-    const s3 = new AWS.S3();
-    const params = {
-      Bucket: 'cargator',
-      Key: key, // Replace with the key of the object you want to delete
-    };
+    if (!key) {
+      return res.status(400).json({ success: false, message: 'Key is required' });
+    }
+    const data = await deleteObjectFromS3('cargator', key);
+    console.log('Object deleted successfully', data);
 
-    s3.deleteObject(params, (err: any, data: any) => {
-      if (err) {
-        console.error('Error deleting object:', err);
-        res.status(400).json({ success: false, message: err });
-      } else {
-        // console.log("Object deleted successfully");
-        console.log('Object deleted successfully', data);
-        res.status(200).send({
-          message: 'Object deleted successfully',
-          data: data,
-        });
-      }
-    });
+    res.status(200).send({ message: 'Object deleted successfully', data });
   } catch (error: any) {
-    res.status(400).json({ success: false, message: error.message });
+    console.error('Error deleting object:', error);
+    res.status(500).json({ success: false, message: error.message });
   }
 });
+
 
 app.get('/onlineDrivers', onlineDrivers);
 
