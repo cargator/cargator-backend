@@ -102,8 +102,7 @@ import {
 import { Utils } from './models';
 import { CronExpressions } from './shared/enums/CronExpressions';
 import { Driver } from './models/driver.model';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { deleteObjectFromS3 } from './config/aws.config';
+import { deleteObjectFromS3, getSignedUrlForS3 } from './config/aws.config';
 
 let utilsData: any;
 
@@ -330,7 +329,6 @@ app.post('/verifyOtp', verifyOtp);
 app.post('/presignedurl', async (req, res) => {
   try {
     const { key, contentType, type } = req.body;
-    console.log(">>>>>>>>>>>>>>>>>>",key , contentType, type);
     if (!key || !type) {
       return res.status(400).send({ error: 'Key and type are required' });
     }
@@ -345,12 +343,7 @@ app.post('/presignedurl', async (req, res) => {
       s3Params.ContentType = contentType;
     }
 
-    console.log(">>>>>>>>>>>>>>>>>222");
-
-    const url = await getSignedUrl(type, s3Params);
-
-    console.log("this is a url", url);
-    
+    const url = await getSignedUrlForS3(type, s3Params);
 
     if (!url) {
       throw new Error('URL not generated');
