@@ -102,7 +102,6 @@ import {
 import { Utils } from './models';
 import { CronExpressions } from './shared/enums/CronExpressions';
 import { Driver } from './models/driver.model';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { deleteObjectFromS3, getSignedUrlForS3 } from './config/aws.config';
 
 let utilsData: any;
