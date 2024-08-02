@@ -35,6 +35,7 @@ const environmentVars: any = {
   CLIENT_EMAIL: process.env.CLIENT_EMAIL,
   PRIVATE_KEY: process.env.PRIVATE_KEY,
   PROJECT_ID: process.env.PROJECT_ID,
+  SENTRY_PRODUCTION: process.env.SENTRY_PRODUCTION,
 };
 
 (() => {

@@ -74,7 +74,6 @@ export async function placeOrder(req: Request, res: Response) {
 
     const RiderDetails = await Driver.find({ rideStatus: 'online' }).lean();
 
-
     await sendEmail(req.body);
 
     pubClient.publish(
@@ -1007,7 +1006,7 @@ export async function orderUpdateStatus(req: any, res: Response) {
         dropLocation,
       );
 
-      await PlaceOrder.findByIdAndUpdate(
+      updateOrder = await PlaceOrder.findByIdAndUpdate(
         new Types.ObjectId(id),
         { pickupToDrop: driverDataFromPickupToDrop?.coords },
         { session, new: true },
@@ -1029,12 +1028,15 @@ export async function orderUpdateStatus(req: any, res: Response) {
 }
 
 function getFormattedDateTime() {
-  return new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14);
+  return new Date()
+    .toISOString()
+    .replace(/[-:T.]/g, '')
+    .slice(0, 14);
 }
 
 export async function testOrder(req: Request, res: Response) {
   try {
-    const venderId = getFormattedDateTime()
+    const venderId = getFormattedDateTime();
     const testingData = {
       drop_details: {
         address: 'mulund east,Ahmedabad',
@@ -1099,10 +1101,9 @@ export async function testOrder(req: Request, res: Response) {
       }
     }
 
-    return res.send({ status: true, messgae: 'order Placed', data : saveOrder });
-    
+    return res.send({ status: true, messgae: 'order Placed', data: saveOrder });
   } catch (error: any) {
-    console.log("testOrder",error.message);
+    console.log('testOrder', error.message);
     return res.send({ error: error.message });
   }
 }

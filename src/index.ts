@@ -1,6 +1,8 @@
 'use strict';
 
 // Library Imports
+require("./instruments.js");
+const Sentry = require("@sentry/node");
 import { createAdapter } from '@socket.io/redis-adapter';
 import cors from 'cors';
 import express, { Request, Response, json } from 'express';
@@ -111,7 +113,6 @@ const jwt = require('jsonwebtoken');
 const app = express();
 const cron = require('node-cron');
 const CronJob = require('cron').CronJob;
-
 
 const sendToAllRiders: any = (data: any) => {
   try {
@@ -238,7 +239,6 @@ export async function getDriverStatus(req: any, res: Response) {
 }
 
 export async function toggleDriverStatus(req: any, res: Response) {
-  console.log('i am here');
 
   const driverId = req.decoded.user._id;
   try {
@@ -325,6 +325,13 @@ app.post('/login', handleLogin);
 app.get('/getCountryCodeMobile', getCountryCodeMobiles);
 // Route for verifying OTP and generating authentication token
 app.post('/verifyOtp', verifyOtp);
+
+
+
+app.get("/debug-sentry", function mainHandler(req, res) {
+  throw new Error("My first Sentry error!");
+});
+
 
 app.post('/presignedurl', async (req, res) => {
   try {
@@ -546,6 +553,10 @@ app.delete('/delete-country-code/:id', deleteCountryCode);
 
 // redis clients
 // Redis pub/sub setup
+
+
+Sentry.setupExpressErrorHandler(app);
+
 
 export const pubClient = createClient({
   password: environmentVars.REDIS_PASSWORD,
