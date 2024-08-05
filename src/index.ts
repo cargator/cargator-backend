@@ -1,8 +1,8 @@
 'use strict';
 
 // Library Imports
-require("./instruments.js");
-const Sentry = require("@sentry/node");
+require('./instruments.js');
+const Sentry = require('@sentry/node');
 import { createAdapter } from '@socket.io/redis-adapter';
 import cors from 'cors';
 import express, { Request, Response, json } from 'express';
@@ -145,7 +145,6 @@ let io: Server;
 app.use(cors());
 app.use(json());
 
-
 let access_token = '';
 const refreshToken = async () => {
   try {
@@ -239,7 +238,6 @@ export async function getDriverStatus(req: any, res: Response) {
 }
 
 export async function toggleDriverStatus(req: any, res: Response) {
-
   const driverId = req.decoded.user._id;
   try {
     await Driver.updateOne(
@@ -288,20 +286,31 @@ const authorize = async (req: any, res: Response, next: any) => {
     const token = req?.headers?.authorization?.split(' ')[1];
     if (token) {
       // Verify the JWT token
-      jwt.verify(
-        token,
-        environmentVars.PUBLIC_KEY,
-        (err: any, decoded: any) => {
-          if (err) {
-            throw new Error('Invalid token');
-            // res.status(401).send({ message: 'Token invalid' });
-            // res.json({ success: false, message: "Token invalid" }); // Token has expired or is invalid
-          } else {
-            req.decoded = decoded; // Assign to req. variable to be able to use it in next() route ('/me' route)
-            next(); // Required to leave middleware
-          }
-        },
-      );
+      const decoded: any = await new Promise((resolve, reject) => {
+        jwt.verify(
+          token,
+          environmentVars.PUBLIC_KEY,
+          (err: any, decoded: any) => {
+            if (err) {
+              reject(new Error('Invalid token'));
+            } else {
+              resolve(decoded);
+            }
+          },
+        );
+      });
+
+      const driverData: any = await Driver.findOne({
+        mobileNumber: decoded.user.mobileNumber,
+      }).lean();
+
+      if (!driverData) {
+        return res
+          .status(405)
+          .send({ message: 'driver is not valid', status: 405 });
+      }
+      req.decoded = decoded;
+      next();
     } else {
       res.status(401).send({ success: false, message: 'No token provided' }); // Return error if no token was provided in the request
     }
@@ -326,12 +335,9 @@ app.get('/getCountryCodeMobile', getCountryCodeMobiles);
 // Route for verifying OTP and generating authentication token
 app.post('/verifyOtp', verifyOtp);
 
-
-
-app.get("/debug-sentry", function mainHandler(req, res) {
-  throw new Error("My first Sentry error!");
+app.get('/debug-sentry', function mainHandler(req, res) {
+  throw new Error('My first Sentry error!');
 });
-
 
 app.post('/presignedurl', async (req, res) => {
   try {
@@ -430,7 +436,9 @@ app.post('/delete-object-from-s3', async (req, res) => {
   try {
     const { key } = req.body;
     if (!key) {
-      return res.status(400).json({ success: false, message: 'Key is required' });
+      return res
+        .status(400)
+        .json({ success: false, message: 'Key is required' });
     }
     const data = await deleteObjectFromS3('cargator', key);
     console.log('Object deleted successfully', data);
@@ -441,7 +449,6 @@ app.post('/delete-object-from-s3', async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 });
-
 
 app.get('/onlineDrivers', onlineDrivers);
 
@@ -554,9 +561,7 @@ app.delete('/delete-country-code/:id', deleteCountryCode);
 // redis clients
 // Redis pub/sub setup
 
-
 Sentry.setupExpressErrorHandler(app);
-
 
 export const pubClient = createClient({
   password: environmentVars.REDIS_PASSWORD,
