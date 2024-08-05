@@ -300,14 +300,16 @@ const authorize = async (req: any, res: Response, next: any) => {
         );
       });
 
-      const driverData: any = await Driver.findOne({
-        mobileNumber: decoded.user.mobileNumber,
-      }).lean();
+      if (decoded.type == 'driver') {
+        const driverData: any = await Driver.findOne({
+          mobileNumber: decoded.user.mobileNumber,
+        }).lean();
 
-      if (!driverData) {
-        return res
-          .status(405)
-          .send({ message: 'driver is not valid', status: 405 });
+        if (!driverData) {
+          return res
+            .status(405)
+            .send({ message: 'driver is not valid', status: 405 });
+        }
       }
       req.decoded = decoded;
       next();
