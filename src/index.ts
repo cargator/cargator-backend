@@ -15,6 +15,7 @@ import mongoConnect from './config/mongo';
 import constants from './constantsVars';
 import { formatSocketResponse } from './helpers/common';
 import driverSocketConnected, { getAllSocket } from './helpers/driverEvents';
+import adminSocketConnected from './helpers/adminEvents';
 import {
   adminLogin,
   adminRegister,
@@ -630,33 +631,60 @@ subClient.on('error', () => console.log(`Subscriber Client Error`));
 
     // Handle socket connections
     io.on('connection', async (socket: Socket) => {
+      console.log('A new client connected');
       // console.log('socket.conn.transport ==> ',socket.conn.transport);
       const Token: any = String(socket?.handshake.query?.['token']);
       // Validate user and type information from the socket handshake
+
       const data = decodeToken(Token);
-      const userId = data.user._id;
-      const type = data.type;
-      if (!userId || !type) {
-        socket.emit(
-          'error',
-          formatSocketResponse({ message: 'please attach userId and type' }),
-        );
-        socket.disconnect();
-        console.log('Socket Disconnected ! userId or type not found');
-        return;
-      }
-      try {
-        if (type == 'driver') {
-          await driverSocketConnected(socket, userId, io);
+      if (data?.type == 'driver') {
+        const userId = data.user._id;
+        const type = data.type;
+        if (!userId || !type) {
+          socket.emit(
+            'error',
+            formatSocketResponse({ message: 'please attach userId and type' }),
+          );
+          socket.disconnect();
+          console.log('Socket Disconnected ! userId or type not found');
+          return;
         }
-      } catch (error: any) {
-        socket.emit(
-          'error',
-          formatSocketResponse({
-            message: error.message,
-          }),
-        );
-        socket.disconnect();
+        try {
+          if (type == 'driver') {
+            await driverSocketConnected(socket, userId, io);
+          }
+        } catch (error: any) {
+          socket.emit(
+            'error',
+            formatSocketResponse({
+              message: error.message,
+            }),
+          );
+          socket.disconnect();
+        }
+      } else {
+        const email = data.email;
+        if (!email) {
+          socket.emit(
+            'error',
+            formatSocketResponse({ message: 'please attach email' }),
+          );
+          socket.disconnect();
+          console.log('Socket Disconnected ! userId or type not found');
+          return;
+        }
+
+        try {
+          await adminSocketConnected(socket, email, io);
+        } catch (error: any) {
+          socket.emit(
+            'error',
+            formatSocketResponse({
+              message: error.message,
+            }),
+          );
+          socket.disconnect();
+        }
       }
     });
     setUpCronJobs();
