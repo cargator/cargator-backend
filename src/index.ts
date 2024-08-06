@@ -15,7 +15,7 @@ import mongoConnect from './config/mongo';
 import constants from './constantsVars';
 import { formatSocketResponse } from './helpers/common';
 import driverSocketConnected, { getAllSocket } from './helpers/driverEvents';
-import adminSocketConnected from './helpers/adminEvents';
+import adminSocketConnected, { getAllAdminSocket } from './helpers/adminEvents';
 import {
   adminLogin,
   adminRegister,
@@ -140,6 +140,22 @@ const sendNewOrderToAllRiders: any = (data: any) => {
   }
 };
 
+const riderStatusUpdate =(message: any) => {
+  try {
+    const riderSocket = getAllAdminSocket();
+    for (let index = 0; index < Object.values(riderSocket).length; index++) {
+      const element: any = Object.values(riderSocket)[index];
+      console.log("dbfsjbjsgsdndn",element);
+      
+      element.emit('status-update', message);
+      console.log("emited msg");
+      
+    }
+  } catch (error: any) {
+    console.log(error.message);
+  }
+}
+
 let io: Server;
 
 // Configure Express app with necessary middleware
@@ -241,7 +257,7 @@ export async function getDriverStatus(req: any, res: Response) {
 export async function toggleDriverStatus(req: any, res: Response) {
   const driverId = req.decoded.user._id;
   try {
-    await Driver.updateOne(
+    const updatedDriver = await Driver.findOneAndUpdate(
       {
         _id: driverId,
         rideStatus: { $ne: 'on-ride' },
@@ -261,16 +277,31 @@ export async function toggleDriverStatus(req: any, res: Response) {
           },
         },
       ],
+      { new: true } // Return the updated document
+    ).lean();
+
+    const obj ={
+      riderId: updatedDriver?._id,
+      riderName: updatedDriver?.firstName,
+      riderStaus: updatedDriver?.rideStatus,
+      updateDate: updatedDriver?.updatedAt,
+    }
+  
+    // Check if the update was successful
+    pubClient.publish(
+      'status-update',
+      formatSocketResponse({
+        riderStatusDetails: obj, // Add any relevant data here
+      }),
     );
-    res.status(200).send({
+
+    return res.status(200).send({
       status: true,
-      // vendor_order_id: order_details.vendor_order_id,
-      message: 'Order created succcessfully.',
+      message: 'Status updated successfully.',
     });
   } catch (err: any) {
-    res.status(200).send({
-      status: true,
-      // vendor_order_id: order_details.vendor_order_id,
+    return res.status(500).send({
+      status: false,
       message: err.message,
     });
   }
@@ -596,6 +627,7 @@ subClient.on('ready', () => {
 //orders
 subClient.subscribe('order-update-response', sendToAllRiders);
 subClient.subscribe('new-order', sendNewOrderToAllRiders);
+subClient.subscribe('status-update', riderStatusUpdate);
 
 // Log errors for publisher and subscriber clients
 pubClient.on('error', () => console.log(`Publisher Client Error`));
@@ -632,61 +664,32 @@ subClient.on('error', () => console.log(`Subscriber Client Error`));
     // Handle socket connections
     io.on('connection', async (socket: Socket) => {
       console.log('A new client connected');
-      // console.log('socket.conn.transport ==> ',socket.conn.transport);
-      const Token: any = String(socket?.handshake.query?.['token']);
-      // Validate user and type information from the socket handshake
-
+      const Token: string = String(socket?.handshake.query?.['token']);
       const data = decodeToken(Token);
-      if (data?.type == 'driver') {
-        const userId = data.user._id;
-        const type = data.type;
-        if (!userId || !type) {
-          socket.emit(
-            'error',
-            formatSocketResponse({ message: 'please attach userId and type' }),
-          );
-          socket.disconnect();
-          console.log('Socket Disconnected ! userId or type not found');
-          return;
-        }
-        try {
-          if (type == 'driver') {
-            await driverSocketConnected(socket, userId, io);
-          }
-        } catch (error: any) {
-          socket.emit(
-            'error',
-            formatSocketResponse({
-              message: error.message,
-            }),
-          );
-          socket.disconnect();
-        }
-      } else {
-        const email = data.email;
-        if (!email) {
-          socket.emit(
-            'error',
-            formatSocketResponse({ message: 'please attach email' }),
-          );
-          socket.disconnect();
-          console.log('Socket Disconnected ! userId or type not found');
-          return;
-        }
 
-        try {
+      const userId = data?.type === 'driver' ? data.user?._id : undefined;
+      const email = data?.email;
+      const type = data?.type;
+    
+      if ((type === 'driver' && (!userId || !type)) || (type !== 'driver' && !email)) {
+        const message = type === 'driver' ? 'Please attach userId and type' : 'Please attach email';
+        socket.emit('error', formatSocketResponse({ message }));
+        console.log('Socket Disconnected! Missing required information');
+        return socket.disconnect();
+      }
+    
+      try {
+        if (type === 'driver') {
+          await driverSocketConnected(socket, userId, io);
+        } else {
           await adminSocketConnected(socket, email, io);
-        } catch (error: any) {
-          socket.emit(
-            'error',
-            formatSocketResponse({
-              message: error.message,
-            }),
-          );
-          socket.disconnect();
         }
+      } catch (error: any) {
+        socket.emit('error', formatSocketResponse({ message: error.message }));
+        socket.disconnect();
       }
     });
+
     setUpCronJobs();
   } catch (error) {
     console.error('Error is occured and the error is : ', error);
