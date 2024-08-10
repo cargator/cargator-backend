@@ -341,10 +341,10 @@ const authorize = async (req: any, res: Response, next: any) => {
       req.decoded = decoded;
       next();
     } else {
-      res.status(401).send({ success: false, message: 'No token provided' }); // Return error if no token was provided in the request
+      res.status(405).send({ success: false, message: 'No token provided' }); // Return error if no token was provided in the request
     }
   } catch (error: any) {
-    return res.status(403).send({ message: error.message });
+    return res.status(405).send({ message: error.message });
   }
 };
 
