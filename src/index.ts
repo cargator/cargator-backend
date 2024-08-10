@@ -11,11 +11,12 @@ import { Server, Socket } from 'socket.io';
 import environmentVars from './constantsVars';
 // Files Imports
 import axios from 'axios';
+import { deleteObjectFromS3, getSignedUrlForS3 } from './config/aws.config';
 import mongoConnect from './config/mongo';
 import constants from './constantsVars';
+import adminSocketConnected, { getAllAdminSocket } from './helpers/adminEvents';
 import { formatSocketResponse } from './helpers/common';
 import driverSocketConnected, { getAllSocket } from './helpers/driverEvents';
-import adminSocketConnected, { getAllAdminSocket } from './helpers/adminEvents';
 import {
   adminLogin,
   adminRegister,
@@ -103,9 +104,8 @@ import {
   updateVehicleType,
 } from './main/vehicleType';
 import { Utils } from './models';
-import { CronExpressions } from './shared/enums/CronExpressions';
 import { Driver } from './models/driver.model';
-import { deleteObjectFromS3, getSignedUrlForS3 } from './config/aws.config';
+import { CronExpressions } from './shared/enums/CronExpressions';
 
 let utilsData: any;
 
@@ -140,21 +140,17 @@ const sendNewOrderToAllRiders: any = (data: any) => {
   }
 };
 
-const riderStatusUpdate =(message: any) => {
+const riderStatusUpdate = (message: any) => {
   try {
     const riderSocket = getAllAdminSocket();
     for (let index = 0; index < Object.values(riderSocket).length; index++) {
       const element: any = Object.values(riderSocket)[index];
-      console.log("dbfsjbjsgsdndn",element);
-      
-      element.emit('status-update', message);
-      console.log("emited msg");
-      
+      element.emit('driver-status-update', message);
     }
   } catch (error: any) {
     console.log(error.message);
   }
-}
+};
 
 let io: Server;
 
@@ -277,19 +273,18 @@ export async function toggleDriverStatus(req: any, res: Response) {
           },
         },
       ],
-      { new: true } // Return the updated document
+      { new: true }, // Return the updated document
     ).lean();
 
-    const obj ={
+    const obj = {
       riderId: updatedDriver?._id,
       riderName: updatedDriver?.firstName,
       riderStaus: updatedDriver?.rideStatus,
       updateDate: updatedDriver?.updatedAt,
-    }
-  
+    };
     // Check if the update was successful
     pubClient.publish(
-      'status-update',
+      'driver-status-update',
       formatSocketResponse({
         riderStatusDetails: obj, // Add any relevant data here
       }),
@@ -423,6 +418,8 @@ app.get('/getAppFlowMobile', getAppFlowMobile);
 app.get('/get-order-history', getOrderHistory);
 
 app.get('/get-order/:id', getOrderById);
+
+app.get('/get-country-code', getCountryCodes);
 
 app.use(authorize);
 
@@ -588,7 +585,7 @@ app.post('/chat-gpt-api', chatGptApi);
 // Country Code Crud
 
 app.post('/create-country-code', createCountryCode);
-app.get('/get-country-code', getCountryCodes);
+
 // app.get("/get-country-code/:id", getCountryCodeOne);
 app.delete('/delete-country-code/:id', deleteCountryCode);
 
@@ -627,7 +624,7 @@ subClient.on('ready', () => {
 //orders
 subClient.subscribe('order-update-response', sendToAllRiders);
 subClient.subscribe('new-order', sendNewOrderToAllRiders);
-subClient.subscribe('status-update', riderStatusUpdate);
+subClient.subscribe('driver-status-update', riderStatusUpdate);
 
 // Log errors for publisher and subscriber clients
 pubClient.on('error', () => console.log(`Publisher Client Error`));
@@ -670,14 +667,19 @@ subClient.on('error', () => console.log(`Subscriber Client Error`));
       const userId = data?.type === 'driver' ? data.user?._id : undefined;
       const email = data?.email;
       const type = data?.type;
-    
-      if ((type === 'driver' && (!userId || !type)) || (type !== 'driver' && !email)) {
-        const message = type === 'driver' ? 'Please attach userId and type' : 'Please attach email';
+
+      if (
+        (type === 'driver' && (!userId || !type)) ||
+        (type !== 'driver' && !email)
+      ) {
+        const message =
+          type === 'driver'
+            ? 'Please attach userId and type'
+            : 'Please attach email';
         socket.emit('error', formatSocketResponse({ message }));
         console.log('Socket Disconnected! Missing required information');
         return socket.disconnect();
       }
-    
       try {
         if (type === 'driver') {
           await driverSocketConnected(socket, userId, io);
