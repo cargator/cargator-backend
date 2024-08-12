@@ -89,5 +89,4 @@ jobs:
 
       # Deploy to cloud run
       - name: Deploy api to cloud run
-        run: |-
-          gcloud run deploy $SERVICE_NAME --image gcr.io/$PROJECT_ID/$SERVICE_NAME:$GITHUB_SHA --platform managed --region $REGION --project $PROJECT_ID --quiet
+        run: gcloud run deploy $SERVICE_NAME --image gcr.io/$PROJECT_ID/$SERVICE_NAME:$GITHUB_SHA --region=$REGION
