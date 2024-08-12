@@ -108,7 +108,6 @@ import { Driver } from './models/driver.model';
 import { CronExpressions } from './shared/enums/CronExpressions';
 
 let utilsData: any;
-
 const jwt = require('jsonwebtoken');
 const app = express();
 const cron = require('node-cron');
