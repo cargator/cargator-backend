@@ -109,7 +109,6 @@ import { CronExpressions } from './shared/enums/CronExpressions';
 
 let utilsData: any;
 
-const _ = require('lodash');
 const jwt = require('jsonwebtoken');
 const app = express();
 const cron = require('node-cron');
