@@ -92,5 +92,5 @@ jobs:
         uses: google-github-actions/deploy-cloudrun@v1
         with:
           service: '${{ env.SERVICE_NAME }}'
-          image: 'gcr.io/$PROJECT_ID/${{ env.SERVICE_NAME }}:${{ github.sha }}'
+          image: 'gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:${{ github.sha }}'
           region: '${{ env.REGION }}'
