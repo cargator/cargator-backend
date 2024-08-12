@@ -90,4 +90,4 @@ jobs:
       # Deploy to cloud run
       - name: Deploy api to cloud run
         run: |-
-          gcloud run deploy sukam --image gcr.io/mystic-song-410112/sukam:latest --platform managed --port 8080 --region asia-southeast1 --project mystic-song-410112
+          gcloud run deploy $SERVICE_NAME --image gcr.io/$PROJECT_ID/$SERVICE_NAME:$GITHUB_SHA --platform managed --region $REGION --project $PROJECT_ID --quiet
