@@ -2,7 +2,7 @@ import { config } from 'dotenv';
 config();
 
 const environmentVars: any = {
-  PORT: process.env.PORT || 8080,
+  PORT: process.env.PORT_SUKAM || 8080,
   MONGO_URL: process.env.MONGO_URL_SUKAM,
   GOOGLE_API_KEY: process.env.GOOGLE_API_KEY,
   OLA_MAPS_API_KEY: process.env.OLA_MAPS_API_KEY,
