@@ -451,7 +451,6 @@ app.delete('/deleteDriver/:uid', deleteDriver);
 app.get('/getDriverById/:id', getDriverById);
 
 // vehicle crud
-
 app.delete('/deleteVehicle/:uid', deleteVehicle);
 
 // Route for admin change password
