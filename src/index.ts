@@ -593,7 +593,7 @@ Sentry.setupExpressErrorHandler(app);
 export const pubClient = createClient({
   password: constants.REDIS_PASSWORD,
   socket: {
-    host: constants.REDIS_URL,
+    host: "redis-10131.c305.ap-south-1-1.ec2.redns.redis-cloud.com",
     port: 10131,
   },
 });
