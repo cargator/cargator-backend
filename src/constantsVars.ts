@@ -6,7 +6,7 @@ const environmentVars: any = {
   MONGO_URL: process.env.MONGO_URL_SUKAM,
   GOOGLE_API_KEY: process.env.GOOGLE_API_KEY,
   OLA_MAPS_API_KEY: process.env.OLA_MAPS_API_KEY,
-  REDIS_URL: process.env.REDIS_URL_SUKAM || "redis-10131.c305.ap-south-1-1.ec2.redns.redis-cloud.com",
+  REDIS_URL: process.env.REDIS_URL_SUKAM,
   REDIS_PASSWORD: process.env.REDIS_PASSWORD,
   NODE_ENV: process.env.NODE_ENV,
   PUBLIC_KEY: process.env.PUBLIC_KEY,
