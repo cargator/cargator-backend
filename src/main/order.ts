@@ -3,7 +3,7 @@ import { Request, Response } from 'express';
 import { PipelineStage, Types } from 'mongoose';
 import { pubClient } from '..';
 import { sendOrderNotification } from '../config/firebase-admin';
-import environmentVars from '../constantsVars';
+import constants from '../constantsVars';
 import { formatSocketResponse, getDirections } from '../helpers/common';
 import { sendEmail } from '../helpers/sendEmail';
 import { Driver } from '../models/driver.model';
@@ -14,7 +14,7 @@ import { getDriverDetails } from './driver';
 
 const petpoojaAcknowledge = async (data: any) => {
   try {
-    return axios.post(environmentVars.PETPUJA_API_URL, data);
+    return axios.post(constants.PETPUJA_API_URL, data);
   } catch (error: any) {
     throw new Error(error);
   }
@@ -188,8 +188,8 @@ export async function orderAccept(req: any, res: Response) {
     const obj = {
       status: true,
       data: {
-        api_key: environmentVars.PETPUJA_API_KEY,
-        api_secret_key: environmentVars.PETPUJA_SECRET_KEY,
+        api_key: constants.PETPUJA_API_KEY,
+        api_secret_key: constants.PETPUJA_SECRET_KEY,
         vendor_order_id: response?.order_details?.vendor_order_id,
         rider_name: response?.driver_details?.name,
         rider_contact: response?.driver_details?.contact,
@@ -275,8 +275,8 @@ export async function orderUpdate(req: any, res: Response) {
     const obj = {
       status: true,
       data: {
-        api_key: environmentVars.PETPUJA_API_KEY,
-        api_secret_key: environmentVars.PETPUJA_SECRET_KEY,
+        api_key: constants.PETPUJA_API_KEY,
+        api_secret_key: constants.PETPUJA_SECRET_KEY,
         vendor_order_id: response?.order_details?.vendor_order_id,
         rider_name: response?.driver_details?.name,
         rider_contact: response?.driver_details?.contact,
@@ -330,7 +330,7 @@ export async function trackOrderStatus(req: Request, res: Response) {
     const { vendor_order_id } = req.body;
     // const access_token = req.headers.access_token;
 
-    // if (access_token != environmentVars.PETPOOJA_ACCESS_TOKEN) {
+    // if (access_token != constants.PETPOOJA_ACCESS_TOKEN) {
     //     throw new Error("Invalid Access Token!");
     // }
     console.log(
@@ -445,8 +445,8 @@ export async function cancelTask(req: Request, res: Response) {
     const obj = {
       status: true,
       data: {
-        api_key: environmentVars.PETPUJA_API_KEY,
-        api_secret_key: environmentVars.PETPUJA_SECRET_KEY,
+        api_key: constants.PETPUJA_API_KEY,
+        api_secret_key: constants.PETPUJA_SECRET_KEY,
         vendor_order_id: cancel_task?.order_details?.vendor_order_id,
         rider_name: cancel_task?.driver_details?.name,
         rider_contact: cancel_task?.driver_details?.contact,
