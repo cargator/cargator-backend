@@ -8,7 +8,6 @@ import cors from 'cors';
 import express, { Request, Response, json } from 'express';
 import { createClient } from 'redis';
 import { Server, Socket } from 'socket.io';
-import environmentVars from './constantsVars';
 // Files Imports
 import axios from 'axios';
 import { deleteObjectFromS3, getSignedUrlForS3 } from './config/aws.config';
@@ -162,12 +161,12 @@ const refreshToken = async () => {
     // Make a request to obtain a new token (assuming you have the necessary API endpoint)
     const data = {
       grant_type: 'client_credentials',
-      client_id: `${environmentVars.REFRESH_TOKEN_CLIENT_ID}`,
-      client_secret: `${environmentVars.REFRESH_TOKEN_CLIENT_SECRET}`,
+      client_id: `${constants.REFRESH_TOKEN_CLIENT_ID}`,
+      client_secret: `${constants.REFRESH_TOKEN_CLIENT_SECRET}`,
     };
 
     const token: any = await axios.post(
-      `${environmentVars.REFRESH_TOKEN_URL}`,
+      `${constants.REFRESH_TOKEN_URL}`,
       data,
       {
         headers: { 'content-type': 'application/x-www-form-urlencoded' },
@@ -314,7 +313,7 @@ const authorize = async (req: any, res: Response, next: any) => {
       const decoded: any = await new Promise((resolve, reject) => {
         jwt.verify(
           token,
-          environmentVars.PUBLIC_KEY,
+          constants.PUBLIC_KEY,
           (err: any, decoded: any) => {
             if (err) {
               reject(new Error('Invalid token'));
@@ -348,7 +347,7 @@ const authorize = async (req: any, res: Response, next: any) => {
 
 const decodeToken = (token: any) => {
   try {
-    const data = jwt.verify(token, environmentVars.PUBLIC_KEY);
+    const data = jwt.verify(token, constants.PUBLIC_KEY);
     // return JSON.parse(data);
     return data;
   } catch (error) {
@@ -592,9 +591,9 @@ app.delete('/delete-country-code/:id', deleteCountryCode);
 Sentry.setupExpressErrorHandler(app);
 
 export const pubClient = createClient({
-  password: environmentVars.REDIS_PASSWORD,
+  password: constants.REDIS_PASSWORD,
   socket: {
-    host: environmentVars.REDIS_URL,
+    host: "redis-10131.c305.ap-south-1-1.ec2.redns.redis-cloud.com",
     port: 10131,
   },
 });
