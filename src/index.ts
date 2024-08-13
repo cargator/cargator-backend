@@ -311,13 +311,17 @@ const authorize = async (req: any, res: Response, next: any) => {
     if (token) {
       // Verify the JWT token
       const decoded: any = await new Promise((resolve, reject) => {
-        jwt.verify(token, constants.PUBLIC_KEY, (err: any, decoded: any) => {
-          if (err) {
-            reject(new Error('Invalid token'));
-          } else {
-            resolve(decoded);
-          }
-        });
+        jwt.verify(
+          token,
+          constants.PUBLIC_KEY,
+          (err: any, decoded: any) => {
+            if (err) {
+              reject(new Error('Invalid token'));
+            } else {
+              resolve(decoded);
+            }
+          },
+        );
       });
 
       if (decoded.type == 'driver') {
@@ -589,7 +593,7 @@ Sentry.setupExpressErrorHandler(app);
 export const pubClient = createClient({
   password: constants.REDIS_PASSWORD,
   socket: {
-    host: 'redis-10131.c305.ap-south-1-1.ec2.redns.redis-cloud.com',
+    host: constants.REDIS_URL,
     port: 10131,
   },
 });
