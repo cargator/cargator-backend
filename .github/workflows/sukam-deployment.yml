@@ -23,7 +23,7 @@ jobs:
       - name: Make envfile
         uses: SpicyPizza/create-envfile@v1
         with:
-          envkey_PORT: ${{ secrets.PORT }}
+          envkey_PORT_SUKAM: ${{ secrets.PORT_SUKAM }}
           envkey_MONGO_URL_SUKAM: ${{ secrets.MONGO_URL_SUKAM }}
           envkey_GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           envkey_OLA_MAPS_API_KEY: ${{secrets.OLA_MAPS_API_KEY}}
