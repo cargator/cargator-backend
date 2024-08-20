@@ -53,6 +53,7 @@ import {
   updateDriverStatus,
   updateFcmToken,
   updateLiveLocation,
+  updateTimelineCoords,
 } from './main/driver';
 import { createFare, getFareValue, upDateFareValue } from './main/fare';
 import {
@@ -311,17 +312,13 @@ const authorize = async (req: any, res: Response, next: any) => {
     if (token) {
       // Verify the JWT token
       const decoded: any = await new Promise((resolve, reject) => {
-        jwt.verify(
-          token,
-          constants.PUBLIC_KEY,
-          (err: any, decoded: any) => {
-            if (err) {
-              reject(new Error('Invalid token'));
-            } else {
-              resolve(decoded);
-            }
-          },
-        );
+        jwt.verify(token, constants.PUBLIC_KEY, (err: any, decoded: any) => {
+          if (err) {
+            reject(new Error('Invalid token'));
+          } else {
+            resolve(decoded);
+          }
+        });
       });
 
       if (decoded.type == 'driver') {
@@ -427,6 +424,7 @@ app.get('/get-driver-status', getDriverStatus);
 app.post('/get-history', getHistory);
 app.get('/progress', getProgress);
 app.post(`/update-live-location`, updateLiveLocation);
+app.post(`/update-timeline`, updateTimelineCoords);
 app.post('/update-FCM-token', updateFcmToken);
 app.post('/update-order-status', orderUpdateStatus);
 
@@ -593,7 +591,7 @@ Sentry.setupExpressErrorHandler(app);
 export const pubClient = createClient({
   password: constants.REDIS_PASSWORD,
   socket: {
-    host: "redis-10131.c305.ap-south-1-1.ec2.redns.redis-cloud.com",
+    host: 'redis-10131.c305.ap-south-1-1.ec2.redns.redis-cloud.com',
     port: 10131,
   },
 });

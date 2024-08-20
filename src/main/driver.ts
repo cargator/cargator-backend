@@ -4,6 +4,8 @@ import { getUtils } from '..';
 import environmentVars from '../constantsVars';
 import { Driver } from '../models/driver.model';
 import { Vehicles } from '../models';
+import { pathCoords, Timeline } from '../models/location-track.model';
+import { Types } from 'mongoose';
 const AWS = require('aws-sdk');
 AWS.config.update({
   region: environmentVars.AWS_REGION,
@@ -613,7 +615,7 @@ export async function nearBydriver(req: Request, res: Response) {
 export async function updateLiveLocation(req: any, res: Response) {
   try {
     const driverId = req.decoded.user._id;
-    const coordinates  = req.body.coordinates;
+    const coordinates = req.body.coordinates;
 
     /// Update the driver's live location in the database
     const updateLocation: any = await Driver.findOneAndUpdate(
@@ -631,6 +633,51 @@ export async function updateLiveLocation(req: any, res: Response) {
     });
   } catch (err: any) {
     console.log('err in live-location', err);
+  }
+}
+export async function updateTimelineCoords(req: any, res: Response) {
+  try {
+    const driverId = req.decoded.user._id;
+    const orderId: string = req.body.orderId;
+    if (!orderId) {
+      throw new Error('Order Id not Found');
+    }
+    let pathCoords: pathCoords[] | pathCoords = req.body.pathCoords;
+    if (!Array.isArray(pathCoords)) {
+      pathCoords = [pathCoords];
+    }
+    /// Update the driver's live location in the database
+    const updateLocation: any = await Driver.findOneAndUpdate(
+      {
+        _id: driverId,
+      },
+      {
+        liveLocation: pathCoords[pathCoords.length - 1].coords,
+      },
+    );
+
+    console.log('pathCoords===>', pathCoords);
+    const updateTimeline: any = await Timeline.findOneAndUpdate(
+      {
+        driverId: new Types.ObjectId(driverId),
+        orderId: new Types.ObjectId(orderId),
+      },
+      {
+        $addToSet: { pathCoords: { $each: pathCoords } },
+      },
+      {
+        upsert: true,
+        new: true,
+      },
+    );
+    console.log('response>>>>>>>>', updateTimeline);
+
+    return res.status(200).send({
+      message: 'Driver-Timeline updated successfully.',
+    });
+  } catch (err: any) {
+    console.log('err in Timeline', err.message);
+    return res.status(400).send(err.message || err);
   }
 }
 
