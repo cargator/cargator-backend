@@ -4,7 +4,7 @@ import { getUtils } from '..';
 import environmentVars from '../constantsVars';
 import { Driver } from '../models/driver.model';
 import { Vehicles } from '../models';
-import { pathCoords, Timeline } from '../models/location-track.model';
+import { pathCoords, Timeline } from '../models/timeline.model';
 import { Types } from 'mongoose';
 const AWS = require('aws-sdk');
 AWS.config.update({
