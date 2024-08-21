@@ -11,17 +11,17 @@ export async function adminLogin(req: Request, res: Response) {
   try {
     // console.log(`admin-login API >> body :>> `, req.body);
     const body = req.body;
-    const { email, password } = body;
+    const { mobile_Number, password } = body;
   
     
 
-    if (!email || !password) {
+    if (!mobile_Number || !password) {
       throw new Error(`Invalid email or password !`);
     }
 
     // Find the admin based on the provided credentials
     let adminDoc: any = await Admin.findOne({
-      email,
+      mobile_Number,
       password,
     }).lean();
     // console.log(`admin-login >> adminDoc :>> `, adminDoc);
@@ -30,6 +30,8 @@ export async function adminLogin(req: Request, res: Response) {
     if (!adminDoc) {
       throw new Error(`Invalid email or password !`);
     }
+
+    const email = adminDoc.email;
 
     // Generate a JWT token
     const token = jwt.sign({ email }, environmentVars.PUBLIC_KEY, {
