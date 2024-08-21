@@ -97,7 +97,7 @@ export async function createAdmin(req: Request, res: Response) {
     const { name, mobile_Number } = body;
     const email = body.email || '';
 
-    if (!name || !mobile_Number || mobile_Number.length() < 9) {
+    if (!name || !mobile_Number) {
       throw new Error(`Invalid data provided !`);
     }
     const password = (mobile_Number + '').slice(-4);
