@@ -96,18 +96,18 @@ export async function createAdmin(req: Request, res: Response) {
   try {
     // console.log(`admin-login API >> body :>> `, req.body);
     const body = req.body;
-    const { name, mobile_Number } = body;
+    const { fullName, mobileNumber } = body;
     const email = body.email || '';
 
-    if (!name || !mobile_Number) {
+    if (!fullName || !mobileNumber) {
       throw new Error(`Invalid data provided !`);
     }
-    const password = (mobile_Number + '').slice(-4);
+    const password = (mobileNumber + '').slice(-4);
 
     await Admin.create({
-      name,
-      email,
-      mobile_Number,
+      name : fullName,
+      email : '',
+      mobile_Number: mobileNumber,
       password,
     });
 
