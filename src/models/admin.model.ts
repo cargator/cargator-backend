@@ -1,4 +1,5 @@
 import mongoose, { Types } from 'mongoose';
+import { AdminRole } from '../shared/enums/status.enum';
 
 const adminSchema = new mongoose.Schema(
   {
@@ -7,12 +8,16 @@ const adminSchema = new mongoose.Schema(
       type: String,
       unique: true,
     },
-    mobile_Number:{
-      type:String,
-      unique:true
+    mobile_Number: {
+      type: String,
+      unique: true,
     },
     password: String,
-
+    role: {
+      required: false,
+      default: AdminRole.ADMIN,
+      type: String,
+    },
   },
   {
     timestamps: true,

@@ -20,7 +20,9 @@ import {
   adminLogin,
   adminRegister,
   changePassword,
+  createAdmin,
   dashboardData,
+  getAllAdmins,
 } from './main/admin';
 import {
   createApp,
@@ -399,6 +401,8 @@ app.post('/admin-login', adminLogin);
 // Route for admin register
 app.post('/admin-register', adminRegister);
 
+app.get('/get-all-admins', getAllAdmins);
+
 // PetPooja API's--------------------
 
 app.post('/place-order', placeOrder);
@@ -416,6 +420,9 @@ app.get('/get-order/:id', getOrderById);
 app.get('/get-country-code', getCountryCodes);
 
 app.use(authorize);
+
+//admin create by other admin and superAdmin
+app.post('/create-admin', createAdmin);
 
 app.post('/toggle-driver-status', toggleDriverStatus);
 

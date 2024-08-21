@@ -19,3 +19,8 @@ export enum FlowTypeEnum {
 export enum NotificationMessageEnum {
   NEW_ORDER = `New Order Assigned! 📦\nOrder is ready for pickup.\n`,
 }
+
+export enum AdminRole {
+  ADMIN = 'ADMIN',
+  SUPER_ADMIN = 'SUPER ADMIN',
+}
