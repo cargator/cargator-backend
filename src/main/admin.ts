@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const _ = require('lodash');
 import environmentVars from '../constantsVars';
 import { placeOrder } from './order';
+import mongoose from 'mongoose';
 
 export async function adminLogin(req: Request, res: Response) {
   try {
@@ -97,7 +98,7 @@ export async function createAdmin(req: Request, res: Response) {
     // console.log(`admin-login API >> body :>> `, req.body);
     const body = req.body;
     const { fullName, mobileNumber } = body;
-    const email = body.email || '';
+    const email = body.email || `${fullName.split(" ")[0]}@gmail.com`;
 
     if (!fullName || !mobileNumber) {
       throw new Error(`Invalid data provided !`);
@@ -106,7 +107,7 @@ export async function createAdmin(req: Request, res: Response) {
 
     await Admin.create({
       name : fullName,
-      email : '',
+      email : email,
       mobile_Number: mobileNumber,
       password,
     });
@@ -277,5 +278,156 @@ export async function dashboardData(req: Request, res: Response) {
   } catch (error: any) {
     console.log(`dashboard-data error :>> `, error);
     res.status(400).send({ success: false, message: error.message });
+  }
+}
+
+export async function deleteAdminUsers(req: Request, res: Response) {
+  let session: any;
+  try {
+    session = await mongoose.startSession();
+    session.startTransaction();
+    
+    const id = req.params.id;
+    const deleteType = await Admin.deleteOne({"_id":id});
+
+    if (!deleteType) {
+      throw new Error('Error while deleting User');
+    }
+
+    await session.commitTransaction();
+    res.status(200).send({
+      message: ' User deleted Successfully.',
+      data: deleteType
+    });
+  } catch (error: any) {
+    res.status(400).json({ success: false, message: error.message });
+    if (session) {
+      await session.abortTransaction();
+    }
+    console.log('err :>> ', error);
+  } finally {
+    if (session) {
+      await session.endSession();
+    }
+  }
+}
+
+export async function updateAdminUser(req: Request, res: Response) {
+  let session: any;
+  try {
+    session = await mongoose.startSession();
+    session.startTransaction();
+
+    const id = req.params.id;
+
+    const user = await Admin.findOneAndUpdate(
+      { _id: id },
+
+      {
+        name: req.body.fullName,
+        mobile_Number: req.body.mobileNumber,
+      },
+      { new: true }
+    );
+
+    if (!user) {
+      throw new Error("Error while getting user");
+    }
+
+    await session.commitTransaction();
+    res.status(200).send({
+      message: " breakPoints Type Updated Successfully.",
+      data: user,
+    });
+  } catch (error: any) {
+    res.status(400).json({ success: false, message: error.message });
+    if (session) {
+      await session.abortTransaction();
+    }
+    console.log("err :>> ", error);
+  } finally {
+    if (session) {
+      await session.endSession();
+    }
+  }
+}
+
+export async function updateAdminUserStatus(req: Request, res: Response) {
+  let session: any;
+  try {
+    session = await mongoose.startSession();
+    session.startTransaction();
+
+    const id = req.params.id;
+
+    const updateUserStatus = await Admin.findOneAndUpdate(
+      {
+        _id: id,
+      },
+      [
+        {
+          $set: {
+            status: {
+              $switch: {
+                branches: [
+                  { case: { $eq: ['$status', 'active'] }, then: 'inactive' },
+                  { case: { $eq: ['$status', 'inactive'] }, then: 'active' },
+                ],
+                default: 'active',
+              },
+            },
+          },
+        },
+      ],
+      { new: true }, // Return the updated document
+    ).lean();
+
+    await session.commitTransaction();
+    res.status(200).send({
+      message: " user status updated Successfully.",
+      data: updateUserStatus,
+    });
+  } catch (error: any) {
+    res.status(400).json({ success: false, message: error.message });
+    if (session) {
+      await session.abortTransaction();
+    }
+    console.log("err :>> ", error);
+  } finally {
+    if (session) {
+      await session.endSession();
+    }
+  }
+}
+
+export async function getAdminUserOne(req: Request, res: Response) {
+  let session: any;
+  try {
+    session = await mongoose.startSession();
+    session.startTransaction();
+
+    const id = req.params.id;
+
+    const user = await Admin.findById({ _id: id });
+
+    if (!user) {
+      throw new Error("Error while getting users");
+    }
+
+    await session.commitTransaction();
+    res.status(200).send({
+      message: " user got Successfully.",
+      data: user,
+    });
+  } catch (error: any) {
+    res.status(400).json({ success: false, message: error.message });
+    if (session) {
+      await session.abortTransaction();
+    }
+    console.log("err :>> ", error);
+  } finally {
+    if (session) {
+      await session.endSession();
+    }
   }
 }

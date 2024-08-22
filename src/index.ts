@@ -22,7 +22,11 @@ import {
   changePassword,
   createAdmin,
   dashboardData,
+  deleteAdminUsers,
+  getAdminUserOne,
   getAllAdmins,
+  updateAdminUser,
+  updateAdminUserStatus,
 } from './main/admin';
 import {
   createApp,
@@ -423,6 +427,11 @@ app.use(authorize);
 
 //admin create by other admin and superAdmin
 app.post('/create-admin', createAdmin);
+app.delete('/delete-user/:id', deleteAdminUsers);
+app.get('/get-users/:id', getAdminUserOne);
+app.patch('/update-user/:id', updateAdminUser);
+app.patch('/update-user-status/:id', updateAdminUserStatus);
+
 
 app.post('/toggle-driver-status', toggleDriverStatus);
 

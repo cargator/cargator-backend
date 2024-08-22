@@ -13,6 +13,11 @@ const adminSchema = new mongoose.Schema(
       unique: true,
     },
     password: String,
+    status: {
+      type: String,
+      enum: ['active', 'inactive'],
+      default: 'active',
+    },
     role: {
       required: false,
       default: AdminRole.ADMIN,
