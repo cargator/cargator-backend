@@ -95,10 +95,10 @@ export async function adminRegister(req: Request, res: Response) {
 //Admin created by another Admin or superAdmin
 export async function createAdmin(req: Request, res: Response) {
   try {
-    // console.log(`admin-login API >> body :>> `, req.body);
+    console.log(`admin-login API >> body :>> `, req.body);
     const body = req.body;
     const { fullName, mobileNumber } = body;
-    // const email = body.email || `${fullName.split(" ")[0]}@gmail.com`;
+    const email = body.email || `${fullName.split(" ")[0]}@gmail.com`;
 
     if (!fullName || !mobileNumber) {
       throw new Error(`Invalid data provided !`);
@@ -107,7 +107,7 @@ export async function createAdmin(req: Request, res: Response) {
 
     await Admin.create({
       name : fullName,
-      // email : email,
+      email : email,
       mobile_Number: mobileNumber,
       password,
     });
@@ -326,6 +326,7 @@ export async function updateAdminUser(req: Request, res: Response) {
       {
         name: req.body.fullName,
         mobile_Number: req.body.mobileNumber,
+        password: req.body.mobileNumber.slice(-4)
       },
       { new: true }
     );
