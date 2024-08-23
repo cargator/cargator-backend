@@ -337,7 +337,7 @@ export async function updateAdminUser(req: Request, res: Response) {
 
     await session.commitTransaction();
     res.status(200).send({
-      message: " breakPoints Type Updated Successfully.",
+      message: " user Updated Successfully.",
       data: user,
     });
   } catch (error: any) {

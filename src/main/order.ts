@@ -11,6 +11,7 @@ import { PlaceOrder } from '../models/placeOrder.model';
 import { Earning } from '../models/earning.model';
 import { OrderStatusEnum } from '../shared/enums/status.enum';
 import { getDriverDetails } from './driver';
+import { Timeline } from '../models/timeline.model';
 
 const petpoojaAcknowledge = async (data: any) => {
   try {
@@ -890,9 +891,15 @@ export async function getDriversPendingOrders(req: any, res: Response) {
         },
       ],
     }).lean();
+
+    const path = await Timeline.findOne({
+      driverId: req.decoded.user._id
+    }).lean()
+
     return res.send({
       message: response ? 'Fetched My Pending Orders.' : 'No Pending Orders',
       data: response,
+      coords: path
     });
   } catch (error: any) {
     return res.status(400).send({ error: error.message });
