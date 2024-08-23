@@ -15,7 +15,7 @@ import { Timeline } from '../models/timeline.model';
 
 const petpoojaAcknowledge = async (data: any) => {
   try {
-    console.log("petpoojaAcknowledge on order status updates", data);
+    console.log("petpoojaAcknowledge sent on order status updates", data);
     return axios.post(constants.PETPUJA_API_URL, data);
   } catch (error: any) {
     console.log("petpoojaAcknowledge error while updating order", error);
@@ -1017,7 +1017,18 @@ export async function orderUpdateStatus(req: any, res: Response) {
       ).lean();
     }
 
-    await petpoojaAcknowledge(updateOrder);
+    const acknowledgementResponse = await petpoojaAcknowledge(updateOrder);
+
+    console.log(
+      JSON.stringify({
+        method: 'acknowledgementResponse',
+        message: 'Order update acknoeledgement response',
+        data: {
+          acknowledgementResponse
+        },
+      }),
+    );
+
 
     await session.commitTransaction();
     return res.status(200).send({

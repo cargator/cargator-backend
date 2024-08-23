@@ -48,7 +48,7 @@ const driverSocketConnected = async (
 
   const petpoojaAcknowledge = async (data: any) => {
     try {
-      console.log('petpoojaAcknowledge on accept order', data);
+      console.log('petpoojaAcknowledge sent on accept order', data);
       return axios.post(constants.PETPUJA_API_URL, data);
     } catch (error: any) {
       console.log('petpoojaAcknowledge error while accepting', error);
@@ -201,7 +201,16 @@ const driverSocketConnected = async (
       ).lean();
 
       console.log('order accepted successfully');
-      petpoojaAcknowledge(updatedOrder);
+      const acknowledgementResponse = await petpoojaAcknowledge(updatedOrder);
+      console.log(
+        JSON.stringify({
+          method: 'acknoeledgementResponse',
+          message: 'Order accept acknowledgement response',
+          data: {
+            acknowledgementResponse
+          },
+        }),
+      );
 
       pubClient.publish(
         'order-update-response',
