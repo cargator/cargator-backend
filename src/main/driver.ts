@@ -6,6 +6,7 @@ import { Driver } from '../models/driver.model';
 import { Vehicles } from '../models';
 import { pathCoords, Timeline } from '../models/timeline.model';
 import { Types } from 'mongoose';
+import { PlaceOrder } from '../models/placeOrder.model';
 const AWS = require('aws-sdk');
 AWS.config.update({
   region: environmentVars.AWS_REGION,
@@ -670,6 +671,15 @@ export async function updateTimelineCoords(req: any, res: Response) {
         new: true,
       },
     );
+
+    const realPathcoords = await PlaceOrder.findOneAndUpdate(
+      {
+        _id: orderId
+      },
+      {
+        realPath: pathCoords[pathCoords.length - 1].coords
+      }
+    )
     console.log('response>>>>>>>>', updateTimeline);
 
     return res.status(200).send({

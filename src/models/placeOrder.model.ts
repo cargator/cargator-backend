@@ -16,6 +16,7 @@ const placeOrder = new mongoose.Schema(
       status: { type: String },
       riderPathToPickUp: Array,
       pickupToDrop: Array,
+      realPath: Array,
       driver_details: {
         driver_id: String,
         name: String,

@@ -892,14 +892,9 @@ export async function getDriversPendingOrders(req: any, res: Response) {
       ],
     }).lean();
 
-    const path = await Timeline.findOne({
-      driverId: req.decoded.user._id
-    }).lean()
-
     return res.send({
       message: response ? 'Fetched My Pending Orders.' : 'No Pending Orders',
       data: response,
-      coords: path
     });
   } catch (error: any) {
     return res.status(400).send({ error: error.message });
