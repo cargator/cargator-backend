@@ -5,6 +5,8 @@ import { Driver } from '../models/driver.model';
 import { PlaceOrder } from '../models/placeOrder.model';
 import { OrderStatusEnum } from '../shared/enums/status.enum';
 import { formatSocketResponse, getDirections } from './common';
+import constants from '../constantsVars';
+import axios from 'axios';
 // const { utilsData } = require('../index.ts');
 
 const driversSocket: Record<string, Socket> = {};
@@ -43,6 +45,16 @@ const driverSocketConnected = async (
       }),
     );
   }
+
+  const petpoojaAcknowledge = async (data: any) => {
+    try {
+      console.log('petpoojaAcknowledge on accept order', data);
+      return axios.post(constants.PETPUJA_API_URL, data);
+    } catch (error: any) {
+      console.log('petpoojaAcknowledge error while accepting', error);
+      throw new Error(error);
+    }
+  };
 
   // accept-order event---------
   socket.on('accept-order', async (body: any) => {
@@ -189,6 +201,7 @@ const driverSocketConnected = async (
       ).lean();
 
       console.log('order accepted successfully');
+      petpoojaAcknowledge(updatedOrder);
 
       pubClient.publish(
         'order-update-response',

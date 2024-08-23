@@ -15,8 +15,10 @@ import { Timeline } from '../models/timeline.model';
 
 const petpoojaAcknowledge = async (data: any) => {
   try {
+    console.log("petpoojaAcknowledge on order status updates", data);
     return axios.post(constants.PETPUJA_API_URL, data);
   } catch (error: any) {
+    console.log("petpoojaAcknowledge error while updating order", error);
     throw new Error(error);
   }
 };
@@ -1014,6 +1016,8 @@ export async function orderUpdateStatus(req: any, res: Response) {
         { session, new: true },
       ).lean();
     }
+
+    await petpoojaAcknowledge(updateOrder);
 
     await session.commitTransaction();
     return res.status(200).send({
