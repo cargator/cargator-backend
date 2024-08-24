@@ -19,15 +19,22 @@ export async function adminLogin(req: Request, res: Response) {
     }
 
     // Find the admin based on the provided credentials
+    // let adminDoc: any = await Admin.findOne({
+    //   mobile_Number,
+    //   password,
+    // }).lean();
+    
+
     let adminDoc: any = await Admin.findOne({
-      mobile_Number,
+      mobile_Number : mobile_Number.slice(-10),
       password,
     }).lean();
+
     // console.log(`admin-login >> adminDoc :>> `, adminDoc);
 
     // Check if the admin is registered
     if (!adminDoc) {
-      throw new Error(`Invalid email or password !`);
+      throw new Error(`Invalid mobile number or password !`);
     }
 
     const email = adminDoc.email;
