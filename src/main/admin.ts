@@ -28,6 +28,7 @@ export async function adminLogin(req: Request, res: Response) {
     let adminDoc: any = await Admin.findOne({
       mobile_Number : mobile_Number.slice(-10),
       password,
+      status: "active"
     }).lean();
 
     // console.log(`admin-login >> adminDoc :>> `, adminDoc);
