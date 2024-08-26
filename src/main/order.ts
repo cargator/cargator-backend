@@ -1017,7 +1017,20 @@ export async function orderUpdateStatus(req: any, res: Response) {
       ).lean();
     }
 
-    const acknowledgementResponse = await petpoojaAcknowledge(updateOrder);
+    const obj = {
+      status: true,
+      data: {
+        api_key: constants.PETPUJA_API_KEY,
+        api_secret_key: constants.PETPUJA_SECRET_KEY,
+        vendor_order_id: updateOrder?.order_details?.vendor_order_id,
+        rider_name: updateOrder?.driver_details?.name,
+        rider_contact: updateOrder?.driver_details?.contact,
+      },
+      message: 'Ok',
+      status_code: updateOrder?.status,
+    };
+
+    const acknowledgementResponse = await petpoojaAcknowledge(obj);
 
     console.log(
       JSON.stringify({

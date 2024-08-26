@@ -200,8 +200,21 @@ const driverSocketConnected = async (
         { session, new: true },
       ).lean();
 
+      const obj = {
+        status: true,
+        data: {
+          api_key: constants.PETPUJA_API_KEY,
+          api_secret_key: constants.PETPUJA_SECRET_KEY,
+          vendor_order_id: updatedOrder?.order_details?.vendor_order_id,
+          rider_name: updatedOrder?.driver_details?.name,
+          rider_contact: updatedOrder?.driver_details?.contact,
+        },
+        message: 'Ok',
+        status_code: updatedOrder?.status,
+      };
+
       console.log('order accepted successfully');
-      const acknowledgementResponse = await petpoojaAcknowledge(updatedOrder);
+      const acknowledgementResponse = await petpoojaAcknowledge(obj);
       console.log(
         JSON.stringify({
           method: 'acknoeledgementResponse',
