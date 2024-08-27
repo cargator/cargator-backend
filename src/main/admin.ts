@@ -38,16 +38,14 @@ export async function adminLogin(req: Request, res: Response) {
       throw new Error(`Invalid mobile number or password !`);
     }
 
-    const email = adminDoc.email;
-
     // Generate a JWT token
-    const token = jwt.sign({ email }, environmentVars.PUBLIC_KEY, {
+    const token = jwt.sign({ mobile_Number }, environmentVars.PUBLIC_KEY, {
       expiresIn: '7d',
     });
 
     return res.status(200).send({
       message: 'success',
-      data: { token },
+      data: { token, fullName: adminDoc.name },
     });
   } catch (error: any) {
     console.log(`admin-login error :>> `, error);
