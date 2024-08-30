@@ -647,6 +647,9 @@ export async function updateTimelineCoords(req: any, res: Response) {
     if (!Array.isArray(pathCoords)) {
       pathCoords = [pathCoords];
     }
+
+    console.log("updateTimelineCoords>>>", pathCoords[pathCoords.length - 1].coords, orderId)
+
     /// Update the driver's live location in the database
     const updateLocation: any = await Driver.findOneAndUpdate(
       {
@@ -657,7 +660,7 @@ export async function updateTimelineCoords(req: any, res: Response) {
       },
     );
 
-    console.log('pathCoords===>', pathCoords);
+    // console.log('pathCoords===>', pathCoords);
     const updateTimeline: any = await Timeline.findOneAndUpdate(
       {
         driverId: new Types.ObjectId(driverId),
@@ -677,10 +680,10 @@ export async function updateTimelineCoords(req: any, res: Response) {
         _id: orderId
       },
       {
-        realPath: pathCoords[pathCoords.length - 1].coords
+        $push: {realPath: pathCoords[pathCoords.length - 1].coords}
       }
     )
-    console.log('response>>>>>>>>', updateTimeline);
+    // console.log('response>>>>>>>>', updateTimeline);
 
     return res.status(200).send({
       message: 'Driver-Timeline updated successfully.',

@@ -306,6 +306,23 @@ export async function toggleDriverStatus(req: any, res: Response) {
   }
 }
 
+export async function getForGroundIntervalDuration(req: any, res: Response) {
+  try {
+    const response = await Utils.findOne().lean();
+
+    res.status(200).send({
+      status: true,
+      message: 'utils get succcessfully.',
+      data: response,
+    });
+  } catch (err: any) {
+    res.status(200).send({
+      status: true,
+      message: err.message,
+    });
+  }
+}
+
 // container health check endpoint
 app.get('/', (req: Request, res: Response) => {
   res.send('success');
@@ -422,6 +439,8 @@ app.get('/get-order-history', getOrderHistory);
 app.get('/get-order/:id', getOrderById);
 
 app.get('/get-country-code', getCountryCodes);
+
+app.get('/get-forground-interval-duration', getForGroundIntervalDuration);
 
 app.use(authorize);
 

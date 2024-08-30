@@ -39,6 +39,7 @@ const utilsSchema = new mongoose.Schema(
     debounceTime: Number,
     preBookRideTime: Number,
     scheduleRideInterval: Number,
+    forGroundIntervalDuration: Number
   },
   {
     timestamps: true,
