@@ -219,9 +219,9 @@ const driverSocketConnected = async (
         JSON.stringify({
           method: 'acknoeledgementResponse',
           message: 'Order accept acknowledgement response',
-          data: {
-            acknowledgementResponse
-          },
+          data: 
+            acknowledgementResponse.data
+          ,
         }),
       );
 
@@ -244,6 +244,7 @@ const driverSocketConnected = async (
 
       await session.commitTransaction();
     } catch (err: any) {
+      console.log('err :>> ', err);
       //! add proper error message. Or you can add status codes for every error message and handle frontend based on this errorcodes create enum for this.
       socket.emit(
         'error',

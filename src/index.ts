@@ -78,6 +78,7 @@ import {
   getOrderHistory,
   getProgress,
   getpendingOrders,
+  orderAccept,
   orderUpdateStatus,
   placeOrder,
   testOrder,
@@ -380,6 +381,8 @@ app.post('/login', handleLogin);
 app.get('/getCountryCodeMobile', getCountryCodeMobiles);
 // Route for verifying OTP and generating authentication token
 app.post('/verifyOtp', verifyOtp);
+app.post('/order-accept', orderAccept);
+
 
 app.get('/debug-sentry', function mainHandler(req, res) {
   throw new Error('My first Sentry error!');

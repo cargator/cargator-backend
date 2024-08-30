@@ -119,7 +119,7 @@ export async function placeOrder(req: Request, res: Response) {
 
 export async function orderAccept(req: any, res: Response) {
   try {
-    const driverId = req.decoded.user._id;
+    const driverId = "ewgfbvgbve";
     const { driverLocation, pickUpDetails, id } = req.body;
 
     console.log(
@@ -130,89 +130,90 @@ export async function orderAccept(req: any, res: Response) {
       }),
     );
 
-    const driverData = await Driver.findOne({ _id: driverId }).lean();
+    // const driverData = await Driver.findOne({ _id: driverId }).lean();
 
-    if (!driverData) {
-      console.log(
-        JSON.stringify({
-          method: 'orderAccept',
-          message: 'Driver is not Found!',
-          data: driverId,
-        }),
-      );
+    // if (!driverData) {
+    //   console.log(
+    //     JSON.stringify({
+    //       method: 'orderAccept',
+    //       message: 'Driver is not Found!',
+    //       data: driverId,
+    //     }),
+    //   );
 
-      res.status(404).send({
-        status: true,
-        driverId,
-        message: 'Driver is not Found!',
-      });
-    }
+    //   res.status(404).send({
+    //     status: true,
+    //     driverId,
+    //     message: 'Driver is not Found!',
+    //   });
+    // }
 
-    const pickUpLocation = {
-      latitude: pickUpDetails.latitude, //latitude: 19.172141,
-      longitude: pickUpDetails.longitude, //longitude: 72.956832
-    };
+    // const pickUpLocation = {
+    //   latitude: pickUpDetails.latitude, //latitude: 19.172141,
+    //   longitude: pickUpDetails.longitude, //longitude: 72.956832
+    // };
 
-    const driverDataFromCurrLocationToPickup = await getDirections(
-      driverLocation,
-      pickUpLocation,
-    );
+    // const driverDataFromCurrLocationToPickup = await getDirections(
+    //   driverLocation,
+    //   pickUpLocation,
+    // );
 
-    const newStatusUpdate = {
-      status: OrderStatusEnum.ORDER_ALLOTTED,
-      time: new Date(),
-    };
+    // const newStatusUpdate = {
+    //   status: OrderStatusEnum.ORDER_ALLOTTED,
+    //   time: new Date(),
+    // };
 
-    const driverDetails = {
-      driver_id: driverData?._id,
-      name: driverData?.firstName,
-      contact: driverData?.mobileNumber,
-    };
+    // const driverDetails = {
+    //   driver_id: driverData?._id,
+    //   name: driverData?.firstName,
+    //   contact: driverData?.mobileNumber,
+    // };
 
-    const response = await PlaceOrder.findOneAndUpdate(
-      { _id: id },
-      {
-        status: OrderStatusEnum.ORDER_ALLOTTED,
-        statusUpdates: newStatusUpdate,
-        driver_details: driverDetails,
-      },
-    ).lean();
+    // const response = await PlaceOrder.findOneAndUpdate(
+    //   { _id: id },
+    //   {
+    //     status: OrderStatusEnum.ORDER_ALLOTTED,
+    //     statusUpdates: newStatusUpdate,
+    //     driver_details: driverDetails,
+    //   },
+    // ).lean();
 
-    if (response) {
-      await Driver.findOneAndUpdate(
-        { _id: driverId, rideStatus: 'online' },
-        {
-          rideStatus: 'on-ride',
-        },
-        { new: true },
-      ).lean();
-    }
+    // if (response) {
+    //   await Driver.findOneAndUpdate(
+    //     { _id: driverId, rideStatus: 'online' },
+    //     {
+    //       rideStatus: 'on-ride',
+    //     },
+    //     { new: true },
+    //   ).lean();
+    // }
 
     const obj = {
       status: true,
       data: {
         api_key: constants.PETPUJA_API_KEY,
         api_secret_key: constants.PETPUJA_SECRET_KEY,
-        vendor_order_id: response?.order_details?.vendor_order_id,
-        rider_name: response?.driver_details?.name,
-        rider_contact: response?.driver_details?.contact,
+        vendor_order_id: "abhjahhjga",
+        rider_name: "aghjasgjd",
+        rider_contact: "dshj",
       },
       message: 'Ok',
       status_code: OrderStatusEnum.ORDER_ALLOTTED,
     };
 
-    await petpoojaAcknowledge(obj);
+    const resp = await petpoojaAcknowledge(obj);
 
     console.log(
       JSON.stringify({
         method: 'orderAccept',
         message: 'order Accept Response',
-        data: { response, driverDataFromCurrLocationToPickup },
+        data: resp.data
+        // data: { response, driverDataFromCurrLocationToPickup },
       }),
     );
     res.status(200).send({
       message: 'Order accepted successfully.',
-      data: { response, driverDataFromCurrLocationToPickup },
+      // data: { response, driverDataFromCurrLocationToPickup },
     });
   } catch (error: any) {
     console.log(
@@ -1036,9 +1037,9 @@ export async function orderUpdateStatus(req: any, res: Response) {
       JSON.stringify({
         method: 'acknowledgementResponse',
         message: 'Order update acknoeledgement response',
-        data: {
-          acknowledgementResponse
-        },
+        data: 
+          acknowledgementResponse.data
+        ,
       }),
     );
 
