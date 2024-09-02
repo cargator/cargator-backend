@@ -626,19 +626,19 @@ app.delete('/delete-country-code/:id', deleteCountryCode);
 
 Sentry.setupExpressErrorHandler(app);
 
-export const pubClient = createClient({
-  password: constants.REDIS_PASSWORD,
-  socket: {
-    host: 'redis-10131.c305.ap-south-1-1.ec2.redns.redis-cloud.com',
-    port: 10131,
-  },
-});
-
 // export const pubClient = createClient({
-//   url:
-//     environmentVars.REDIS_URL ||
-//     'redis://default:Titandevil@12@redis-19288.c212.ap-south-1-1.ec2.cloud.redislabs.com:19288',
+//   password: constants.REDIS_PASSWORD,
+//   socket: {
+//     host: 'redis-10131.c305.ap-south-1-1.ec2.redns.redis-cloud.com',
+//     port: 10131,
+//   },
 // });
+
+export const pubClient = createClient({
+  url:
+    // environmentVars.REDIS_URL ||
+    'redis://default:Titandevil@12@redis-19288.c212.ap-south-1-1.ec2.cloud.redislabs.com:19288',     
+});
 export const subClient = pubClient.duplicate();
 
 // Log publisher and subscriber connection status
