@@ -692,7 +692,7 @@ subClient.on('error', () => console.log(`Subscriber Client Error`));
 
     // Handle socket connections
     io.on('connection', async (socket: Socket) => {
-      console.log('A new client connected');
+      // console.log('A new client connected');
       const Token: string = String(socket?.handshake.query?.['token']);
       const data = decodeToken(Token);
 

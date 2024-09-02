@@ -215,15 +215,17 @@ const driverSocketConnected = async (
 
       console.log('order accepted successfully');
       const acknowledgementResponse = await petpoojaAcknowledge(obj);
-      console.log(
-        JSON.stringify({
-          method: 'acknoeledgementResponse',
-          message: 'Order accept acknowledgement response',
-          data: 
-            acknowledgementResponse.data
-          ,
-        }),
-      );
+      console.log("Order accept acknowledgement response", acknowledgementResponse.data);
+      
+      // console.log(
+      //   JSON.stringify({
+      //     method: 'acknoeledgementResponse',
+      //     message: 'Order accept acknowledgement response',
+      //     data: 
+      //       acknowledgementResponse.data
+      //     ,
+      //   }),
+      // );
 
       pubClient.publish(
         'order-update-response',

@@ -23,6 +23,7 @@ const adminSocketConnected = async (
 ) => {
   try {
     adminSocket[email] = socket;
+    console.log('Admin Socket connected successfully!');
   } catch (err: any) {
     socket.emit(
       'error',

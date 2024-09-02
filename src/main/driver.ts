@@ -627,7 +627,7 @@ export async function updateLiveLocation(req: any, res: Response) {
         liveLocation: coordinates,
       },
     );
-    // console.log("response>>>>>>>>",updateLocation);
+    console.log("update-live-location>>>>",updateLocation);
 
     return res.status(200).send({
       message: 'Driver-location updated successfully.',

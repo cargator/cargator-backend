@@ -1033,15 +1033,16 @@ export async function orderUpdateStatus(req: any, res: Response) {
 
     const acknowledgementResponse = await petpoojaAcknowledge(obj);
 
-    console.log(
-      JSON.stringify({
-        method: 'acknowledgementResponse',
-        message: 'Order update acknoeledgement response',
-        data: 
-          acknowledgementResponse.data
-        ,
-      }),
-    );
+    console.log("Order update acknoeledgement response", acknowledgementResponse.data);
+    // console.log(
+    //   JSON.stringify({
+    //     method: 'acknowledgementResponse',
+    //     message: 'Order update acknoeledgement response',
+    //     data: 
+    //       acknowledgementResponse.data
+    //     ,
+    //   }),
+    // );
 
 
     await session.commitTransaction();
