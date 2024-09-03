@@ -93,8 +93,8 @@ export async function placeOrder(req: Request, res: Response) {
 
     res.status(200).send({
       status: true,
-      // vendor_order_id: order_details.vendor_order_id,
-      message: 'Order created succcessfully.',
+      vendor_order_id: req.body.order_details.vendor_order_id,
+      message: 'Order created',
       Status_code: OrderStatusEnum.ORDER_ACCEPTED,
     });
 
@@ -102,7 +102,7 @@ export async function placeOrder(req: Request, res: Response) {
       JSON.stringify({
         method: 'placeOrder',
         message: 'Order saved Response',
-        // data: saveOrder,
+        data: saveOrder,
       }),
     );
   } catch (error: any) {
