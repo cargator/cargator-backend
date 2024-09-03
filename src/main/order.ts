@@ -227,107 +227,107 @@ export async function orderAccept(req: any, res: Response) {
   }
 }
 
-export async function orderUpdate(req: any, res: Response) {
-  try {
-    const { pickUpLocation, destination, orderId } = req.body;
-    const driverId = req.decoded.user._id;
-    let status = req.body.status;
+// export async function orderUpdate(req: any, res: Response) {
+//   try {
+//     const { pickUpLocation, destination, orderId } = req.body;
+//     const driverId = req.decoded.user._id;
+//     let status = req.body.status;
 
-    console.log(
-      JSON.stringify({
-        method: 'orderUpdate',
-        message: 'order Update body',
-        data: req.body,
-      }),
-    );
+//     console.log(
+//       JSON.stringify({
+//         method: 'orderUpdate',
+//         message: 'order Update body',
+//         data: req.body,
+//       }),
+//     );
 
-    const driverData = await Driver.findOne({ _id: driverId }).lean();
-    if (!driverData) {
-      console.log(
-        JSON.stringify({
-          method: 'orderUpdate',
-          message: 'Driver is not Found!',
-          data: {
-            driverId,
-          },
-        }),
-      );
-      res.status(404).send({
-        status: true,
-        driverId,
-        message: 'Driver is not Found!',
-      });
-    }
+//     const driverData = await Driver.findOne({ _id: driverId }).lean();
+//     if (!driverData) {
+//       console.log(
+//         JSON.stringify({
+//           method: 'orderUpdate',
+//           message: 'Driver is not Found!',
+//           data: {
+//             driverId,
+//           },
+//         }),
+//       );
+//       res.status(404).send({
+//         status: true,
+//         driverId,
+//         message: 'Driver is not Found!',
+//       });
+//     }
 
-    if (!Object.values(OrderStatusEnum).includes(status)) {
-      return res.status(400).send({ error: 'Invalid order status' });
-    }
+//     if (!Object.values(OrderStatusEnum).includes(status)) {
+//       return res.status(400).send({ error: 'Invalid order status' });
+//     }
 
-    status = status as OrderStatusEnum;
-    const driverDataFromCurrLocationToPickup = await getDirections(
-      pickUpLocation,
-      destination,
-    );
+//     status = status as OrderStatusEnum;
+//     const driverDataFromCurrLocationToPickup = await getDirections(
+//       pickUpLocation,
+//       destination,
+//     );
 
-    const newStatusUpdate = { status: status, time: new Date() };
-    const response = await PlaceOrder.findOneAndUpdate(
-      { _id: orderId },
-      { status: status, $push: { statusUpdates: newStatusUpdate } },
-      { new: true },
-    );
+//     const newStatusUpdate = { status: status, time: new Date() };
+//     const response = await PlaceOrder.findOneAndUpdate(
+//       { _id: orderId },
+//       { status: status, $push: { statusUpdates: newStatusUpdate } },
+//       { new: true },
+//     );
 
-    const obj = {
-      status: true,
-      data: {
-        api_key: constants.PETPUJA_API_KEY,
-        api_secret_key: constants.PETPUJA_SECRET_KEY,
-        vendor_order_id: response?.order_details?.vendor_order_id,
-        rider_name: response?.driver_details?.name,
-        rider_contact: response?.driver_details?.contact,
-      },
-      message: 'Ok',
-      status_code: response?.status,
-    };
+//     const obj = {
+//       status: true,
+//       data: {
+//         api_key: constants.PETPUJA_API_KEY,
+//         api_secret_key: constants.PETPUJA_SECRET_KEY,
+//         vendor_order_id: response?.order_details?.vendor_order_id,
+//         rider_name: response?.driver_details?.name,
+//         rider_contact: response?.driver_details?.contact,
+//       },
+//       message: 'Ok',
+//       status_code: response?.status,
+//     };
 
-    await petpoojaAcknowledge(obj);
+//     await petpoojaAcknowledge(obj);
 
-    if (
-      status == OrderStatusEnum.DELIVERED &&
-      response &&
-      driverData?.rideStatus == 'on-ride'
-    ) {
-      await Driver.findOneAndUpdate(
-        { _id: driverId },
-        { rideStatus: 'online' },
-      );
-    }
+//     if (
+//       status == OrderStatusEnum.DELIVERED &&
+//       response &&
+//       driverData?.rideStatus == 'on-ride'
+//     ) {
+//       await Driver.findOneAndUpdate(
+//         { _id: driverId },
+//         { rideStatus: 'online' },
+//       );
+//     }
 
-    console.log(
-      JSON.stringify({
-        method: 'orderUpdate',
-        message: 'order Update response',
-        data: {
-          status: response?.status,
-          vendor_order_id: response?.order_details?.vendor_order_id,
-        },
-      }),
-    );
+//     console.log(
+//       JSON.stringify({
+//         method: 'orderUpdate',
+//         message: 'order Update response',
+//         data: {
+//           status: response?.status,
+//           vendor_order_id: response?.order_details?.vendor_order_id,
+//         },
+//       }),
+//     );
 
-    res.status(200).send({
-      message: ' orders updated successfully.',
-      data: { response, driverDataFromCurrLocationToPickup },
-    });
-  } catch (error: any) {
-    console.log(
-      JSON.stringify({
-        method: 'orderUpdate',
-        message: error.message,
-      }),
-    );
+//     res.status(200).send({
+//       message: ' orders updated successfully.',
+//       data: { response, driverDataFromCurrLocationToPickup },
+//     });
+//   } catch (error: any) {
+//     console.log(
+//       JSON.stringify({
+//         method: 'orderUpdate',
+//         message: error.message,
+//       }),
+//     );
 
-    res.status(400).send({ success: false, message: error.message });
-  }
-}
+//     res.status(400).send({ success: false, message: error.message });
+//   }
+// }
 
 export async function trackOrderStatus(req: Request, res: Response) {
   try {
@@ -428,7 +428,7 @@ export async function cancelTask(req: Request, res: Response) {
       },
       {
         status: OrderStatusEnum.ORDER_CANCELLED,
-        statusUpdates: [newStatusUpdate],
+        $push: { statusUpdates: newStatusUpdate },
       },
     ).lean();
 
@@ -459,7 +459,9 @@ export async function cancelTask(req: Request, res: Response) {
       status_code: OrderStatusEnum.ORDER_CANCELLED,
     };
 
-    await petpoojaAcknowledge(obj);
+    const resp = await petpoojaAcknowledge(obj);
+
+    console.log("Acknowledgement response on Cancelled order", resp.data);
 
     console.log(
       JSON.stringify({

@@ -627,7 +627,7 @@ export async function updateLiveLocation(req: any, res: Response) {
         liveLocation: coordinates,
       },
     );
-    console.log("update-live-location>>>>",updateLocation);
+    console.log("updating-driver-live-location>>>>",updateLocation.liveLocation);
 
     return res.status(200).send({
       message: 'Driver-location updated successfully.',
@@ -636,6 +636,7 @@ export async function updateLiveLocation(req: any, res: Response) {
     console.log('err in live-location', err);
   }
 }
+
 export async function updateTimelineCoords(req: any, res: Response) {
   try {
     const driverId = req.decoded.user._id;
@@ -648,7 +649,6 @@ export async function updateTimelineCoords(req: any, res: Response) {
       pathCoords = [pathCoords];
     }
 
-    console.log("updateTimelineCoords>>>", pathCoords[pathCoords.length - 1].coords, orderId)
 
     /// Update the driver's live location in the database
     const updateLocation: any = await Driver.findOneAndUpdate(
@@ -683,7 +683,8 @@ export async function updateTimelineCoords(req: any, res: Response) {
         $push: {realPath: pathCoords[pathCoords.length - 1].coords}
       }
     )
-    // console.log('response>>>>>>>>', updateTimeline);
+
+    console.log("updateTimelineCoords>>>", pathCoords[pathCoords.length - 1].coords, orderId)
 
     return res.status(200).send({
       message: 'Driver-Timeline updated successfully.',
