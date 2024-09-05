@@ -12,6 +12,9 @@ import { Earning } from '../models/earning.model';
 import { OrderStatusEnum } from '../shared/enums/status.enum';
 import { getDriverDetails } from './driver';
 import { Timeline } from '../models/timeline.model';
+import { Flows } from '../models';
+import { error } from 'console';
+import { flow } from 'lodash';
 
 const petpoojaAcknowledge = async (data: any) => {
   try {
@@ -1139,5 +1142,30 @@ export async function testOrder(req: Request, res: Response) {
   } catch (error: any) {
     console.log('testOrder', error.message);
     return res.send({ error: error.message });
+  }
+}
+
+
+export async function getButtontextFlow(req: Request, res: Response) {
+  try {
+
+    const flows = await Flows.find().lean();
+    
+    if (!flows || flows.length === 0) {
+      throw new Error('Flows not found!');
+    }
+
+    console.log("Button Text flow fetched successfully!", {flows});
+    
+    return res.status(200).json({
+      message: 'Flows fetched successfully',
+      data: flows,
+    });
+  } catch (error: any) {
+    console.error("get flows error: ", error);
+    return res.status(500).json({
+      message: 'Error fetching flows',
+      error: error.message,
+    });
   }
 }

@@ -72,6 +72,7 @@ import {
 } from './main/flows';
 import {
   cancelTask,
+  getButtontextFlow,
   getDriversPendingOrders,
   getHistory,
   getOrderById,
@@ -442,6 +443,8 @@ app.get('/get-order-history', getOrderHistory);
 app.get('/get-order/:id', getOrderById);
 
 app.get('/get-country-code', getCountryCodes);
+
+app.get('/get-flows', getButtontextFlow);
 
 app.get('/get-forground-interval-duration', getForGroundIntervalDuration);
 
