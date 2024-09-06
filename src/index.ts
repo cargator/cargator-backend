@@ -114,6 +114,9 @@ import {
 import { Utils } from './models';
 import { Driver } from './models/driver.model';
 import { CronExpressions } from './shared/enums/CronExpressions';
+import { AdminAction, AdminRole } from './shared/enums/status.enum';
+import { LogActivity } from './models/logActivity.model';
+import { Types } from 'mongoose';
 
 let utilsData: any;
 const jwt = require('jsonwebtoken');
@@ -384,7 +387,6 @@ app.get('/getCountryCodeMobile', getCountryCodeMobiles);
 app.post('/verifyOtp', verifyOtp);
 app.post('/order-accept', orderAccept);
 
-
 app.get('/debug-sentry', function mainHandler(req, res) {
   throw new Error('My first Sentry error!');
 });
@@ -426,8 +428,6 @@ app.post('/admin-login', adminLogin);
 // Route for admin register
 app.post('/admin-register', adminRegister);
 
-app.get('/get-all-admins', getAllAdmins);
-
 // PetPooja API's--------------------
 
 app.post('/place-order', placeOrder);
@@ -449,14 +449,13 @@ app.get('/get-flows', getButtontextFlow);
 app.get('/get-forground-interval-duration', getForGroundIntervalDuration);
 
 app.use(authorize);
-
+app.get('/get-all-admins', getAllAdmins);
 //admin create by other admin and superAdmin
 app.post('/create-admin', createAdmin);
 app.delete('/delete-user/:id', deleteAdminUsers);
 app.get('/get-users/:id', getAdminUserOne);
 app.patch('/update-user/:id', updateAdminUser);
 app.patch('/update-user-status/:id', updateAdminUserStatus);
-
 
 app.post('/toggle-driver-status', toggleDriverStatus);
 
@@ -640,7 +639,7 @@ Sentry.setupExpressErrorHandler(app);
 export const pubClient = createClient({
   url:
     // environmentVars.REDIS_URL ||
-    'redis://default:Titandevil@12@redis-19288.c212.ap-south-1-1.ec2.cloud.redislabs.com:19288',     
+    'redis://default:Titandevil@12@redis-19288.c212.ap-south-1-1.ec2.cloud.redislabs.com:19288',
 });
 export const subClient = pubClient.duplicate();
 

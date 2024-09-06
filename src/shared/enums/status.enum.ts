@@ -24,3 +24,9 @@ export enum AdminRole {
   ADMIN = 'ADMIN',
   SUPER_ADMIN = 'SUPER ADMIN',
 }
+
+export enum AdminAction {
+  CREATE = 'CREATE',
+  UPDATE = 'UPDATE',
+  DELETE = 'DELETE',
+}

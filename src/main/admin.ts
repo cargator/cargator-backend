@@ -7,6 +7,9 @@ const _ = require('lodash');
 import environmentVars from '../constantsVars';
 import { placeOrder } from './order';
 import mongoose from 'mongoose';
+import { pushlogActivity } from '../helpers/common';
+import { AdminAction } from '../shared/enums/status.enum';
+import { Types } from 'mongoose';
 
 export async function adminLogin(req: Request, res: Response) {
   try {
@@ -23,13 +26,15 @@ export async function adminLogin(req: Request, res: Response) {
     //   mobile_Number,
     //   password,
     // }).lean();
-    
 
-    let adminDoc: any = await Admin.findOne({
-      mobile_Number : mobile_Number.slice(-10),
-      password,
-      status: "active"
-    }).lean();
+    let adminDoc = await Admin.findOne(
+      {
+        mobile_Number: mobile_Number.slice(-10),
+        password,
+        status: 'active',
+      },
+      { createdAt: 0, updatedAt: 0, password: 0 },
+    ).lean();
 
     // console.log(`admin-login >> adminDoc :>> `, adminDoc);
 
@@ -39,7 +44,7 @@ export async function adminLogin(req: Request, res: Response) {
     }
 
     // Generate a JWT token
-    const token = jwt.sign({ mobile_Number }, environmentVars.PUBLIC_KEY, {
+    const token = jwt.sign({ ...adminDoc }, environmentVars.PUBLIC_KEY, {
       expiresIn: '7d',
     });
 
@@ -99,24 +104,33 @@ export async function adminRegister(req: Request, res: Response) {
 }
 
 //Admin created by another Admin or superAdmin
-export async function createAdmin(req: Request, res: Response) {
+export async function createAdmin(req: Request | any, res: Response) {
   try {
     console.log(`admin-login API >> body :>> `, req.body);
     const body = req.body;
     const { fullName, mobileNumber } = body;
-    const email = body.email || `${fullName.split(" ")[0]}@gmail.com`;
+    const email = body.email || `${fullName.split(' ')[0]}@gmail.com`;
 
     if (!fullName || !mobileNumber) {
       throw new Error(`Invalid data provided !`);
     }
     const password = (mobileNumber + '').slice(-4);
 
-    await Admin.create({
-      name : fullName,
-      email : email,
+    let adminDoc = await Admin.create({
+      name: fullName,
+      email: email,
       mobile_Number: mobileNumber,
       password,
     });
+
+    delete adminDoc.password;
+    await pushlogActivity(
+      req,
+      AdminAction.CREATE,
+      `Admin ${fullName}`,
+      new Types.ObjectId(req.decoded._id),
+      adminDoc,
+    );
 
     return res.status(200).send({
       message: 'success',
@@ -287,23 +301,34 @@ export async function dashboardData(req: Request, res: Response) {
   }
 }
 
-export async function deleteAdminUsers(req: Request, res: Response) {
+export async function deleteAdminUsers(req: Request | any, res: Response) {
   let session: any;
   try {
     session = await mongoose.startSession();
     session.startTransaction();
-    
+
     const id = req.params.id;
-    const deleteType = await Admin.deleteOne({"_id":id});
+    const adminDoc = await Admin.findOne({ _id: id }, { password: 0 }).lean();
+    if (!adminDoc) {
+      throw new Error('User not Found');
+    }
+    const deleteType = await Admin.deleteOne({ _id: id });
 
     if (!deleteType) {
       throw new Error('Error while deleting User');
     }
 
     await session.commitTransaction();
+    await pushlogActivity(
+      req,
+      AdminAction.DELETE,
+      `Admin ${adminDoc?.name}`,
+      new Types.ObjectId(req.decoded._id),
+      adminDoc,
+    );
     res.status(200).send({
       message: ' User deleted Successfully.',
-      data: deleteType
+      data: deleteType,
     });
   } catch (error: any) {
     res.status(400).json({ success: false, message: error.message });
@@ -318,7 +343,7 @@ export async function deleteAdminUsers(req: Request, res: Response) {
   }
 }
 
-export async function updateAdminUser(req: Request, res: Response) {
+export async function updateAdminUser(req: Request | any, res: Response) {
   let session: any;
   try {
     session = await mongoose.startSession();
@@ -332,18 +357,27 @@ export async function updateAdminUser(req: Request, res: Response) {
       {
         name: req.body.fullName,
         mobile_Number: req.body.mobileNumber,
-        password: req.body.mobileNumber.slice(-4)
+        password: req.body.mobileNumber.slice(-4),
       },
-      { new: true }
-    );
+      { new: true },
+    ).projection({ password: 0 });
 
     if (!user) {
-      throw new Error("Error while getting user");
+      throw new Error('Error while getting user');
     }
 
     await session.commitTransaction();
+
+    await pushlogActivity(
+      req,
+      AdminAction.UPDATE,
+      `Admin ${user?.name}`,
+      new Types.ObjectId(req.decoded._id),
+      user,
+    );
+
     res.status(200).send({
-      message: " user Updated Successfully.",
+      message: ' user Updated Successfully.',
       data: user,
     });
   } catch (error: any) {
@@ -351,7 +385,7 @@ export async function updateAdminUser(req: Request, res: Response) {
     if (session) {
       await session.abortTransaction();
     }
-    console.log("err :>> ", error);
+    console.log('err :>> ', error);
   } finally {
     if (session) {
       await session.endSession();
@@ -391,7 +425,7 @@ export async function updateAdminUserStatus(req: Request, res: Response) {
 
     await session.commitTransaction();
     res.status(200).send({
-      message: " user status updated Successfully.",
+      message: ' user status updated Successfully.',
       data: updateUserStatus,
     });
   } catch (error: any) {
@@ -399,7 +433,7 @@ export async function updateAdminUserStatus(req: Request, res: Response) {
     if (session) {
       await session.abortTransaction();
     }
-    console.log("err :>> ", error);
+    console.log('err :>> ', error);
   } finally {
     if (session) {
       await session.endSession();
@@ -418,12 +452,12 @@ export async function getAdminUserOne(req: Request, res: Response) {
     const user = await Admin.findById({ _id: id });
 
     if (!user) {
-      throw new Error("Error while getting users");
+      throw new Error('Error while getting users');
     }
 
     await session.commitTransaction();
     res.status(200).send({
-      message: " user got Successfully.",
+      message: ' user got Successfully.',
       data: user,
     });
   } catch (error: any) {
@@ -431,7 +465,7 @@ export async function getAdminUserOne(req: Request, res: Response) {
     if (session) {
       await session.abortTransaction();
     }
-    console.log("err :>> ", error);
+    console.log('err :>> ', error);
   } finally {
     if (session) {
       await session.endSession();

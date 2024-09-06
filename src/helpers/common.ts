@@ -3,6 +3,9 @@ import { isEmpty } from 'lodash';
 import { decode } from '@mapbox/polyline';
 import constants from '../constantsVars';
 import { access_token } from '..';
+import { AdminAction } from '../shared/enums/status.enum';
+import { Document, Types } from 'mongoose';
+import { LogActivity } from '../models/logActivity.model';
 
 const token_type = 'bearer';
 
@@ -35,9 +38,35 @@ const getAddressFromAutoComplete = async (text: string | undefined) => {
   }
 };
 
+export const pushlogActivity = async (
+  req: any,
+  action: AdminAction,
+  subject: String,
+  admin_id: Types.ObjectId,
+  responseBody?: Object,
+) => {
+  const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+  const userAgent = req.headers['user-agent'];
+  const logEntry = {
+    admin_id,
+    action,
+    subject,
+    details: {
+      ip,
+      userAgent,
+      method: req.method,
+      url: req.originalUrl,
+      queryParams: JSON.stringify(req.query),
+      body: responseBody,
+    },
+  };
+  const logActivityDoc = await LogActivity.create(logEntry);
+  console.log('logActivityDoc ===> ', logActivityDoc);
+};
 
 const getAddressFromAutoCompleteOlaMaps = async (
-  text: string | undefined, location:any
+  text: string | undefined,
+  location: any,
 ) => {
   try {
     if (isEmpty(text)) {
@@ -47,7 +76,7 @@ const getAddressFromAutoCompleteOlaMaps = async (
     }
 
     let olaMapsResponse = await axios.get(
-      `https://api.olamaps.io/places/v1/autocomplete?location=${location.latitude},${location.longitude}&input=${text}&api_key=${constants.OLA_MAPS_API_KEY}`
+      `https://api.olamaps.io/places/v1/autocomplete?location=${location.latitude},${location.longitude}&input=${text}&api_key=${constants.OLA_MAPS_API_KEY}`,
     );
 
     // let mapmyindiaPlacesRes = await axios.get(
