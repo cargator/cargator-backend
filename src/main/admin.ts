@@ -43,6 +43,8 @@ export async function adminLogin(req: Request, res: Response) {
       expiresIn: '7d',
     });
 
+    console.log("admin loged in successfully", adminDoc);
+
     return res.status(200).send({
       message: 'success',
       data: { token, fullName: adminDoc.name },
