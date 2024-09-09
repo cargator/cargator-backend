@@ -120,8 +120,8 @@ export async function sendEmail(orderData: any) {
       to: [
         'manish@cargator.org',
         // 'Kanav@crepe-fe.com',
-        // 'kuldeep.mane@code-b.dev',
-        "9nath.parte@gmail.com"
+        'kuldeep.mane@code-b.dev',
+        // "9nath.parte@gmail.com"
       ],
       subject: 'New Order Received',
       text: 'A new order has been received.',
