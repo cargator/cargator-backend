@@ -117,6 +117,7 @@ import { CronExpressions } from './shared/enums/CronExpressions';
 import { AdminAction, AdminRole } from './shared/enums/status.enum';
 import { LogActivity } from './models/logActivity.model';
 import { Types } from 'mongoose';
+import { getActivities } from './main/support';
 
 let utilsData: any;
 const jwt = require('jsonwebtoken');
@@ -450,6 +451,9 @@ app.get('/get-forground-interval-duration', getForGroundIntervalDuration);
 
 app.use(authorize);
 app.get('/get-all-admins', getAllAdmins);
+
+app.get('/get-activities', getActivities);
+
 //admin create by other admin and superAdmin
 app.post('/create-admin', createAdmin);
 app.delete('/delete-user/:id', deleteAdminUsers);

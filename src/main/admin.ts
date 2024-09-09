@@ -178,10 +178,7 @@ export async function getAllAdmins(req: Request, res: Response) {
       data: adminResponse[0],
     });
   } catch (error: any) {
-    console.log(`admin-register error :>> `, error);
-    if (error.code === 11000) {
-      return res.status(400).send({ message: 'Email already registered !' });
-    }
+    console.log(`get-all-admin error :>> `, error);
     return res.status(400).send({ message: error.message });
   }
 }
@@ -351,22 +348,23 @@ export async function updateAdminUser(req: Request | any, res: Response) {
 
     const id = req.params.id;
 
-    const user = await Admin.findOneAndUpdate(
+    let user = await Admin.findOneAndUpdate(
       { _id: id },
-
       {
         name: req.body.fullName,
         mobile_Number: req.body.mobileNumber,
         password: req.body.mobileNumber.slice(-4),
       },
       { new: true },
-    ).projection({ password: 0 });
+    ).lean();
 
+    delete user?.password;
     if (!user) {
       throw new Error('Error while getting user');
     }
 
     await session.commitTransaction();
+    console.log('user:', user);
 
     await pushlogActivity(
       req,

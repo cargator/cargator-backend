@@ -61,7 +61,6 @@ export const pushlogActivity = async (
     },
   };
   const logActivityDoc = await LogActivity.create(logEntry);
-  console.log('logActivityDoc ===> ', logActivityDoc);
 };
 
 const getAddressFromAutoCompleteOlaMaps = async (
