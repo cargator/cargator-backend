@@ -21,12 +21,15 @@ import {
   adminRegister,
   changePassword,
   createAdmin,
+  // createNewMapFlow,
   dashboardData,
   deleteAdminUsers,
   getAdminUserOne,
   getAllAdmins,
+  getCurrentMap,
   updateAdminUser,
   updateAdminUserStatus,
+  updateCurrentMap,
 } from './main/admin';
 import {
   createApp,
@@ -595,6 +598,14 @@ app.post('/create-app-flow', createDriverAppFlow);
 app.get('/get-app-flow', getCurrentFlow);
 
 app.patch('/update-app-flow/:id', updateAppFlow);
+
+// Map changing API
+
+// app.post('/create-map-flow', createNewMapFlow);
+
+app.get('/get-current-map', getCurrentMap);
+
+app.patch('/update-current-map/:id', updateCurrentMap);
 
 // app.post('/login-time', loginTime);
 

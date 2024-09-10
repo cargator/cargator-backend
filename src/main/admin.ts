@@ -10,6 +10,8 @@ import mongoose from 'mongoose';
 import { pushlogActivity } from '../helpers/common';
 import { AdminAction } from '../shared/enums/status.enum';
 import { Types } from 'mongoose';
+import { Utils } from '../models';
+import { error } from 'console';
 
 export async function adminLogin(req: Request, res: Response) {
   try {
@@ -470,5 +472,108 @@ export async function getAdminUserOne(req: Request, res: Response) {
     if (session) {
       await session.endSession();
     }
+  }
+}
+
+
+
+// ----------- Map Functions for create, get, update ------------
+
+// export async function createNewMapFlow(req: Request, res: Response) {
+//   let session: any;
+//   try {
+//     session = await mongoose.startSession();
+//     session.startTransaction();
+
+//     const { selectedMapOption } = req.body;
+//     console.log('object', selectedMapOption);
+
+//     const res = await Utils.create(
+//       [
+//         {
+//           currentMap: selectedMapOption,
+//         },
+//       ],
+//       { session: session },
+//     );
+
+//     if (!flowres) {
+//       throw new Error('Error while creating application flow');
+//     }
+
+//     await session.commitTransaction();
+//     res.status(200).send({
+//       message: ' App Flow craeted successfully.',
+//       data: flowres,
+//     });
+//   } catch (error: any) {
+//     res.status(400).json({ success: false, message: error.message });
+//     if (session) {
+//       await session.abortTransaction();
+//     }
+//     console.log('err :>> ', error);
+//   } finally {
+//     if (session) {
+//       await session.endSession();
+//     }
+//   }
+// }
+
+export async function updateCurrentMap(req: Request, res: Response) {
+  try {
+    const id = req.params.id;
+
+    // Rename the result from Utils.findOneAndUpdate to avoid conflict with Express's res
+    const result: any = await Utils.findOneAndUpdate(
+      { _id: id },
+      {
+        currentMap: req.body.selectedMapOption,
+      },
+      { new: true },
+    );
+
+    if(!result){
+      throw new Error("current map not found!")
+    }
+
+    console.log(
+      JSON.stringify({
+        method: 'updateCurrentMap',
+        data: result,
+      }),
+    );
+
+
+    res.status(200).send({
+      message: 'Current map updated successfully.',
+    });
+  } catch (error: any) {
+    res.status(400).json({ success: false, message: error.message });
+    console.log('err :>> ', error);
+  }
+}
+
+
+export async function getCurrentMap(req: Request, res: Response) {
+  try {
+    const response = await Utils.findOne();
+
+    console.log(
+      JSON.stringify({
+        method: 'getCurrentMap',
+        data: response,
+      }),
+    );
+
+    res.status(200).send({
+      message: 'current Map got successfully.',
+      data: response,
+    });
+  } catch (error: any) {
+    console.log({
+      method: 'getCurrentMap',
+      error: error,
+    });
+    res.status(400).json({ success: false, message: error.message });
   }
 }
