@@ -351,7 +351,7 @@ export async function updateAdminUser(req: Request | any, res: Response) {
     session.startTransaction();
 
     const id = req.params.id;
-
+    let oldUser = await Admin.findById(id, { password: 0 }).lean();
     let user = await Admin.findOneAndUpdate(
       { _id: id },
       {
@@ -375,7 +375,7 @@ export async function updateAdminUser(req: Request | any, res: Response) {
       AdminAction.UPDATE,
       `Admin ${user?.name}`,
       new Types.ObjectId(req.decoded._id),
-      user,
+      { beforeUpdate: oldUser, afterUpdate: user },
     );
 
     res.status(200).send({
