@@ -26,10 +26,8 @@ import {
   deleteAdminUsers,
   getAdminUserOne,
   getAllAdmins,
-  getCurrentMap,
   updateAdminUser,
   updateAdminUserStatus,
-  updateCurrentMap,
 } from './main/admin';
 import {
   createApp,
@@ -120,7 +118,12 @@ import { CronExpressions } from './shared/enums/CronExpressions';
 import { AdminAction, AdminRole } from './shared/enums/status.enum';
 import { LogActivity } from './models/logActivity.model';
 import { Types } from 'mongoose';
-import { getActivities } from './main/support';
+import {
+  getActivities,
+  getCurrentMap,
+  updateAppImage,
+  updateCurrentMap,
+} from './main/support';
 
 let utilsData: any;
 const jwt = require('jsonwebtoken');
@@ -405,7 +408,7 @@ app.post('/presignedurl', async (req, res) => {
     const s3Params: any = {
       Bucket: 'cargator',
       Key: key,
-      Expires: 60 * 60,
+      contentType: contentType,
     };
 
     if (type === 'put') {
@@ -602,6 +605,8 @@ app.patch('/update-app-flow/:id', updateAppFlow);
 // Map changing API
 
 // app.post('/create-map-flow', createNewMapFlow);
+
+app.patch('/update-app-image/:id', updateAppImage);
 
 app.get('/get-current-map', getCurrentMap);
 

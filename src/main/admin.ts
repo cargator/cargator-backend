@@ -50,7 +50,7 @@ export async function adminLogin(req: Request, res: Response) {
       expiresIn: '7d',
     });
 
-    console.log("admin loged in successfully", adminDoc);
+    console.log('admin loged in successfully', adminDoc);
 
     return res.status(200).send({
       message: 'success',
@@ -475,8 +475,6 @@ export async function getAdminUserOne(req: Request, res: Response) {
   }
 }
 
-
-
 // ----------- Map Functions for create, get, update ------------
 
 // export async function createNewMapFlow(req: Request, res: Response) {
@@ -518,62 +516,3 @@ export async function getAdminUserOne(req: Request, res: Response) {
 //     }
 //   }
 // }
-
-export async function updateCurrentMap(req: Request, res: Response) {
-  try {
-    const id = req.params.id;
-
-    // Rename the result from Utils.findOneAndUpdate to avoid conflict with Express's res
-    const result: any = await Utils.findOneAndUpdate(
-      { _id: id },
-      {
-        currentMap: req.body.selectedMapOption,
-      },
-      { new: true },
-    );
-
-    if(!result){
-      throw new Error("current map not found!")
-    }
-
-    console.log(
-      JSON.stringify({
-        method: 'updateCurrentMap',
-        data: result,
-      }),
-    );
-
-
-    res.status(200).send({
-      message: 'Current map updated successfully.',
-    });
-  } catch (error: any) {
-    res.status(400).json({ success: false, message: error.message });
-    console.log('err :>> ', error);
-  }
-}
-
-
-export async function getCurrentMap(req: Request, res: Response) {
-  try {
-    const response = await Utils.findOne();
-
-    console.log(
-      JSON.stringify({
-        method: 'getCurrentMap',
-        data: response,
-      }),
-    );
-
-    res.status(200).send({
-      message: 'current Map got successfully.',
-      data: response,
-    });
-  } catch (error: any) {
-    console.log({
-      method: 'getCurrentMap',
-      error: error,
-    });
-    res.status(400).json({ success: false, message: error.message });
-  }
-}

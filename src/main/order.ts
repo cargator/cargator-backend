@@ -18,10 +18,10 @@ import { flow } from 'lodash';
 
 const petpoojaAcknowledge = async (data: any) => {
   try {
-    console.log("petpoojaAcknowledge sent on order status updates", data);
+    console.log('petpoojaAcknowledge sent on order status updates', data);
     return axios.post(constants.PETPUJA_API_URL, data);
   } catch (error: any) {
-    console.log("petpoojaAcknowledge error while updating order", error);
+    console.log('petpoojaAcknowledge error while updating order', error);
     throw new Error(error);
   }
 };
@@ -65,6 +65,10 @@ const petpoojaAcknowledge = async (data: any) => {
 
 export async function placeOrder(req: Request, res: Response) {
   try {
+    const newStatusUpdate = {
+      status: OrderStatusEnum.ORDER_ACCEPTED,
+      time: new Date(),
+    };
     const saveOrder = await PlaceOrder.create({
       ...req.body,
       status: OrderStatusEnum.ORDER_ACCEPTED,
@@ -72,6 +76,7 @@ export async function placeOrder(req: Request, res: Response) {
         ...req.body.order_details,
         payment_status: req.body.order_details.paid,
       },
+      $push: { statusUpdates: newStatusUpdate },
     });
 
     if (!saveOrder) {
@@ -122,7 +127,7 @@ export async function placeOrder(req: Request, res: Response) {
 
 export async function orderAccept(req: any, res: Response) {
   try {
-    const driverId = "ewgfbvgbve";
+    const driverId = 'ewgfbvgbve';
     const { driverLocation, pickUpDetails, id } = req.body;
 
     console.log(
@@ -196,9 +201,9 @@ export async function orderAccept(req: any, res: Response) {
       data: {
         api_key: constants.PETPUJA_API_KEY,
         api_secret_key: constants.PETPUJA_SECRET_KEY,
-        vendor_order_id: "abhjahhjga",
-        rider_name: "aghjasgjd",
-        rider_contact: "dshj",
+        vendor_order_id: 'abhjahhjga',
+        rider_name: 'aghjasgjd',
+        rider_contact: 'dshj',
       },
       message: 'Ok',
       status_code: OrderStatusEnum.ORDER_ALLOTTED,
@@ -210,7 +215,7 @@ export async function orderAccept(req: any, res: Response) {
       JSON.stringify({
         method: 'orderAccept',
         message: 'order Accept Response',
-        data: resp.data
+        data: resp.data,
         // data: { response, driverDataFromCurrLocationToPickup },
       }),
     );
@@ -464,7 +469,7 @@ export async function cancelTask(req: Request, res: Response) {
 
     const resp = await petpoojaAcknowledge(obj);
 
-    console.log("Acknowledgement response on Cancelled order", resp.data);
+    console.log('Acknowledgement response on Cancelled order', resp.data);
 
     console.log(
       JSON.stringify({
@@ -745,7 +750,7 @@ export async function getOrderHistory(
       status = [
         OrderStatusEnum.ORDER_ALLOTTED,
         OrderStatusEnum.DISPATCHED,
-        OrderStatusEnum.ORDER_ACCEPTED,
+        OrderStatusEnum.ARRIVED,
         OrderStatusEnum.ARRIVED_CUSTOMER_DOORSTEP,
       ];
     } else if (filter === 'cancelled') {
@@ -1038,17 +1043,19 @@ export async function orderUpdateStatus(req: any, res: Response) {
 
     const acknowledgementResponse = await petpoojaAcknowledge(obj);
 
-    console.log("Order update acknoeledgement response", acknowledgementResponse.data);
+    console.log(
+      'Order update acknoeledgement response',
+      acknowledgementResponse.data,
+    );
     // console.log(
     //   JSON.stringify({
     //     method: 'acknowledgementResponse',
     //     message: 'Order update acknoeledgement response',
-    //     data: 
+    //     data:
     //       acknowledgementResponse.data
     //     ,
     //   }),
     // );
-
 
     await session.commitTransaction();
     return res.status(200).send({
@@ -1145,24 +1152,22 @@ export async function testOrder(req: Request, res: Response) {
   }
 }
 
-
 export async function getButtontextFlow(req: Request, res: Response) {
   try {
-
     const flows = await Flows.find().lean();
-    
+
     if (!flows || flows.length === 0) {
       throw new Error('Flows not found!');
     }
 
-    console.log("Button Text flow fetched successfully!", {flows});
-    
+    console.log('Button Text flow fetched successfully!', { flows });
+
     return res.status(200).json({
       message: 'Flows fetched successfully',
       data: flows,
     });
   } catch (error: any) {
-    console.error("get flows error: ", error);
+    console.error('get flows error: ', error);
     return res.status(500).json({
       message: 'Error fetching flows',
       error: error.message,

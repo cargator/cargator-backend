@@ -1,6 +1,5 @@
 import mongoose, { Types } from 'mongoose';
 
-
 const vehicleSchema = new mongoose.Schema(
   {
     vehicleName: String,
@@ -40,7 +39,8 @@ const utilsSchema = new mongoose.Schema(
     preBookRideTime: Number,
     scheduleRideInterval: Number,
     forGroundIntervalDuration: Number,
-    currentMap: String
+    currentMap: String,
+    appImageKey: String,
   },
   {
     timestamps: true,
@@ -48,12 +48,11 @@ const utilsSchema = new mongoose.Schema(
   },
 );
 
-
 const vehicleTypeSchema = new mongoose.Schema(
   {
     vehicleType: String,
     vehicleModel: String,
-    vehicleMake: String
+    vehicleMake: String,
   },
   {
     timestamps: true,
@@ -93,7 +92,7 @@ const spots = new mongoose.Schema(
   },
   {
     timestamps: true,
-    collection: "spots",
+    collection: 'spots',
   },
 );
 // country code schema
@@ -107,7 +106,7 @@ const countryCodeSchema = new mongoose.Schema(
     timestamps: true,
     collection: 'countryCodes',
   },
-)
+);
 
 // flows point schema
 const breakingPointSchema = new mongoose.Schema(
@@ -125,18 +124,15 @@ const breakingPointSchema = new mongoose.Schema(
 
 const driverApplicationFlow = new mongoose.Schema(
   {
-    applicationFLow: String
+    applicationFLow: String,
   },
   {
     timestamps: true,
     collection: 'driverAppFlow',
   },
-)
+);
 
 // Order Schema's
-
-
-
 
 export const VehicleTypes = mongoose.model('vehicleTypes', vehicleTypeSchema);
 export const fares = mongoose.model('fares', faresSchema);
@@ -144,7 +140,9 @@ export const apps = mongoose.model('apps', appsSchema);
 export const Spots = mongoose.model('Spots', spots);
 export const Utils = mongoose.model('Utils', utilsSchema);
 export const Vehicles = mongoose.model('vehicles', vehicleSchema);
-export const CountryCode = mongoose.model("CountryCode", countryCodeSchema);
+export const CountryCode = mongoose.model('CountryCode', countryCodeSchema);
 export const Flows = mongoose.model('Flows', breakingPointSchema);
-export const DriverAppFlow = mongoose.model("DriverAppFlow", driverApplicationFlow);
-
+export const DriverAppFlow = mongoose.model(
+  'DriverAppFlow',
+  driverApplicationFlow,
+);

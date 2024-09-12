@@ -495,17 +495,33 @@ export async function paginatedDriverData(req: Request, res: Response) {
   try {
     const page: any = req?.query?.page;
     const limit: any = req.query.limit;
+    let status = ['online', 'offline'];
+    if (req.query?.status === 'online' || req.query?.status === 'offline') {
+      status = [req.query?.status];
+    }
     const dataLimit = parseInt(limit);
     const skip = (parseInt(page) - 1) * dataLimit;
     const allDrivers = await Driver.aggregate([
       {
         $facet: {
           drivers: [
+            {
+              $match: {
+                rideStatus: { $in: status },
+              },
+            },
             { $sort: { updatedAt: -1 } },
             { $skip: skip },
             { $limit: dataLimit },
           ],
-          totalDrivers: [{ $count: 'count' }],
+          totalDrivers: [
+            {
+              $match: {
+                rideStatus: { $in: status },
+              },
+            },
+            { $count: 'count' },
+          ],
         },
       },
     ]);
@@ -627,7 +643,10 @@ export async function updateLiveLocation(req: any, res: Response) {
         liveLocation: coordinates,
       },
     );
-    console.log("updating-driver-live-location>>>>",updateLocation.liveLocation);
+    console.log(
+      'updating-driver-live-location>>>>',
+      updateLocation.liveLocation,
+    );
 
     return res.status(200).send({
       message: 'Driver-location updated successfully.',
@@ -648,7 +667,6 @@ export async function updateTimelineCoords(req: any, res: Response) {
     if (!Array.isArray(pathCoords)) {
       pathCoords = [pathCoords];
     }
-
 
     /// Update the driver's live location in the database
     const updateLocation: any = await Driver.findOneAndUpdate(
@@ -677,14 +695,18 @@ export async function updateTimelineCoords(req: any, res: Response) {
 
     const realPathcoords = await PlaceOrder.findOneAndUpdate(
       {
-        _id: orderId
+        _id: orderId,
       },
       {
-        $push: {realPath: pathCoords[pathCoords.length - 1].coords}
-      }
-    )
+        $push: { realPath: pathCoords[pathCoords.length - 1].coords },
+      },
+    );
 
-    console.log("updateTimelineCoords>>>", pathCoords[pathCoords.length - 1].coords, orderId)
+    console.log(
+      'updateTimelineCoords>>>',
+      pathCoords[pathCoords.length - 1].coords,
+      orderId,
+    );
 
     return res.status(200).send({
       message: 'Driver-Timeline updated successfully.',
