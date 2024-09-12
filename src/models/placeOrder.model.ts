@@ -25,6 +25,7 @@ const placeOrder = new mongoose.Schema(
       statusUpdates: [
         {
           status: String,
+          location: Array,
           time: {
             type: Date,
             default: Date.now
