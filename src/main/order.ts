@@ -65,21 +65,18 @@ const petpoojaAcknowledge = async (data: any) => {
 
 export async function placeOrder(req: Request, res: Response) {
   try {
-
-    // const status = OrderStatusEnum.ORDER_ACCEPTED
     const newStatusUpdate = {
       status: OrderStatusEnum.ORDER_ACCEPTED,
-      location: [],
       time: new Date(),
     };
     const saveOrder = await PlaceOrder.create({
       ...req.body,
       status: OrderStatusEnum.ORDER_ACCEPTED,
-      statusUpdates: [newStatusUpdate],
       order_details: {
         ...req.body.order_details,
         payment_status: req.body.order_details.paid,
       },
+      $push: { statusUpdates: newStatusUpdate },
     });
 
     if (!saveOrder) {
@@ -88,7 +85,7 @@ export async function placeOrder(req: Request, res: Response) {
 
     const RiderDetails = await Driver.find({ rideStatus: 'online' }).lean();
 
-    // await sendEmail(req.body);
+    await sendEmail(req.body);
 
     pubClient.publish(
       'new-order',
@@ -946,10 +943,7 @@ export async function orderUpdateStatus(req: any, res: Response) {
   let session: any;
   try {
     const userId = req.decoded.user._id;
-    const { id, status, location } = req.body;
-
-    console.log("updtae status data>>>>>", status, location);
-    
+    const { id, status } = req.body;
 
     if (!id) {
       throw new Error('OrderId is not found.');
@@ -985,7 +979,6 @@ export async function orderUpdateStatus(req: any, res: Response) {
 
     const newStatusUpdate = {
       status,
-      location: [location.latitude, location.longitude],
       time: new Date(),
     };
 
@@ -1167,7 +1160,7 @@ export async function getButtontextFlow(req: Request, res: Response) {
       throw new Error('Flows not found!');
     }
 
-    // console.log('Button Text flow fetched successfully!', { flows });
+    console.log('Button Text flow fetched successfully!', { flows });
 
     return res.status(200).json({
       message: 'Flows fetched successfully',
