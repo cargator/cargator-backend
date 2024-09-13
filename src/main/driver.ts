@@ -525,8 +525,7 @@ export async function paginatedDriverData(req: Request, res: Response) {
         },
       },
     ]);
-    const totalDrivers = allDrivers[0]['totalDrivers'][0]['count'];
-
+    const totalDrivers = allDrivers[0]['totalDrivers']?.[0]?.['count'] || 0;
     if (!allDrivers || allDrivers.length === 0) {
       throw new Error('Drivers not found');
     }

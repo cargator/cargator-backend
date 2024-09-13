@@ -66,6 +66,19 @@ export async function getActivities(req: Request, res: Response) {
   }
 }
 
+export async function getActivityData(req: Request, res: Response) {
+  try {
+    const activityDoc = await LogActivity.find({ _id: req.params.id }).lean();
+    return res.status(200).send({
+      message: 'success',
+      data: activityDoc,
+    });
+  } catch (error: any) {
+    console.log(`get-activities error :>> `, error);
+    return res.status(400).send({ message: error.message });
+  }
+}
+
 export async function updateAppImage(req: Request, res: Response) {
   try {
     await Utils.findOneAndUpdate(
