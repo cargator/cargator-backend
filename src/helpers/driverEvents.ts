@@ -117,6 +117,7 @@ const driverSocketConnected = async (
 
       const newStatusUpdate = {
         status: OrderStatusEnum.ORDER_ALLOTTED,
+        location: [driver_location.latitude, driver_location.longitude],
         time: new Date(),
       };
 
@@ -215,13 +216,16 @@ const driverSocketConnected = async (
 
       console.log('order accepted successfully');
       const acknowledgementResponse = await petpoojaAcknowledge(obj);
-      console.log("Order accept acknowledgement response", acknowledgementResponse.data);
-      
+      console.log(
+        'Order accept acknowledgement response',
+        acknowledgementResponse.data,
+      );
+
       // console.log(
       //   JSON.stringify({
       //     method: 'acknoeledgementResponse',
       //     message: 'Order accept acknowledgement response',
-      //     data: 
+      //     data:
       //       acknowledgementResponse.data
       //     ,
       //   }),
