@@ -120,6 +120,7 @@ import { LogActivity } from './models/logActivity.model';
 import { Types } from 'mongoose';
 import {
   getActivities,
+  getActivityData,
   getCurrentMap,
   updateAppImage,
   updateCurrentMap,
@@ -459,6 +460,7 @@ app.use(authorize);
 app.get('/get-all-admins', getAllAdmins);
 
 app.get('/get-activities', getActivities);
+app.get('/get-activity-data/:id', getActivityData);
 
 //admin create by other admin and superAdmin
 app.post('/create-admin', createAdmin);
