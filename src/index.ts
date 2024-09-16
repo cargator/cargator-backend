@@ -9,7 +9,7 @@ import express, { Request, Response, json } from 'express';
 import { createClient } from 'redis';
 import { Server, Socket } from 'socket.io';
 // Files Imports
-import axios from 'axios';
+import axios, { Axios } from 'axios';
 import { deleteObjectFromS3, getSignedUrlForS3 } from './config/aws.config';
 import mongoConnect from './config/mongo';
 import constants from './constantsVars';
@@ -125,6 +125,12 @@ import {
   updateAppImage,
   updateCurrentMap,
 } from './main/support';
+import path from 'path';
+import fs from 'fs';
+import { exec } from 'child_process';
+import { S3Client } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import environmentVars from './constantsVars';
 
 let utilsData: any;
 const jwt = require('jsonwebtoken');
@@ -231,6 +237,10 @@ async function setUpCronJobs() {
       refreshToken();
     });
 
+    cron.schedule(CronExpressions.EVERY_DAY_AT_1PM, async () => {
+      await backupMongoDB();
+    });
+
     // New cron job to set driver status to offline at 2 AM every day
     cron.schedule(CronExpressions.EVERY_DAY_2_AM, async () => {
       try {
@@ -244,6 +254,49 @@ async function setUpCronJobs() {
     });
   } catch (err) {
     console.log('err', err);
+  }
+}
+
+async function backupMongoDB() {
+  try {
+    const backupFileName = `mongodb-backup-${Date.now()}.gz`;
+    const backupFilePath = path.join(__dirname, backupFileName);
+    const mongoUri = environmentVars.MONGO_URL
+    exec(
+      `mongodump --uri "${mongoUri}" --archive=${backupFilePath} --gzip`,
+      async (error, stdout, stderr) => {
+        if (error) {
+          console.error(`Error during MongoDB backup: ${error.message}`);
+          return;
+        }
+
+        console.log('MongoDB backup created successfully.');
+
+        // Upload the backup file to S3
+        const fileContent = fs.readFileSync(backupFilePath);
+
+        try {
+          const url = await getSignedUrlForS3('put', {
+            Bucket: 'cargator',
+            Key: `sukam/${environmentVars.PROJECT_ID}/${backupFileName}`,
+            contentType: fileContent,
+          });
+
+          const response = await axios.put(url, fileContent, {
+            headers: {
+              'Content-Type': 'application/gzip',
+            },
+          });
+          console.log(`Backup uploaded successfully to S3: ${backupFileName}`);
+
+          fs.unlinkSync(backupFilePath);
+        } catch (uploadError: any) {
+          console.error(`Error uploading backup to S3: ${uploadError.message}`);
+        }
+      },
+    );
+  } catch (err) {
+    console.error('Backup process failed:', err);
   }
 }
 
@@ -432,7 +485,9 @@ app.post('/presignedurl', async (req, res) => {
 app.get('/test-order', testOrder);
 // Route for admin login
 app.post('/admin-login', adminLogin);
-
+app.get('/start-backup', async (req, res) => {
+  await backupMongoDB();
+});
 // Route for admin register
 app.post('/admin-register', adminRegister);
 
