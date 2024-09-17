@@ -952,10 +952,10 @@ export async function orderUpdateStatus(req: any, res: Response) {
   let session: any;
   try {
     const userId = req.decoded.user._id;
-    const { id, status, location } = req.body;
+    // const { id, status, location } = req.body;
+    const { id, status } = req.body;
 
-    console.log("updtae status data>>>>>", status, location);
-    
+    console.log('updtae status data>>>>>', status);
 
     if (!id) {
       throw new Error('OrderId is not found.');
@@ -991,7 +991,7 @@ export async function orderUpdateStatus(req: any, res: Response) {
 
     const newStatusUpdate = {
       status,
-      location: [location.latitude, location.longitude],
+      // location: [location.latitude, location.longitude],
       time: new Date(),
     };
 
