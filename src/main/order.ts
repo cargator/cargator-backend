@@ -87,7 +87,7 @@ export async function placeOrder(req: Request, res: Response) {
 
     const RiderDetails = await Driver.find({ rideStatus: 'online' }).lean();
 
-    // await sendEmail(req.body);
+    await sendEmail(req.body);
 
     pubClient.publish(
       'new-order',
