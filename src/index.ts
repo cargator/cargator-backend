@@ -131,6 +131,7 @@ import { exec } from 'child_process';
 import { S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import environmentVars from './constantsVars';
+import { createRestaurent, getAvailableRestaurent, getRestaurentList } from './main/restaurent';
 
 let utilsData: any;
 const jwt = require('jsonwebtoken');
@@ -629,6 +630,14 @@ app.delete('/delete-spot/:id', deleteSpot);
 
 app.get('/get-active-spot', getActiveSpot);
 app.get('/get-spot-list-vehicle', getSpotListVehicle);
+
+
+// Restaurent crud
+app.post('/create-restaurent', createRestaurent);
+
+app.get('/get-restaurent-list', getRestaurentList);
+
+app.get('/get-available-restaurent', getAvailableRestaurent);
 
 // appName and Image
 

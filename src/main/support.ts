@@ -129,12 +129,12 @@ export async function getCurrentMap(req: Request, res: Response) {
   try {
     const response = await Utils.findOne();
 
-    console.log(
-      JSON.stringify({
-        method: 'getCurrentMap',
-        data: response,
-      }),
-    );
+    // console.log(
+    //   JSON.stringify({
+    //     method: 'getCurrentMap',
+    //     data: response,
+    //   }),
+    // );
 
     res.status(200).send({
       message: 'current Map got successfully.',

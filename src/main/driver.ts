@@ -146,9 +146,11 @@ export async function createDriver(req: Request, res: Response) {
   try {
     session = await mongoose.startSession();
     session.startTransaction();
+    console.log("createDriver", req.body);
     const {
       firstName,
       lastName,
+      restaurentName,
       vehicleNumber,
       vehicleType,
       vehicleName,
@@ -187,6 +189,7 @@ export async function createDriver(req: Request, res: Response) {
       driverId,
       firstName,
       lastName,
+      restaurentName,
       vehicleNumber:
         vehicleNumber === 'none' ? '' : vehicleNumber.toUpperCase(),
       vehicleType: vehicleNumber === 'none' ? '' : vehicleType,
@@ -339,6 +342,7 @@ export async function updateDriver(req: Request, res: Response) {
     const {
       firstName,
       lastName,
+      restaurentName,
       vehicleNumber,
       vehicleType,
       vehicleName,
@@ -401,6 +405,7 @@ export async function updateDriver(req: Request, res: Response) {
 
     driver.firstName = firstName;
     driver.lastName = lastName;
+    driver.restaurentName = restaurentName;
     driver.mobileNumber = `91${mobileNumber}`;
     driver.profileImageKey = profileImageKey;
     driver.documentsKey = documentsKey;
