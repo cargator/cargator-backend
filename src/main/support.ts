@@ -85,7 +85,15 @@ export async function updateAppImage(req: Request, res: Response) {
       { _id: req.params.id },
       { appImageKey: req.body.appImageKey },
     );
-    return res.status(200).send({ message: 'success' });
+    
+    const s3Params: any = {
+      Bucket: 'cargator',
+      Key: req.body.appImageKey,
+      contentType: req.body.contentType,
+    };
+    const url = await getSignedUrlForS3('get', s3Params);
+
+    return res.status(200).send({message: 'success', imageurl: url });
   } catch (error: any) {
     res.status(400).json({ success: false, message: error.message });
     console.log('update-app-image :>> ', error);
