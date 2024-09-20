@@ -500,9 +500,13 @@ export async function paginatedDriverData(req: Request, res: Response) {
   try {
     const page: any = req?.query?.page;
     const limit: any = req.query.limit;
-    let status = ['online', 'offline'];
+    let status = ['online','on-ride', 'offline'];
     if (req.query?.status === 'online' || req.query?.status === 'offline') {
-      status = [req.query?.status];
+      if(req.query?.status === 'online'){
+        status = [req.query?.status,'on-ride'];
+      }else{
+        status = [req.query?.status];
+      }
     }
     const dataLimit = parseInt(limit);
     const skip = (parseInt(page) - 1) * dataLimit;

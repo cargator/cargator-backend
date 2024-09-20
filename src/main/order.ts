@@ -90,6 +90,7 @@ export async function placeOrder(req: Request, res: Response) {
 
     // await sendEmail(req.body);
 
+
     pubClient.publish(
       'new-order',
       formatSocketResponse({
@@ -738,6 +739,8 @@ export async function getOrderHistory(
     const limit: number = parseInt(req.query.limit as string, 10) || 10;
     const filter: string | undefined = req.query.filter as string | undefined;
 
+    console.log("<>>>>>>>>>>>>>", filter);
+
     console.log(
       JSON.stringify({
         method: 'getOrderHistory',
@@ -748,8 +751,8 @@ export async function getOrderHistory(
 
     let status: any;
     if (filter === 'completed') {
-      status = OrderStatusEnum.DELIVERED;
-    } else if (filter === 'current-order') {
+      status = [OrderStatusEnum.DELIVERED];
+    } else if (filter === 'ongoing-rides' || filter === 'current-order') {
       status = [
         OrderStatusEnum.ORDER_ALLOTTED,
         OrderStatusEnum.DISPATCHED,
@@ -757,7 +760,7 @@ export async function getOrderHistory(
         OrderStatusEnum.ARRIVED_CUSTOMER_DOORSTEP,
       ];
     } else if (filter === 'cancelled') {
-      status = OrderStatusEnum.ORDER_CANCELLED;
+      status = [OrderStatusEnum.ORDER_CANCELLED];
     }
 
     const dataLimit = limit;
@@ -1138,7 +1141,7 @@ export async function testOrder(req: Request, res: Response) {
       throw new Error('error while placing order');
     }
 
-    await sendEmail(req.body);
+    // await sendEmail(req.body);
 
     pubClient.publish(
       'new-order',
