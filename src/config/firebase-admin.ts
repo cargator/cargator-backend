@@ -21,12 +21,18 @@ export async function sendOrderNotification(deviceToken: any, newOrder: any) {
       title: 'New Order Received',
     },
     data: {
-      data: JSON.stringify(newOrder)
-    }
+      data: JSON.stringify(newOrder),
+    },
   };
 
   try {
-    await admin.messaging().send({token: deviceToken, notification: payload.notification, data: payload.data});
+    await admin
+      .messaging()
+      .send({
+        token: deviceToken,
+        notification: payload.notification,
+        data: payload.data,
+      });
     console.log('Notification sent successfully');
   } catch (error) {
     console.error('Error sending notification:', error);

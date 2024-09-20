@@ -1,9 +1,9 @@
-import { Spots, Vehicles } from "../models";
-import { Request, Response } from "express";
-import mongoose from "mongoose";
+import { Spots, Vehicles } from '../models';
+import { Request, Response } from 'express';
+import mongoose from 'mongoose';
 
 export async function createSpot(req: Request, res: Response) {
-//   console.log("body", req.body);
+  //   console.log("body", req.body);
   let session: any;
   try {
     session = await mongoose.startSession();
@@ -17,18 +17,18 @@ export async function createSpot(req: Request, res: Response) {
         // vehicleStatus: "unavailable",
       },
       null,
-      { session: session }
+      { session: session },
     );
 
     if (checkStatus) {
-      throw new Error("Vehicle might be assigned to someone");
+      throw new Error('Vehicle might be assigned to someone');
     }
 
     const existingSpot = await Spots.findOne({ bounds: [bounds] }, null, {
       session: session,
     });
     if (existingSpot) {
-      throw new Error("Location Already used");
+      throw new Error('Location Already used');
     }
 
     const random = Math.floor(Math.random() * 9000 + 1000);
@@ -46,7 +46,7 @@ export async function createSpot(req: Request, res: Response) {
           bounds,
         },
       ],
-      { session: session }
+      { session: session },
     );
 
     // const vehiclespotName = await ZenzoVehicles.findOneAndUpdate(
@@ -59,7 +59,7 @@ export async function createSpot(req: Request, res: Response) {
     // throw new Error('Error while creating driver');
 
     if (spots.length == 0) {
-      throw new Error("Error while creating spot");
+      throw new Error('Error while creating spot');
     }
 
     //   const vehicle = await Vehicles.findOneAndUpdate(
@@ -79,14 +79,14 @@ export async function createSpot(req: Request, res: Response) {
 
     await session.commitTransaction();
     res.status(200).send({
-      message: " Spot data saved.",
+      message: ' Spot data saved.',
     });
   } catch (error: any) {
     res.status(400).json({ success: false, message: error.message });
     if (session) {
       await session.abortTransaction();
     }
-    console.log("err :>> ", error);
+    console.log('err :>> ', error);
   } finally {
     if (session) {
       await session.endSession();
@@ -116,17 +116,17 @@ export async function getSpotList(req: Request, res: Response) {
               $limit: dataLimit,
             },
           ],
-          count: [{ $count: "totalcount" }],
+          count: [{ $count: 'totalcount' }],
         },
       },
     ]);
     // console.log(spotList)
     return res.status(200).json({
-      message: "Fetched all spots",
+      message: 'Fetched all spots',
       data: spotList,
     });
   } catch (error: any) {
-    console.log("get all spot error: ", error);
+    console.log('get all spot error: ', error);
     // res.status(400).send({ error: error.message });
   }
 }
@@ -136,11 +136,11 @@ export async function getSpotListVehicle(req: Request, res: Response) {
     const spotList = await Spots.find();
     // console.log(spotList)
     return res.status(200).json({
-      message: "Fetched all spots",
+      message: 'Fetched all spots',
       data: spotList,
     });
   } catch (error: any) {
-    console.log("get all spot error: ", error);
+    console.log('get all spot error: ', error);
     // res.status(400).send({ error: error.message });
   }
 }
@@ -154,9 +154,9 @@ export async function deleteSpot(req: Request, res: Response) {
     const id = req.params.id;
     // console.log("id", id);
 
-    const deleteType:any = await Spots.findOneAndDelete({ _id: id });
+    const deleteType: any = await Spots.findOneAndDelete({ _id: id });
 
-    const vehicleNumber = deleteType?.vehicleNumber ;
+    const vehicleNumber = deleteType?.vehicleNumber;
 
     // const updateVehicleSpotName = await ZenzoVehicles.findOneAndUpdate(
     //   {vehicleNumber},
@@ -165,12 +165,12 @@ export async function deleteSpot(req: Request, res: Response) {
     //   )
 
     if (!deleteType) {
-      throw new Error("Error while deleting spot");
+      throw new Error('Error while deleting spot');
     }
 
     await session.commitTransaction();
     res.status(200).send({
-      message: " spot deleted Successfully.",
+      message: ' spot deleted Successfully.',
       data: deleteType,
     });
   } catch (error: any) {
@@ -178,7 +178,7 @@ export async function deleteSpot(req: Request, res: Response) {
     if (session) {
       await session.abortTransaction();
     }
-    console.log("err :>> ", error);
+    console.log('err :>> ', error);
   } finally {
     if (session) {
       await session.endSession();
@@ -190,22 +190,22 @@ export async function getActiveSpot(req: Request, res: Response) {
   try {
     // Fetch bounds data from MongoDB with aggregation
     const boundsData = await Spots.aggregate([
-        {
-            $project: {
-                _id: 0,
-                bounds: 1
-            }
-        }
+      {
+        $project: {
+          _id: 0,
+          bounds: 1,
+        },
+      },
     ]);
 
     // console.log("boundsData:",boundsData)
 
     // Extract bounds from the result and create an array
-    const boundsArray = boundsData.map(item => item.bounds);
+    const boundsArray = boundsData.map((item) => item.bounds);
     // console.log("boundsData----:",boundsArray)
     res.json(boundsArray);
-} catch (error) {
+  } catch (error) {
     console.error('Error fetching bounds data:', error);
     res.status(500).json({ message: 'Internal server error' });
-}
+  }
 }

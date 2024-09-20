@@ -2,7 +2,7 @@ import { Vehicles } from '../models';
 import { Driver } from '../models/driver.model';
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import environmentVars from '../constantsVars'
+import environmentVars from '../constantsVars';
 const AWS = require('aws-sdk');
 AWS.config.update({
   region: environmentVars.AWS_REGION,
@@ -224,7 +224,9 @@ export async function deleteVehicle(req: Request, res: Response) {
     const body = {
       uid: req.params.id,
       profileImageKey: req.headers['x-profile-image-key'],
-      documentsKey: req.headers['x-documents-key'] ? req.headers['x-documents-key'][0] : undefined,
+      documentsKey: req.headers['x-documents-key']
+        ? req.headers['x-documents-key'][0]
+        : undefined,
     };
     const vehicle = await Vehicles.findOneAndDelete({
       _id: vehicleId,
@@ -429,5 +431,5 @@ export async function allAllVehicles(req: Request, res: Response) {
 }
 
 export function getVehicalDetails(req: any) {
- return Vehicles.findOne(req) 
+  return Vehicles.findOne(req);
 }

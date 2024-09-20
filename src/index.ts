@@ -261,7 +261,7 @@ async function backupMongoDB() {
   try {
     const backupFileName = `mongodb-backup-${Date.now()}.gz`;
     const backupFilePath = path.join(__dirname, backupFileName);
-    const mongoUri = environmentVars.MONGO_URL
+    const mongoUri = environmentVars.MONGO_URL;
     exec(
       `mongodump --uri "${mongoUri}" --archive=${backupFilePath} --gzip`,
       async (error, stdout, stderr) => {
