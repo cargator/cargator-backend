@@ -116,7 +116,7 @@ export async function verifyOtp(req: Request, res: Response) {
       // Verify OTP
       if (otp == user.otp || mobileNumber === '9876543210') {
         // Select relevant user fields and generate a JWT token
-        user = pick(user, ['_id', 'mobileNumber', 'documentsKey', 'firstName']);
+        user = pick(user, ['_id', 'mobileNumber', 'documentsKey', 'firstName','restaurentName']);
         const token = jwt.sign(
           { user, type: 'driver' },
           environmentVars.PUBLIC_KEY,

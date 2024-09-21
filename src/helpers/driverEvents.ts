@@ -31,12 +31,13 @@ const driverSocketConnected = async (
   socket: Socket,
   userId: string,
   io: Server,
+  restaurentName:string,
 ) => {
   let _userId = new Types.ObjectId(userId);
   try {
     // Set the driver's socket in the driversSocket object
     driversSocket[userId] = socket;
-    console.log('Socket connected successfully!', userId);
+    console.log('Socket connected successfully!', userId, restaurentName);
   } catch (err: any) {
     socket.emit(
       'error',

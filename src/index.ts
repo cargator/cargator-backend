@@ -783,10 +783,13 @@ subClient.on('error', () => console.log(`Subscriber Client Error`));
       // console.log('A new client connected');
       const Token: string = String(socket?.handshake.query?.['token']);
       const data = decodeToken(Token);
-
+      
       const userId = data?.type === 'driver' ? data.user?._id : undefined;
       const email = data?.email;
       const type = data?.type;
+      const restaurentName = data?.user?.restaurentName;
+      console.log(">>>>>>>>>>>",restaurentName);
+
 
       if (
         (type === 'driver' && (!userId || !type)) ||
@@ -802,7 +805,7 @@ subClient.on('error', () => console.log(`Subscriber Client Error`));
       }
       try {
         if (type === 'driver') {
-          await driverSocketConnected(socket, userId, io);
+          await driverSocketConnected(socket, userId, io,restaurentName);
         } else {
           await adminSocketConnected(socket, email, io);
         }

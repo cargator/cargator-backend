@@ -6,6 +6,10 @@ const restaurent = new mongoose.Schema(
         type: String,
         unique: true,
       },
+      restaurentNameToLowerCase: {
+        type: String,
+        unique: true,
+      },
       bounds: [],
     },
     {

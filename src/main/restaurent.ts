@@ -4,17 +4,19 @@ import mongoose from "mongoose";
 import { Restaurent } from "../models/reataurent.model";
 
 export async function createRestaurent(req: Request, res: Response) {
-  console.log("body", req.body);
   let session: any;
   try {
     session = await mongoose.startSession();
     const { restaurentName,bounds } = req.body;
-    // console.log('object1 :>> ');
+
+    const restaurentNameToLowerCase = restaurentName.toLowerCase().trim();
+
     session.startTransaction();
 
     const checkStatus: any = await Restaurent.findOne(
       {
         restaurentName: req.body.restaurentName,
+        restaurentNameToLowerCase: restaurentNameToLowerCase,
       },
       null,
       { session: session }
@@ -29,6 +31,7 @@ export async function createRestaurent(req: Request, res: Response) {
       [
         {
           restaurentName,
+          restaurentNameToLowerCase: restaurentNameToLowerCase,
           bounds,
         },
       ],
