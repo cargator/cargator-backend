@@ -8,22 +8,30 @@ import { formatSocketResponse, getDirections } from './common';
 import constants from '../constantsVars';
 import axios from 'axios';
 // const { utilsData } = require('../index.ts');
+interface DriverSocketData {
+  socket: Socket;
+  restaurentName: string;
+}
 
-const driversSocket: Record<string, Socket> = {};
+const driversSocket: Record<string, DriverSocketData> = {};
 
-// Function to get the socket of a driver based on their userId
-const getDriverSocket = (userId: string): Socket => {
-  return driversSocket[userId];
+const getDriverSocket = (userId: string): Socket | undefined => {
+  return driversSocket[userId]?.socket;
 };
 
-const getAllSocket = () => {
+const getAllSocket = (): Record<string, DriverSocketData> => {
   return { ...driversSocket };
 };
 
 // Function to set the socket of a driver based on their userId
-const setDriverSocket = (userId: string, socket: Socket): Socket => {
-  driversSocket[userId] = socket;
-  return socket;
+// const setDriverSocket = (userId: string, socket: Socket): Socket => {
+//   driversSocket[userId] = socket;
+//   return socket;
+// };
+
+const setDriverSocket = (userId: string, socket: Socket, restaurentName: string): DriverSocketData => {
+  driversSocket[userId] = { socket, restaurentName };
+  return driversSocket[userId];
 };
 
 // Function to handle the event when a driver's socket is connected
@@ -36,7 +44,8 @@ const driverSocketConnected = async (
   let _userId = new Types.ObjectId(userId);
   try {
     // Set the driver's socket in the driversSocket object
-    driversSocket[userId] = socket;
+    // driversSocket[userId] = socket;
+    setDriverSocket(userId, socket, restaurentName);
     console.log('Socket connected successfully!', userId, restaurentName);
   } catch (err: any) {
     socket.emit(

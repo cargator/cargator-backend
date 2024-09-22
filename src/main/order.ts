@@ -66,13 +66,12 @@ const petpoojaAcknowledge = async (data: any) => {
 export async function placeOrder(req: Request, res: Response) {
   try {
 
-    // const status = OrderStatusEnum.ORDER_ACCEPTED
     const newStatusUpdate = {
       status: OrderStatusEnum.ORDER_ACCEPTED,
       location: [],
       time: new Date(),
     };
-    const saveOrder = await PlaceOrder.create({
+    const saveOrder: any = await PlaceOrder.create({
       ...req.body,
       status: OrderStatusEnum.ORDER_ACCEPTED,
       statusUpdates: [newStatusUpdate],
@@ -86,7 +85,7 @@ export async function placeOrder(req: Request, res: Response) {
       throw new Error('error while placing order');
     }
 
-    const RiderDetails = await Driver.find({ rideStatus: 'online' }).lean();
+    const RiderDetails:any = await Driver.find({ rideStatus: 'online' }).lean();
 
     // await sendEmail(req.body);
 
@@ -99,7 +98,13 @@ export async function placeOrder(req: Request, res: Response) {
     );
     if (RiderDetails.length > 0) {
       for (const iterator of RiderDetails) {
-        await sendOrderNotification(iterator.deviceToken, saveOrder);
+        if(iterator.restaurentName === saveOrder?.pickup_details?.name.toLowerCase().trim()){
+          if (iterator.deviceToken) { 
+            await sendOrderNotification(iterator.deviceToken, saveOrder);
+          } else {
+            console.warn(`Device token is undefined for rider: ${iterator.firstName} ${iterator.lastName}`);
+          }
+        }
       }
     }
 
@@ -739,8 +744,6 @@ export async function getOrderHistory(
     const limit: number = parseInt(req.query.limit as string, 10) || 10;
     const filter: string | undefined = req.query.filter as string | undefined;
 
-    console.log("<>>>>>>>>>>>>>", filter);
-
     console.log(
       JSON.stringify({
         method: 'getOrderHistory',
@@ -1133,9 +1136,9 @@ export async function testOrder(req: Request, res: Response) {
       status: OrderStatusEnum.ORDER_ACCEPTED,
     };
 
-    const saveOrder = await PlaceOrder.create(testingData);
+    const saveOrder: any = await PlaceOrder.create(testingData);
 
-    const RiderDetails = await Driver.find({ rideStatus: 'online' }).lean();
+    const RiderDetails: any = await Driver.find({ rideStatus: 'online' }).lean();
 
     if (!saveOrder) {
       throw new Error('error while placing order');
@@ -1149,9 +1152,14 @@ export async function testOrder(req: Request, res: Response) {
         order: saveOrder,
       }),
     );
-    if (RiderDetails.length > 0) {
-      for (const iterator of RiderDetails) {
-        await sendOrderNotification(iterator.deviceToken, saveOrder);
+
+    for (const iterator of RiderDetails) {
+      if(iterator.restaurentName === saveOrder?.pickup_details?.name.toLowerCase().trim()){
+        if (iterator.deviceToken) { 
+          await sendOrderNotification(iterator.deviceToken, saveOrder);
+        } else {
+          console.warn(`Device token is undefined for rider: ${iterator.firstName} ${iterator.lastName}`);
+        }
       }
     }
 

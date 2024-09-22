@@ -145,7 +145,7 @@ const sendToAllRiders: any = (data: any) => {
     const driverSocket = getAllSocket();
     for (let index = 0; index < Object.values(driverSocket).length; index++) {
       const element: any = Object.values(driverSocket)[index];
-      element.emit(dataNew.type, formatSocketResponse(dataNew.message));
+      element.socket.emit(dataNew.type, formatSocketResponse(dataNew.message));
     }
   } catch (error: any) {
     console.log('error :', error);
@@ -154,11 +154,19 @@ const sendToAllRiders: any = (data: any) => {
 
 const sendNewOrderToAllRiders: any = (data: any) => {
   try {
+    const parsedData = JSON.parse(data)
+    const orderRestaurentName = parsedData?.order?.pickup_details?.name.toLowerCase().trim();
     const driverSocket = getAllSocket();
-    for (let index = 0; index < Object.values(driverSocket).length; index++) {
-      const element: any = Object.values(driverSocket)[index];
-      element.emit('new-order', data);
-    }
+    // for (let index = 0; index < Object.values(driverSocket).length; index++) {
+    //   const element: any = Object.values(driverSocket)[index];
+    //     element.socket.emit('new-order', data);
+    // }
+    Object.values(driverSocket).forEach((element: any) => {
+      if (element.restaurentName === orderRestaurentName) {
+        element.socket.emit('new-order', data);
+        console.log(`New order sent to driver for restaurant: ${orderRestaurentName}`);
+      }
+    });
   } catch (error) {
     console.log('error', error);
   }
@@ -780,7 +788,6 @@ subClient.on('error', () => console.log(`Subscriber Client Error`));
 
     // Handle socket connections
     io.on('connection', async (socket: Socket) => {
-      // console.log('A new client connected');
       const Token: string = String(socket?.handshake.query?.['token']);
       const data = decodeToken(Token);
       
@@ -788,8 +795,6 @@ subClient.on('error', () => console.log(`Subscriber Client Error`));
       const email = data?.email;
       const type = data?.type;
       const restaurentName = data?.user?.restaurentName;
-      console.log(">>>>>>>>>>>",restaurentName);
-
 
       if (
         (type === 'driver' && (!userId || !type)) ||
@@ -821,14 +826,6 @@ subClient.on('error', () => console.log(`Subscriber Client Error`));
   }
 })();
 
-// cron.schedule('*/15 * * * *', function () {
-//   FetchPayments();
-// });
-
-// cron.schedule('*/15 * * * *', function () {
-//   console.log('running a task every 15 minutes');
-//   FetchPayments();
-// });
 const getUtils = (): any => {
   return utilsData;
 };
