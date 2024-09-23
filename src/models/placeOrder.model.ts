@@ -57,6 +57,13 @@ const placeOrder = new mongoose.Schema(
           price: { type: Number, required: true },
         }
       ],
+      documentsKey:[
+        {
+          pickUpImageKey: String,
+          dropiImageKey: String,
+        }
+      ]
+
     },
   
     {
