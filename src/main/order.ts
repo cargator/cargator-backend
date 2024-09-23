@@ -85,10 +85,11 @@ export async function placeOrder(req: Request, res: Response) {
       throw new Error('error while placing order');
     }
 
-    const RiderDetails:any = await Driver.find({ rideStatus: 'online' }).lean();
+    const RiderDetails: any = await Driver.find({
+      rideStatus: 'online',
+    }).lean();
 
-    await sendEmail(req.body);
-
+    // await sendEmail(req.body);
 
     pubClient.publish(
       'new-order',
@@ -98,11 +99,16 @@ export async function placeOrder(req: Request, res: Response) {
     );
     if (RiderDetails.length > 0) {
       for (const iterator of RiderDetails) {
-        if(iterator.restaurentName === saveOrder?.pickup_details?.name.toLowerCase().trim()){
-          if (iterator.deviceToken) { 
+        if (
+          iterator.restaurentName ===
+          saveOrder?.pickup_details?.name.toLowerCase().trim()
+        ) {
+          if (iterator.deviceToken) {
             await sendOrderNotification(iterator.deviceToken, saveOrder);
           } else {
-            console.warn(`Device token is undefined for rider: ${iterator.firstName} ${iterator.lastName}`);
+            console.warn(
+              `Device token is undefined for rider: ${iterator.firstName} ${iterator.lastName}`,
+            );
           }
         }
       }
@@ -604,25 +610,31 @@ export async function getHistory(req: any, res: Response) {
 export async function getProgress(req: any, res: Response) {
   const userId = req.decoded.user._id;
   try {
-    const getOrderCount = await getOrderCounts(userId);
+    const getProgressResult = await getProgressDetails(userId);
 
     const response = {
       message: 'Fetched all Order History!',
       data: {
         today: {
           earning: 0,
-          loginHours: 0,
-          orders: getOrderCount?.todayCount || 0,
+          loginHours:
+            formatMillisecondsToHMS(getProgressResult?.today.totalOnrideTime) ||
+            0,
+          orders: getProgressResult?.today.count || 0,
         },
         week: {
           earning: 0,
-          loginHours: 0,
-          orders: getOrderCount?.weekCount || 0,
+          loginHours:
+            formatMillisecondsToHMS(getProgressResult?.week.totalOnrideTime) ||
+            0,
+          orders: getProgressResult?.today.count || 0,
         },
         month: {
           earning: 0,
-          loginHours: 0,
-          orders: getOrderCount?.monthCount || 0,
+          loginHours:
+            formatMillisecondsToHMS(getProgressResult?.month.totalOnrideTime) ||
+            0,
+          orders: getProgressResult?.today.count || 0,
         },
       },
     };
@@ -640,6 +652,18 @@ export async function getProgress(req: any, res: Response) {
   }
 }
 
+const formatMillisecondsToHMS = async (milliseconds: number) => {
+  const totalSeconds = Math.floor(milliseconds / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(
+    2,
+    '0',
+  )}:${String(seconds).padStart(2, '0')}`;
+};
+
 async function saveEarning(data: any) {
   try {
     await Earning.create(data);
@@ -648,7 +672,7 @@ async function saveEarning(data: any) {
   }
 }
 
-async function getOrderCounts(userId: string) {
+async function getProgressDetails(userId: string) {
   try {
     // Get today's date range
     const todayStart = new Date();
@@ -699,34 +723,139 @@ async function getOrderCounts(userId: string) {
       {
         $facet: {
           today: [
-            { $match: { createdAt: { $gte: todayStart, $lte: todayEnd } } },
-            { $count: 'count' },
+            {
+              $match: {
+                createdAt: {
+                  $gte: todayStart,
+                  $lte: todayEnd,
+                },
+              },
+            },
+            /**
+             * Calculating the time difference between the status 'ALLOTTED' and 'DELIVERED'.
+             * This difference helps determine how much time the driver was "on-ride" from the moment
+             * the delivery was assigned (ALLOTTED) until it was completed (DELIVERED).
+             */
+
+            {
+              $addFields: {
+                timeDifference: {
+                  $subtract: [
+                    { $arrayElemAt: ['$statusUpdates.time', -1] },
+                    { $arrayElemAt: ['$statusUpdates.time', 1] },
+                  ],
+                },
+              },
+            },
+            {
+              $group: {
+                _id: null,
+                totalOnrideTime: { $sum: '$timeDifference' },
+                count: { $sum: 1 }, //gets completed ride's count
+              },
+            },
+            {
+              $project: {
+                _id: 0,
+                totalOnrideTime: 1,
+                count: 1,
+              },
+            },
           ],
           week: [
-            { $match: { createdAt: { $gte: weekStart, $lte: weekEnd } } },
-            { $count: 'count' },
+            {
+              $match: {
+                createdAt: {
+                  $gte: weekStart,
+                  $lte: weekEnd,
+                },
+              },
+            },
+            /**
+             * Calculating the time difference between the status 'ALLOTTED' and 'DELIVERED'.
+             * This difference helps determine how much time the driver was "on-ride" from the moment
+             * the delivery was assigned (ALLOTTED) until it was completed (DELIVERED).
+             */
+            {
+              $addFields: {
+                timeDifference: {
+                  $subtract: [
+                    { $arrayElemAt: ['$statusUpdates.time', -1] },
+                    { $arrayElemAt: ['$statusUpdates.time', 1] },
+                  ],
+                },
+              },
+            },
+            {
+              $group: {
+                _id: null,
+                totalOnrideTime: { $sum: '$timeDifference' },
+                count: { $sum: 1 }, //gets completed ride's count
+              },
+            },
+            {
+              $project: {
+                _id: 0,
+                totalOnrideTime: 1,
+                count: 1,
+              },
+            },
           ],
           month: [
-            { $match: { createdAt: { $gte: monthStart, $lte: monthEnd } } },
-            { $count: 'count' },
+            {
+              $match: {
+                createdAt: {
+                  $gte: monthStart,
+                  $lte: monthEnd,
+                },
+              },
+            },
+            /**
+             * Calculating the time difference between the status 'ALLOTTED' and 'DELIVERED'.
+             * This difference helps determine how much time the driver was "on-ride" from the moment
+             * the delivery was assigned (ALLOTTED) until it was completed (DELIVERED).
+             */
+            {
+              $addFields: {
+                timeDifference: {
+                  $subtract: [
+                    { $arrayElemAt: ['$statusUpdates.time', -1] },
+                    { $arrayElemAt: ['$statusUpdates.time', 1] },
+                  ],
+                },
+              },
+            },
+            {
+              $group: {
+                _id: null,
+                totalOnrideTime: { $sum: '$timeDifference' },
+                count: { $sum: 1 }, //gets completed ride's count
+              },
+            },
+            {
+              $project: {
+                _id: 0,
+                totalOnrideTime: 1,
+                count: 1,
+              },
+            },
           ],
+        },
+      },
+      {
+        $project: {
+          today: { $arrayElemAt: ['$today', 0] },
+          week: { $arrayElemAt: ['$week', 0] },
+          month: { $arrayElemAt: ['$month', 0] },
         },
       },
     ]);
 
-    const todayCount = result[0].today[0]?.count || 0;
-    const weekCount = result[0].week[0]?.count || 0;
-    const monthCount = result[0].month[0]?.count || 0;
-
-    return {
-      todayCount,
-      weekCount,
-      monthCount,
-    };
+    return result[0];
   } catch (error: any) {
     console.log(
       JSON.stringify({
-        method: 'getOrderCounts',
+        method: 'getProgressDetailss',
         message: error.message,
       }),
     );
@@ -1138,7 +1267,9 @@ export async function testOrder(req: Request, res: Response) {
 
     const saveOrder: any = await PlaceOrder.create(testingData);
 
-    const RiderDetails: any = await Driver.find({ rideStatus: 'online' }).lean();
+    const RiderDetails: any = await Driver.find({
+      rideStatus: 'online',
+    }).lean();
 
     if (!saveOrder) {
       throw new Error('error while placing order');
@@ -1154,11 +1285,16 @@ export async function testOrder(req: Request, res: Response) {
     );
 
     for (const iterator of RiderDetails) {
-      if(iterator.restaurentName === saveOrder?.pickup_details?.name.toLowerCase().trim()){
-        if (iterator.deviceToken) { 
+      if (
+        iterator.restaurentName ===
+        saveOrder?.pickup_details?.name.toLowerCase().trim()
+      ) {
+        if (iterator.deviceToken) {
           await sendOrderNotification(iterator.deviceToken, saveOrder);
         } else {
-          console.warn(`Device token is undefined for rider: ${iterator.firstName} ${iterator.lastName}`);
+          console.warn(
+            `Device token is undefined for rider: ${iterator.firstName} ${iterator.lastName}`,
+          );
         }
       }
     }
