@@ -218,6 +218,28 @@ const getDirectionsmapmyindia = async (location1: any, location2: any) => {
   }
 };
 
+const formatMillisecondsToHMS = (milliseconds: number) => {
+  try {
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(
+      2,
+      '0',
+    )}:${String(seconds).padStart(2, '0')}`;
+  } catch (error: any) {
+    console.log(
+      JSON.stringify({
+        method: 'formatMillisecondsToHMS',
+        message: error.message,
+      }),
+    );
+    throw new Error(error.message);
+  }
+};
+
 export {
   getAddressFromAutoComplete,
   getAddressFromAutoCompleteOlaMaps,
@@ -228,4 +250,5 @@ export {
   getAddressFromCoordsmapmyindia,
   getDirections,
   getDirectionsmapmyindia,
+  formatMillisecondsToHMS,
 };

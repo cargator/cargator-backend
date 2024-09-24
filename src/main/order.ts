@@ -4,7 +4,11 @@ import { PipelineStage, Types } from 'mongoose';
 import { pubClient } from '..';
 import { sendOrderNotification } from '../config/firebase-admin';
 import constants from '../constantsVars';
-import { formatSocketResponse, getDirections } from '../helpers/common';
+import {
+  formatMillisecondsToHMS,
+  formatSocketResponse,
+  getDirections,
+} from '../helpers/common';
 import { sendEmail } from '../helpers/sendEmail';
 import { Driver } from '../models/driver.model';
 import { PlaceOrder } from '../models/placeOrder.model';
@@ -65,7 +69,6 @@ const petpoojaAcknowledge = async (data: any) => {
 
 export async function placeOrder(req: Request, res: Response) {
   try {
-
     const newStatusUpdate = {
       status: OrderStatusEnum.ORDER_ACCEPTED,
       location: [],
@@ -627,14 +630,14 @@ export async function getProgress(req: any, res: Response) {
           loginHours:
             formatMillisecondsToHMS(getProgressResult?.week.totalOnrideTime) ||
             0,
-          orders: getProgressResult?.today.count || 0,
+          orders: getProgressResult?.week.count || 0,
         },
         month: {
           earning: 0,
           loginHours:
             formatMillisecondsToHMS(getProgressResult?.month.totalOnrideTime) ||
             0,
-          orders: getProgressResult?.today.count || 0,
+          orders: getProgressResult?.month.count || 0,
         },
       },
     };
@@ -651,18 +654,6 @@ export async function getProgress(req: any, res: Response) {
     res.status(400).send({ success: false, message: error.message });
   }
 }
-
-const formatMillisecondsToHMS = async (milliseconds: number) => {
-  const totalSeconds = Math.floor(milliseconds / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-
-  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(
-    2,
-    '0',
-  )}:${String(seconds).padStart(2, '0')}`;
-};
 
 async function saveEarning(data: any) {
   try {
@@ -844,13 +835,27 @@ async function getProgressDetails(userId: string) {
       },
       {
         $project: {
-          today: { $arrayElemAt: ['$today', 0] },
-          week: { $arrayElemAt: ['$week', 0] },
-          month: { $arrayElemAt: ['$month', 0] },
+          today: {
+            $ifNull: [
+              { $arrayElemAt: ['$today', 0] },
+              { totalOnrideTime: 0, count: 0 },
+            ],
+          },
+          week: {
+            $ifNull: [
+              { $arrayElemAt: ['$week', 0] },
+              { totalOnrideTime: 0, count: 0 },
+            ],
+          },
+          month: {
+            $ifNull: [
+              { $arrayElemAt: ['$month', 0] },
+              { totalOnrideTime: 0, count: 0 },
+            ],
+          },
         },
       },
     ]);
-
     return result[0];
   } catch (error: any) {
     console.log(
