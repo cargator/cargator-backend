@@ -1139,8 +1139,7 @@ export async function orderUpdateStatus(req: any, res: Response) {
     ).lean();
 
     if (
-      status === OrderStatusEnum.DELIVERED &&
-      updateOrder.order_details.paid === true
+      status === OrderStatusEnum.DELIVERED 
     ) {
       const updateDriver = await Driver.findOneAndUpdate(
         { _id: userId, rideStatus: 'on-ride' },
@@ -1329,6 +1328,41 @@ export async function getButtontextFlow(req: Request, res: Response) {
     console.error('get flows error: ', error);
     return res.status(500).json({
       message: 'Error fetching flows',
+      error: error.message,
+    });
+  }
+}
+
+export async function updateFoodImageKey(req: Request, res: Response) {
+  try {
+    const { vendor_order_id, status, imageKey, latLong } = req.body;
+
+    const updateFields =
+      status === 'ARRIVED'
+        ? {
+            'foodImageKey.pickUpImageKey': imageKey,
+            'foodImageKey.pickUpLocation.latitude': latLong?.latitude,
+            'foodImageKey.pickUpLocation.longitude': latLong?.longitude,
+          }
+        : {
+            'foodImageKey.dropImageKey': imageKey,
+            'foodImageKey.dropLocation.latitude': latLong?.latitude,
+            'foodImageKey.dropLocation.longitude': latLong?.longitude,
+          };
+
+    const response: any = await PlaceOrder.findOneAndUpdate(
+      { 'order_details.vendor_order_id': vendor_order_id },
+      { $set: updateFields },
+    ).lean();
+
+    return res.status(200).json({
+      message: 'image key uploaded successfully',
+      data: response,
+    });
+  } catch (error: any) {
+    console.error('get image key error: ', error);
+    return res.status(500).json({
+      message: 'Error when uploading image key ',
       error: error.message,
     });
   }

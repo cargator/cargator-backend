@@ -85,6 +85,7 @@ import {
   placeOrder,
   testOrder,
   trackOrderStatus,
+  updateFoodImageKey,
   updatePaymentStatusOfOrder,
 } from './main/order';
 import {
@@ -104,6 +105,7 @@ import {
   paginatedVehicleData,
   searchVehicles,
   updateVehicle,
+  updateVehicleImageKey,
 } from './main/vehiclesDetails';
 import {
   createVehicleType,
@@ -543,6 +545,7 @@ app.post(`/update-live-location`, updateLiveLocation);
 app.post(`/update-timeline`, updateTimelineCoords);
 app.post('/update-FCM-token', updateFcmToken);
 app.post('/update-order-status', orderUpdateStatus);
+app.post('/update-food-imageKey', updateFoodImageKey);
 
 app.get('/get-pending-orders', getpendingOrders);
 app.get('/get-my-pending-order', getDriversPendingOrders);
@@ -711,6 +714,9 @@ app.get('/allAvailableVehicles', allAvailableVehicles);
 app.get('/allAllVehicles', allAllVehicles);
 
 app.post('/chat-gpt-api', chatGptApi);
+
+app.post('/update-vehicle-imageKey', updateVehicleImageKey);
+
 
 // Country Code Crud
 
