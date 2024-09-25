@@ -19,6 +19,7 @@ import { Timeline } from '../models/timeline.model';
 import { Flows } from '../models';
 import { error } from 'console';
 import { flow } from 'lodash';
+import { Restaurent } from '../models/reataurent.model';
 
 const petpoojaAcknowledge = async (data: any) => {
   try {
@@ -1008,11 +1009,19 @@ export async function getOrderById(req: Request, res: Response) {
   }
 }
 
-export async function getpendingOrders(req: Request, res: Response) {
+export async function getpendingOrders(req: any, res: Response) {
   try {
-    const endDate = new Date(Date.now() - 10 * 60 * 1000); // 10 minutes ago
+    const restaurentName = req.decoded.user.restaurentName;
+    const endDate = new Date(Date.now() - 10 * 60 * 1000); 
+
+    const restaurent: any = await Restaurent.find({
+      restaurentNameToLowerCase: restaurentName,
+    }).lean();
+
+
     const response = await PlaceOrder.find({
       status: OrderStatusEnum.ORDER_ACCEPTED,
+      "pickup_details.name": restaurent[0].restaurentName,
       createdAt: { $gte: endDate },
     }).lean();
 
