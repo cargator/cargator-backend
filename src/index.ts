@@ -131,7 +131,7 @@ import { exec } from 'child_process';
 import { S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import environmentVars from './constantsVars';
-import { createRestaurent, getAvailableRestaurent, getRestaurentList } from './main/restaurent';
+import { createRestaurent, getAvailableRestaurent, getRestaurentList,deleteRestaurent } from './main/restaurent';
 
 let utilsData: any;
 const jwt = require('jsonwebtoken');
@@ -646,6 +646,8 @@ app.post('/create-restaurent', createRestaurent);
 app.get('/get-restaurent-list', getRestaurentList);
 
 app.get('/get-available-restaurent', getAvailableRestaurent);
+
+app.delete('/delete-restaurent/:id', deleteRestaurent);
 
 // appName and Image
 
