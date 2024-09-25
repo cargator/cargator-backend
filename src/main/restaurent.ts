@@ -23,7 +23,7 @@ export async function createRestaurent(req: Request, res: Response) {
     );
 
     if (checkStatus) {
-      throw new Error("Restaurent already exists");
+      throw new Error("Restaurant already exists");
     }
 
 
@@ -40,12 +40,12 @@ export async function createRestaurent(req: Request, res: Response) {
 
 
     if (restaurent.length == 0) {
-      throw new Error("Error while creating Restaurent");
+      throw new Error("Error while creating Restaurant");
     }
 
     await session.commitTransaction();
     res.status(200).send({
-      message: " restaurent data saved.",
+      message: " restaurant data saved.",
     });
   } catch (error: any) {
     res.status(400).json({ success: false, message: error.message });
@@ -88,11 +88,11 @@ export async function getRestaurentList(req: Request, res: Response) {
       ]);
       // console.log(spotList)
       return res.status(200).json({
-        message: "Fetched all spots",
+        message: "Fetched all restaurants",
         data: restaurentList,
       });
     } catch (error: any) {
-      console.log("get all spot error: ", error);
+      console.log("get all restaurants error: ", error);
       // res.status(400).send({ error: error.message });
     }
   }
@@ -103,13 +103,50 @@ export async function getRestaurentList(req: Request, res: Response) {
       const restaurentList = await Restaurent.find();
       // console.log('vehicleData  allAvailableVehicles :>> ', vehicleData);
       if (!restaurentList) {
-        throw new Error('restaurentList not found');
+        throw new Error('restaurantList not found');
       }
       res.status(200).json({
-        message: 'fetched restaurent data successfully',
+        message: 'fetched Restaurant data successfully',
         data: restaurentList,
       });
     } catch (error: any) {
       res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
+
+
+  export async function deleteRestaurent(req: Request, res: Response) {
+    let session: any;
+    try {
+      session = await mongoose.startSession();
+      session.startTransaction();
+  
+      const id = req.params.id;
+      // console.log("id", id);
+  
+      const deleteType:any = await Restaurent.findOneAndDelete({ _id: id });
+  
+      
+  
+      if (!deleteType) {
+        throw new Error("Error while deleting Restaurant");
+      }
+  
+      await session.commitTransaction();
+      res.status(200).send({
+        message: " Restaurant deleted Successfully.",
+        data: deleteType,
+      });
+    } catch (error: any) {
+      res.status(400).json({ success: false, message: error.message });
+      if (session) {
+        await session.abortTransaction();
+      }
+      console.log("err :>> ", error);
+    } finally {
+      if (session) {
+        await session.endSession();
+      }
     }
   }

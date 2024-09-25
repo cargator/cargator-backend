@@ -85,6 +85,7 @@ import {
   placeOrder,
   testOrder,
   trackOrderStatus,
+  updateFoodImageKey,
   updatePaymentStatusOfOrder,
 } from './main/order';
 import {
@@ -104,6 +105,7 @@ import {
   paginatedVehicleData,
   searchVehicles,
   updateVehicle,
+  updateVehicleImageKey,
 } from './main/vehiclesDetails';
 import {
   createVehicleType,
@@ -131,7 +133,7 @@ import { exec } from 'child_process';
 import { S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import environmentVars from './constantsVars';
-import { createRestaurent, getAvailableRestaurent, getRestaurentList } from './main/restaurent';
+import { createRestaurent, getAvailableRestaurent, getRestaurentList,deleteRestaurent } from './main/restaurent';
 
 let utilsData: any;
 const jwt = require('jsonwebtoken');
@@ -543,6 +545,7 @@ app.post(`/update-live-location`, updateLiveLocation);
 app.post(`/update-timeline`, updateTimelineCoords);
 app.post('/update-FCM-token', updateFcmToken);
 app.post('/update-order-status', orderUpdateStatus);
+app.post('/update-food-imageKey', updateFoodImageKey);
 
 app.get('/get-pending-orders', getpendingOrders);
 app.get('/get-my-pending-order', getDriversPendingOrders);
@@ -647,6 +650,8 @@ app.get('/get-restaurent-list', getRestaurentList);
 
 app.get('/get-available-restaurent', getAvailableRestaurent);
 
+app.delete('/delete-restaurent/:id', deleteRestaurent);
+
 // appName and Image
 
 app.post('/create-app', createApp);
@@ -709,6 +714,9 @@ app.get('/allAvailableVehicles', allAvailableVehicles);
 app.get('/allAllVehicles', allAllVehicles);
 
 app.post('/chat-gpt-api', chatGptApi);
+
+app.post('/update-vehicle-imageKey', updateVehicleImageKey);
+
 
 // Country Code Crud
 

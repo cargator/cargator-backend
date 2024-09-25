@@ -57,12 +57,18 @@ const placeOrder = new mongoose.Schema(
         price: { type: Number, required: true },
       },
     ],
-    documentsKey: [
-      {
-        pickUpImageKey: String,
-        dropiImageKey: String,
+    foodImageKey: {
+      pickUpImageKey: String,
+      dropImageKey: String,
+      pickUpLocation: {
+        latitude: Number,
+        longitude: Number,
       },
-    ],
+      dropLocation: {
+        latitude: Number,
+        longitude: Number,
+      },
+    },
     travelled_distance: Number,
     ride_income: Number,
   },

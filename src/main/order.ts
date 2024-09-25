@@ -1348,3 +1348,38 @@ export async function getButtontextFlow(req: Request, res: Response) {
     });
   }
 }
+
+export async function updateFoodImageKey(req: Request, res: Response) {
+  try {
+    const { vendor_order_id, status, imageKey, latLong } = req.body;
+
+    const updateFields =
+      status === 'ARRIVED'
+        ? {
+            'foodImageKey.pickUpImageKey': imageKey,
+            'foodImageKey.pickUpLocation.latitude': latLong?.latitude,
+            'foodImageKey.pickUpLocation.longitude': latLong?.longitude,
+          }
+        : {
+            'foodImageKey.dropImageKey': imageKey,
+            'foodImageKey.dropLocation.latitude': latLong?.latitude,
+            'foodImageKey.dropLocation.longitude': latLong?.longitude,
+          };
+
+    const response: any = await PlaceOrder.findOneAndUpdate(
+      { 'order_details.vendor_order_id': vendor_order_id },
+      { $set: updateFields },
+    ).lean();
+
+    return res.status(200).json({
+      message: 'image key uploaded successfully',
+      data: response,
+    });
+  } catch (error: any) {
+    console.error('get image key error: ', error);
+    return res.status(500).json({
+      message: 'Error when uploading image key ',
+      error: error.message,
+    });
+  }
+}

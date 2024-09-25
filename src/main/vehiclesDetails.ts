@@ -2,7 +2,7 @@ import { Vehicles } from '../models';
 import { Driver } from '../models/driver.model';
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import environmentVars from '../constantsVars'
+import environmentVars from '../constantsVars';
 const AWS = require('aws-sdk');
 AWS.config.update({
   region: environmentVars.AWS_REGION,
@@ -224,7 +224,9 @@ export async function deleteVehicle(req: Request, res: Response) {
     const body = {
       uid: req.params.id,
       profileImageKey: req.headers['x-profile-image-key'],
-      documentsKey: req.headers['x-documents-key'] ? req.headers['x-documents-key'][0] : undefined,
+      documentsKey: req.headers['x-documents-key']
+        ? req.headers['x-documents-key'][0]
+        : undefined,
     };
     const vehicle = await Vehicles.findOneAndDelete({
       _id: vehicleId,
@@ -429,5 +431,30 @@ export async function allAllVehicles(req: Request, res: Response) {
 }
 
 export function getVehicalDetails(req: any) {
- return Vehicles.findOne(req) 
+  return Vehicles.findOne(req);
+}
+
+export async function updateVehicleImageKey(req: Request, res: Response) {
+  try {
+    const { userId, imageKey } = req.body;
+
+    const response: any = await Vehicles.findOneAndUpdate(
+      {vehicleAssignedToId: userId},
+      {profileImageKey: imageKey},
+      {new: true}
+    ).lean();
+
+    console.log("vehicle image key updtaed succesfully", userId,imageKey);
+
+    return res.status(200).json({
+      message: 'vehicle image key uploaded successfully',
+      data: response,
+    });
+  } catch (error: any) {
+    console.error('get vehicle image key error: ', error);
+    return res.status(500).json({
+      message: 'Error when uploading vehicle image key ',
+      error: error.message,
+    });
+  }
 }
