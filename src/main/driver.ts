@@ -146,7 +146,7 @@ export async function createDriver(req: Request, res: Response) {
   try {
     session = await mongoose.startSession();
     session.startTransaction();
-    console.log("createDriver", req.body);
+    console.log('createDriver', req.body);
     const {
       firstName,
       lastName,
@@ -500,11 +500,11 @@ export async function paginatedDriverData(req: Request, res: Response) {
   try {
     const page: any = req?.query?.page;
     const limit: any = req.query.limit;
-    let status = ['online','on-ride', 'offline'];
+    let status = ['online', 'on-ride', 'offline'];
     if (req.query?.status === 'online' || req.query?.status === 'offline') {
-      if(req.query?.status === 'online'){
-        status = [req.query?.status,'on-ride'];
-      }else{
+      if (req.query?.status === 'online') {
+        status = [req.query?.status, 'on-ride'];
+      } else {
         status = [req.query?.status];
       }
     }

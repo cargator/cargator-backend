@@ -5,6 +5,7 @@ import { pubClient } from '..';
 import { sendOrderNotification } from '../config/firebase-admin';
 import constants from '../constantsVars';
 import {
+  calculateTotalDistance,
   formatMillisecondsToHMS,
   formatSocketResponse,
   getDirections,
@@ -1129,30 +1130,41 @@ export async function orderUpdateStatus(req: any, res: Response) {
       time: new Date(),
     };
 
-    let updateOrder: any = await PlaceOrder.findByIdAndUpdate(
-      new Types.ObjectId(id),
-      {
-        status,
-        $push: { statusUpdates: newStatusUpdate },
-      },
-      { session, new: true },
-    ).lean();
+    const updateFields: any = {
+      status,
+      $push: { statusUpdates: { status, time: new Date() } },
+    };
 
     if (
-      status === OrderStatusEnum.DELIVERED &&
-      updateOrder.order_details.paid === true
+      status === OrderStatusEnum.DELIVERED
+      // &&
+      // order.order_details?.paid === true
     ) {
+      const totalDistance = calculateTotalDistance(order.realPath);
+      console.log('totalDistance ===> ', totalDistance);
+
+      updateFields['travelled_distance'] = totalDistance;
+
+      console.log('updateFields ==> ', updateFields);
+
       const updateDriver = await Driver.findOneAndUpdate(
         { _id: userId, rideStatus: 'on-ride' },
         { rideStatus: 'online' },
         { session, new: true },
       ).lean();
 
+      console.log('updateDriver ===> ', updateDriver);
       if (!updateDriver) {
         await session.abortTransaction();
         return res.status(404).send({ message: 'Driver status not updated' });
       }
     }
+
+    let updateOrder: any = await PlaceOrder.findByIdAndUpdate(
+      new Types.ObjectId(id),
+      updateFields,
+      { session, new: true },
+    ).lean();
 
     if (status === OrderStatusEnum.DISPATCHED) {
       const pickupLocation = {
@@ -1175,6 +1187,7 @@ export async function orderUpdateStatus(req: any, res: Response) {
       ).lean();
     }
 
+    console.log('hereerererereerr');
     const obj = {
       status: true,
       data: {
@@ -1187,6 +1200,8 @@ export async function orderUpdateStatus(req: any, res: Response) {
       message: 'Ok',
       status_code: updateOrder?.status,
     };
+
+    console.log('obj === >', obj);
 
     const acknowledgementResponse = await petpoojaAcknowledge(obj);
 
