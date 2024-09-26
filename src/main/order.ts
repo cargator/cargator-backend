@@ -21,6 +21,7 @@ import { Timeline } from '../models/timeline.model';
 import { Flows } from '../models';
 import { error } from 'console';
 import { flow } from 'lodash';
+import { Restaurent } from '../models/reataurent.model';
 
 const petpoojaAcknowledge = async (data: any) => {
   try {
@@ -1031,21 +1032,30 @@ export async function getOrderById(req: Request, res: Response) {
   }
 }
 
-export async function getpendingOrders(req: Request, res: Response) {
+export async function getpendingOrders(req: any, res: Response) {
   try {
-    const endDate = new Date(Date.now() - 10 * 60 * 1000); // 10 minutes ago
+    const restaurentName = req.decoded.user.restaurentName;
+    const endDate = new Date(Date.now() - 10 * 60 * 1000); 
+
+
     const response = await PlaceOrder.find({
       status: OrderStatusEnum.ORDER_ACCEPTED,
       createdAt: { $gte: endDate },
     }).lean();
 
-    const message = response.length
+    
+    const pendingOrders = response.filter(
+      (order: any) => order.pickup_details.name.toLowerCase().trim() == restaurentName
+      );
+
+
+    const message = pendingOrders.length
       ? 'Fetched All Pending Orders.'
       : 'No Pending Orders';
 
     res.send({
       message,
-      data: response,
+      data: pendingOrders,
     });
   } catch (error: any) {
     console.error('getPendingOrders error:', error);
