@@ -6,6 +6,7 @@ import { sendOrderNotification } from '../config/firebase-admin';
 import constants from '../constantsVars';
 import {
   calculateTotalDistance,
+  convertMetersToKilometers,
   formatMillisecondsToHMS,
   formatSocketResponse,
   getDirections,
@@ -620,21 +621,30 @@ export async function getProgress(req: any, res: Response) {
       message: 'Fetched all Order History!',
       data: {
         today: {
-          earning: 0,
+          earning: getProgressResult?.today.totalEarning || 0,
+          totalDistance: convertMetersToKilometers(
+            getProgressResult?.today.totalTravelDistance,
+          ),
           loginHours:
             formatMillisecondsToHMS(getProgressResult?.today.totalOnrideTime) ||
             0,
           orders: getProgressResult?.today.count || 0,
         },
         week: {
-          earning: 0,
+          earning: getProgressResult?.week.totalEarning || 0,
+          totalDistance: convertMetersToKilometers(
+            getProgressResult?.week.totalTravelDistance,
+          ),
           loginHours:
             formatMillisecondsToHMS(getProgressResult?.week.totalOnrideTime) ||
             0,
           orders: getProgressResult?.week.count || 0,
         },
         month: {
-          earning: 0,
+          earning: getProgressResult?.month.totalEarning || 0,
+          totalDistance: convertMetersToKilometers(
+            getProgressResult?.month.totalTravelDistance,
+          ),
           loginHours:
             formatMillisecondsToHMS(getProgressResult?.month.totalOnrideTime) ||
             0,
@@ -743,6 +753,8 @@ async function getProgressDetails(userId: string) {
               $group: {
                 _id: null,
                 totalOnrideTime: { $sum: '$timeDifference' },
+                totalTravelDistance: { $sum: '$travelled_distance' },
+                totalEarning: { $sum: '$ride_income' },
                 count: { $sum: 1 }, //gets completed ride's count
               },
             },
@@ -750,6 +762,8 @@ async function getProgressDetails(userId: string) {
               $project: {
                 _id: 0,
                 totalOnrideTime: 1,
+                totalTravelDistance: 1,
+                totalEarning: 1,
                 count: 1,
               },
             },
@@ -782,6 +796,8 @@ async function getProgressDetails(userId: string) {
               $group: {
                 _id: null,
                 totalOnrideTime: { $sum: '$timeDifference' },
+                totalTravelDistance: { $sum: '$travelled_distance' },
+                totalEarning: { $sum: '$ride_income' },
                 count: { $sum: 1 }, //gets completed ride's count
               },
             },
@@ -789,6 +805,8 @@ async function getProgressDetails(userId: string) {
               $project: {
                 _id: 0,
                 totalOnrideTime: 1,
+                totalTravelDistance: 1,
+                totalEarning: 1,
                 count: 1,
               },
             },
@@ -821,6 +839,8 @@ async function getProgressDetails(userId: string) {
               $group: {
                 _id: null,
                 totalOnrideTime: { $sum: '$timeDifference' },
+                totalTravelDistance: { $sum: '$travelled_distance' },
+                totalEarning: { $sum: '$ride_income' },
                 count: { $sum: 1 }, //gets completed ride's count
               },
             },
@@ -828,6 +848,8 @@ async function getProgressDetails(userId: string) {
               $project: {
                 _id: 0,
                 totalOnrideTime: 1,
+                totalTravelDistance: 1,
+                totalEarning: 1,
                 count: 1,
               },
             },
@@ -1130,7 +1152,7 @@ export async function orderUpdateStatus(req: any, res: Response) {
       time: new Date(),
     };
 
-    const updateFields: any = {
+    let updateFields: any = {
       status,
       $push: { statusUpdates: { status, time: new Date() } },
     };
@@ -1143,7 +1165,17 @@ export async function orderUpdateStatus(req: any, res: Response) {
       const totalDistance = calculateTotalDistance(order.realPath);
       console.log('totalDistance ===> ', totalDistance);
 
-      updateFields['travelled_distance'] = totalDistance;
+      // const rideIncome = parseFloat(
+      //   (convertMetersToKilometers(totalDistance) * 10).toFixed(2),
+      // );
+
+      updateFields = {
+        ...updateFields,
+        travelled_distance: totalDistance,
+        ride_income: parseFloat(
+          (convertMetersToKilometers(totalDistance) * 10).toFixed(2),
+        ),
+      };
 
       console.log('updateFields ==> ', updateFields);
 

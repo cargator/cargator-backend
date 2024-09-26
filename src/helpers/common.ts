@@ -271,9 +271,13 @@ const calculateTotalDistance = (latLongArray: Array<any>) => {
     totalDistance += haversine(lat1, lon1, lat2, lon2);
   }
 
-  return totalDistance;
+  return parseFloat(totalDistance.toFixed(2));
 };
 
+const convertMetersToKilometers = (meters: number) => {
+  const kilometers = meters / 1000;
+  return parseFloat(kilometers.toFixed(2));
+};
 export {
   getAddressFromAutoComplete,
   getAddressFromAutoCompleteOlaMaps,
@@ -286,4 +290,5 @@ export {
   getDirectionsmapmyindia,
   formatMillisecondsToHMS,
   calculateTotalDistance,
+  convertMetersToKilometers,
 };
