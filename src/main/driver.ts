@@ -752,3 +752,18 @@ export async function updateFcmToken(req: any, res: Response) {
 export function getDriverDetails(req: any) {
   return Driver.findOne(req).lean();
 }
+
+
+export async function updateDeviceInfo(req: any, res: Response) {
+  try {
+    // const userId = req.decoded.user._id;
+    // const {versionNumber,deviceModel,deviceBrand,systemName,systemVersion,batteryLevel} = req.body;
+    // console.log(">>>>>>>>>>>>>",req.body);
+    // const response = await Driver.findOneAndUpdate(
+    //   {_id: userId},
+    //   {deviceInfo: req.body}
+    // )
+  } catch (error) {
+    
+  }
+}

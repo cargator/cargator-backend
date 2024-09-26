@@ -56,6 +56,7 @@ import {
   onlineDrivers,
   paginatedDriverData,
   searchDrivers,
+  updateDeviceInfo,
   updateDriver,
   updateDriverStatus,
   updateFcmToken,
@@ -546,6 +547,8 @@ app.post(`/update-timeline`, updateTimelineCoords);
 app.post('/update-FCM-token', updateFcmToken);
 app.post('/update-order-status', orderUpdateStatus);
 app.post('/update-food-imageKey', updateFoodImageKey);
+app.post('/update-device-info', updateDeviceInfo);
+
 
 app.get('/get-pending-orders', getpendingOrders);
 app.get('/get-my-pending-order', getDriversPendingOrders);
