@@ -22,6 +22,7 @@ import { Flows } from '../models';
 import { error } from 'console';
 import { flow } from 'lodash';
 import { Restaurent } from '../models/reataurent.model';
+import mongoose from 'mongoose';
 
 const petpoojaAcknowledge = async (data: any) => {
   try {
@@ -95,7 +96,7 @@ export async function placeOrder(req: Request, res: Response) {
       rideStatus: 'online',
     }).lean();
 
-    await sendEmail(req.body);
+    // await sendEmail(req.body);
 
     pubClient.publish(
       'new-order',
@@ -1033,33 +1034,48 @@ export async function getOrderById(req: Request, res: Response) {
 }
 
 export async function getpendingOrders(req: any, res: Response) {
+  let session: any;
   try {
+    session = await mongoose.startSession();
+    session.startTransaction();
+    const userId = req.decoded.user._id;
     const restaurentName = req.decoded.user.restaurentName;
-    const endDate = new Date(Date.now() - 10 * 60 * 1000); 
+    const endDate = new Date(Date.now() - 10 * 60 * 1000);
 
+    const driver = await Driver.findOne({
+      _id: userId,
+      rideStatus: { $ne: "offline"  },
+    });
 
-    const response = await PlaceOrder.find({
-      status: OrderStatusEnum.ORDER_ACCEPTED,
-      createdAt: { $gte: endDate },
-    }).lean();
+    if (driver) {
+      const response = await PlaceOrder.find({
+        status: OrderStatusEnum.ORDER_ACCEPTED,
+        createdAt: { $gte: endDate },
+      }).lean();
 
-    
-    const pendingOrders = response.filter(
-      (order: any) => order.pickup_details.name.toLowerCase().trim() == restaurentName
+      const pendingOrders = response.filter(
+        (order: any) =>
+          order.pickup_details.name.toLowerCase().trim() == restaurentName,
       );
 
+      await session.commitTransaction();
 
-    const message = pendingOrders.length
-      ? 'Fetched All Pending Orders.'
-      : 'No Pending Orders';
+      const message = pendingOrders.length
+        ? 'Fetched All Pending Orders.'
+        : 'No Pending Orders';
+  
+      res.send({
+        message,
+        data: pendingOrders,
+      });
+    }
 
-    res.send({
-      message,
-      data: pendingOrders,
-    });
   } catch (error: any) {
     console.error('getPendingOrders error:', error);
+    await session.abortTransaction();
     res.status(400).send({ error: error.message });
+  } finally {
+    session.endSession();
   }
 }
 
