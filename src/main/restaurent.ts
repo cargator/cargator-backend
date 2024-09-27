@@ -6,16 +6,16 @@ export async function createRestaurent(req: Request, res: Response) {
   let session: any;
   try {
     session = await mongoose.startSession();
-    const { restaurentName, bounds } = req.body;
+    const { restaurantName,bounds } = req.body;
 
-    const restaurentNameToLowerCase = restaurentName.toLowerCase().trim();
+    const restaurantNameToLowerCase = restaurantName.toLowerCase().trim();
 
     session.startTransaction();
 
     const checkStatus: any = await Restaurent.findOne(
       {
-        restaurentName: req.body.restaurentName,
-        restaurentNameToLowerCase: restaurentNameToLowerCase,
+        restaurentName: restaurantName,
+        restaurentNameToLowerCase: restaurantNameToLowerCase,
       },
       null,
       { session: session },
@@ -25,24 +25,24 @@ export async function createRestaurent(req: Request, res: Response) {
       throw new Error('Restaurant already exists');
     }
 
-    const restaurent: any = await Restaurent.create(
+    const restaurant: any = await Restaurent.create(
       [
         {
-          restaurentName,
-          restaurentNameToLowerCase: restaurentNameToLowerCase,
+          restaurentName: restaurantName,
+          restaurentNameToLowerCase: restaurantNameToLowerCase,
           bounds,
         },
       ],
       { session: session },
     );
 
-    if (restaurent.length == 0) {
-      throw new Error('Error while creating Restaurant');
+    if (restaurant.length == 0) {
+      throw new Error("Error while creating Restaurant");
     }
 
     await session.commitTransaction();
     res.status(200).send({
-      message: ' restaurant data saved.',
+      message: " Restaurant Created Successfully.",
     });
   } catch (error: any) {
     res.status(400).json({ success: false, message: error.message });

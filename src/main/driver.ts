@@ -755,12 +755,18 @@ export function getDriverDetails(req: any) {
 
 export async function updateDeviceInfo(req: any, res: Response) {
   try {
-    // const userId = req.decoded.user._id;
+    const userId = req.decoded.user._id;
     // const {versionNumber,deviceModel,deviceBrand,systemName,systemVersion,batteryLevel} = req.body;
     // console.log(">>>>>>>>>>>>>",req.body);
-    // const response = await Driver.findOneAndUpdate(
-    //   {_id: userId},
-    //   {deviceInfo: req.body}
-    // )
-  } catch (error) {}
+    const response = await Driver.findOneAndUpdate(
+      {_id: userId},
+      {deviceInfo: req.body}
+    )
+
+    res.status(200).send({
+      message: 'Device info updated successfully',
+    });
+  } catch (error: any) {
+    console.log("error while updating device info",error);
+  }
 }
