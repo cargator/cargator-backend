@@ -902,6 +902,11 @@ export async function getOrderHistory(
     const page: number = parseInt(req.query.page as string, 10) || 1;
     const limit: number = parseInt(req.query.limit as string, 10) || 10;
     const filter: string | undefined = req.query.filter as string | undefined;
+    const searchText:string |undefined = req.query.searchtext as string | undefined;
+
+    
+    
+    
 
     console.log(
       JSON.stringify({
@@ -923,6 +928,8 @@ export async function getOrderHistory(
       ];
     } else if (filter === 'cancelled') {
       status = [OrderStatusEnum.ORDER_CANCELLED];
+    } else {
+      status=Object.values(OrderStatusEnum)
     }
 
     const dataLimit = limit;
@@ -934,12 +941,81 @@ export async function getOrderHistory(
         pipeline.push({
           $match: {
             status: status,
-          },
+            $or: [
+              {
+                // Prefix search for vendor_order_id if searchText is provided
+                'order_details.vendor_order_id': {
+                  $regex: `^${searchText}`, // Matches vendor_order_id that starts with the searchText
+                  $options: 'i', // Case-insensitive
+                }
+              },
+              {
+               
+                'drop_details.contact_number': {
+                  $regex: `^${searchText}`,
+                  $options: 'i', 
+                }
+              },{
+                "driver_details.contact": {
+                  "$regex": `^91${searchText}`, // Prefix search for searchText
+                  "$options": "i"
+                }
+              },
+              {
+                "pickup_details.address": {
+                  "$regex": `${searchText}`,
+                  "$options": "i" 
+                }
+              },
+              {
+                "drop_details.address": {
+                  "$regex": `${searchText}`,
+                  "$options": "i" 
+                }
+              }
+              
+            ]
+          }
         });
       } else {
         pipeline.push({
           $match: {
             status: { $in: status },
+            $or: [
+              {
+                // Prefix search for vendor_order_id if searchText is provided
+                'order_details.vendor_order_id': {
+                  $regex: `^${searchText}`, // Matches vendor_order_id that starts with the searchText
+                  $options: 'i', // Case-insensitive
+                }
+              },
+              {
+               
+                'drop_details.contact_number': {
+                  $regex: `^${searchText}`,
+                  $options: 'i', 
+                }
+              },
+              {
+                "driver_details.contact": {
+                  "$regex": `^91${searchText}`, // Prefix search for searchText
+                  "$options": "i"
+                }
+              },
+              {
+                "pickup_details.address": {
+                  "$regex": `${searchText}`,
+                  "$options": "i" 
+                }
+              },
+              {
+                "drop_details.address": {
+                  "$regex":`${searchText}`,
+                  "$options": "i" 
+                }
+              }
+              
+            ]
           },
         });
       }

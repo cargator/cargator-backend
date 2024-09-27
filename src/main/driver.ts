@@ -39,7 +39,7 @@ const getSearchDriver = async (req: Request) => {
                   },
                   {
                     mobileNumber: {
-                      $regex: new RegExp(`^${query}`, 'i'),
+                      $regex: new RegExp(`^91${query}`, 'i'),
                     },
                   },
                   {
@@ -130,7 +130,7 @@ const getSearchDriver = async (req: Request) => {
 };
 
 export async function searchDrivers(req: Request, res: Response) {
-  try {
+  try {  
     const response = await getSearchDriver(req);
     res.status(200).json({
       message: 'fetched Driver data successfully',
