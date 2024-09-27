@@ -765,7 +765,7 @@ async function getProgressDetails(userId: string) {
                 _id: 0,
                 totalOnrideTime: 1,
                 totalTravelDistance: 1,
-                totalEarning: 1,
+                totalEarning: { $round: ['$totalEarning', 2] },
                 count: 1,
               },
             },
@@ -808,7 +808,7 @@ async function getProgressDetails(userId: string) {
                 _id: 0,
                 totalOnrideTime: 1,
                 totalTravelDistance: 1,
-                totalEarning: 1,
+                totalEarning: { $round: ['$totalEarning', 2] },
                 count: 1,
               },
             },
@@ -851,7 +851,7 @@ async function getProgressDetails(userId: string) {
                 _id: 0,
                 totalOnrideTime: 1,
                 totalTravelDistance: 1,
-                totalEarning: 1,
+                totalEarning: { $round: ['$totalEarning', 2] },
                 count: 1,
               },
             },
@@ -1044,7 +1044,7 @@ export async function getpendingOrders(req: any, res: Response) {
 
     const driver = await Driver.findOne({
       _id: userId,
-      rideStatus: { $ne: "offline"  },
+      rideStatus: { $ne: 'offline' },
     });
 
     if (driver) {
@@ -1063,13 +1063,12 @@ export async function getpendingOrders(req: any, res: Response) {
       const message = pendingOrders.length
         ? 'Fetched All Pending Orders.'
         : 'No Pending Orders';
-  
+
       res.send({
         message,
         data: pendingOrders,
       });
     }
-
   } catch (error: any) {
     console.error('getPendingOrders error:', error);
     await session.abortTransaction();
@@ -1198,9 +1197,7 @@ export async function orderUpdateStatus(req: any, res: Response) {
       updateFields = {
         ...updateFields,
         travelled_distance: totalDistance,
-        ride_income: parseFloat(
-          (convertMetersToKilometers(totalDistance) * 10).toFixed(2),
-        ),
+        ride_income: convertMetersToKilometers(totalDistance) * 10,
       };
 
       console.log('updateFields ==> ', updateFields);
