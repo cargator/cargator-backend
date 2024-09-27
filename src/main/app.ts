@@ -235,5 +235,5 @@ export async function getCurrentFlow(req: Request, res: Response) {
 }
 
 export function getAppFLow() {
-  return DriverAppFlow.findOne().lean()
+  return DriverAppFlow.findOne().lean();
 }

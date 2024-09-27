@@ -37,8 +37,6 @@ export async function chatGptApi(req: Request, res: Response) {
 
     let data;
     switch (flowType?.applicationFLow) {
-
-
       case FlowTypeEnum.PETPOOJA:
         data = await PlaceOrder.find({
           createdAt: { $gte: startDate, $lt: endDate },

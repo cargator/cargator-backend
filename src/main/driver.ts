@@ -753,7 +753,6 @@ export function getDriverDetails(req: any) {
   return Driver.findOne(req).lean();
 }
 
-
 export async function updateDeviceInfo(req: any, res: Response) {
   try {
     // const userId = req.decoded.user._id;
@@ -763,7 +762,5 @@ export async function updateDeviceInfo(req: any, res: Response) {
     //   {_id: userId},
     //   {deviceInfo: req.body}
     // )
-  } catch (error) {
-    
-  }
+  } catch (error) {}
 }

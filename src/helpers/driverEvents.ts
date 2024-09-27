@@ -29,7 +29,11 @@ const getAllSocket = (): Record<string, DriverSocketData> => {
 //   return socket;
 // };
 
-const setDriverSocket = (userId: string, socket: Socket, restaurentName: string): DriverSocketData => {
+const setDriverSocket = (
+  userId: string,
+  socket: Socket,
+  restaurentName: string,
+): DriverSocketData => {
   driversSocket[userId] = { socket, restaurentName };
   return driversSocket[userId];
 };
@@ -39,7 +43,7 @@ const driverSocketConnected = async (
   socket: Socket,
   userId: string,
   io: Server,
-  restaurentName:string,
+  restaurentName: string,
 ) => {
   let _userId = new Types.ObjectId(userId);
   try {

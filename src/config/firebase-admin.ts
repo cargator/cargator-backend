@@ -15,21 +15,24 @@ admin.initializeApp({
 });
 
 // Function to send a notification
-export async function sendOrderNotification(deviceToken: string, newOrder: any) {
+export async function sendOrderNotification(
+  deviceToken: string,
+  newOrder: any,
+) {
   const payload = {
     notification: {
       title: 'New Order Received',
     },
     data: {
-      data: JSON.stringify(newOrder)
-    }
+      data: JSON.stringify(newOrder),
+    },
   };
 
   try {
     await admin.messaging().send({
       token: deviceToken,
       notification: payload.notification,
-      data: payload.data
+      data: payload.data,
     });
     console.log('Notification sent successfully to token:', deviceToken);
   } catch (error) {

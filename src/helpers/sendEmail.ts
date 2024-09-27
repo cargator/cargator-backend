@@ -106,8 +106,8 @@ transporter.verify((error, success) => {
   if (error) {
     console.error(error);
   } else {
-    console.log("success ===> ",success);
-    
+    console.log('success ===> ', success);
+
     console.log('Server is ready to take our messages');
   }
 });
@@ -130,7 +130,6 @@ export async function sendEmail(orderData: any) {
     const info = await transporter.sendMail(mailOptions);
     console.log('Message sent: %s', info.messageId);
     console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
-
   } catch (error) {
     console.error('Error sending email:', error);
   }

@@ -439,12 +439,12 @@ export async function updateVehicleImageKey(req: Request, res: Response) {
     const { userId, imageKey } = req.body;
 
     const response: any = await Vehicles.findOneAndUpdate(
-      {vehicleAssignedToId: userId},
-      {profileImageKey: imageKey},
-      {new: true}
+      { vehicleAssignedToId: userId },
+      { profileImageKey: imageKey },
+      { new: true },
     ).lean();
 
-    console.log("vehicle image key updtaed succesfully", userId,imageKey);
+    console.log('vehicle image key updtaed succesfully', userId, imageKey);
 
     return res.status(200).json({
       message: 'vehicle image key uploaded successfully',

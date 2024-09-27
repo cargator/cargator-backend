@@ -1,6 +1,6 @@
-import mongoose from "mongoose";
-import { Flows } from "../models";
-import { Request, Response } from "express";
+import mongoose from 'mongoose';
+import { Flows } from '../models';
+import { Request, Response } from 'express';
 
 export async function createBreakPoints(req: Request, res: Response) {
   let session: any;
@@ -19,7 +19,7 @@ export async function createBreakPoints(req: Request, res: Response) {
       const updatedBreakPoints = await Flows.updateMany(
         { sequenceNo: { $gte: Sequence } },
         { $inc: { sequenceNo: 1 } },
-        { session }
+        { session },
       );
     }
     // Create the new breakpoint with the specified sequence
@@ -30,13 +30,13 @@ export async function createBreakPoints(req: Request, res: Response) {
           sequenceNo: Sequence,
         },
       ],
-      { session }
+      { session },
     );
 
     await session.commitTransaction();
 
     res.status(200).send({
-      message: " breakPoint has been created.",
+      message: ' breakPoint has been created.',
     });
   } catch (error: any) {
     if (session) {
@@ -71,17 +71,17 @@ export async function getBreakingPoints(req: Request, res: Response) {
               $limit: dataLimit,
             },
           ],
-          count: [{ $count: "totalcount" }],
+          count: [{ $count: 'totalcount' }],
         },
       },
     ]);
     // console.log(spotList)
     return res.status(200).json({
-      message: "Fetched all BreakingPoints",
+      message: 'Fetched all BreakingPoints',
       data: breakPoints,
     });
   } catch (error: any) {
-    console.log("get all breakPoints error: ", error);
+    console.log('get all breakPoints error: ', error);
     res.status(400).send({ error: error.message });
   }
 }
@@ -91,11 +91,11 @@ export async function getBreakingPointsMobile(req: Request, res: Response) {
     const breakPoints = await Flows.find().sort({ sequenceNo: 1 });
     // console.log(spotList)
     return res.status(200).json({
-      message: "Fetched all BreakingPoints",
+      message: 'Fetched all BreakingPoints',
       data: breakPoints,
     });
   } catch (error: any) {
-    console.log("get all breakPoints error: ", error);
+    console.log('get all breakPoints error: ', error);
     res.status(400).send({ error: error.message });
   }
 }
@@ -115,16 +115,16 @@ export async function deleteBreakingPoints(req: Request, res: Response) {
     await Flows.updateMany(
       { sequenceNo: { $gte: sequenceNo } },
       { $inc: { sequenceNo: -1 } },
-      { session }
+      { session },
     );
 
     if (!deleteType) {
-      throw new Error("Error while deleting breakingPoints");
+      throw new Error('Error while deleting breakingPoints');
     }
 
     await session.commitTransaction();
     res.status(200).send({
-      message: " breakingPoint deleted Successfully.",
+      message: ' breakingPoint deleted Successfully.',
       data: deleteType,
     });
   } catch (error: any) {
@@ -132,7 +132,7 @@ export async function deleteBreakingPoints(req: Request, res: Response) {
     if (session) {
       await session.abortTransaction();
     }
-    console.log("err :>> ", error);
+    console.log('err :>> ', error);
   } finally {
     if (session) {
       await session.endSession();
@@ -153,7 +153,7 @@ export async function updateBreakPoints(req: Request, res: Response) {
     });
 
     if (existingBreakPoint && existingBreakPoint._id.toString() !== id) {
-      throw new Error("breaking point already exist ");
+      throw new Error('breaking point already exist ');
     }
 
     const breakPoints = await Flows.findOneAndUpdate(
@@ -163,16 +163,16 @@ export async function updateBreakPoints(req: Request, res: Response) {
         breakingPointName: req.body.BreakPoints,
         sequenceNo: req.body.Sequence,
       },
-      { new: true }
+      { new: true },
     );
 
     if (!breakPoints) {
-      throw new Error("Error while getting ");
+      throw new Error('Error while getting ');
     }
 
     await session.commitTransaction();
     res.status(200).send({
-      message: " breakPoints Type Updated Successfully.",
+      message: ' breakPoints Type Updated Successfully.',
       data: breakPoints,
     });
   } catch (error: any) {
@@ -180,7 +180,7 @@ export async function updateBreakPoints(req: Request, res: Response) {
     if (session) {
       await session.abortTransaction();
     }
-    console.log("err :>> ", error);
+    console.log('err :>> ', error);
   } finally {
     if (session) {
       await session.endSession();
@@ -199,12 +199,12 @@ export async function getBreakPointOne(req: Request, res: Response) {
     const breakPoint = await Flows.findById({ _id: id });
 
     if (!breakPoint) {
-      throw new Error("Error while getting breakpoints");
+      throw new Error('Error while getting breakpoints');
     }
 
     await session.commitTransaction();
     res.status(200).send({
-      message: " Vehicle Type deleted Successfully.",
+      message: ' Vehicle Type deleted Successfully.',
       data: breakPoint,
     });
   } catch (error: any) {
@@ -212,7 +212,7 @@ export async function getBreakPointOne(req: Request, res: Response) {
     if (session) {
       await session.abortTransaction();
     }
-    console.log("err :>> ", error);
+    console.log('err :>> ', error);
   } finally {
     if (session) {
       await session.endSession();
