@@ -11,18 +11,18 @@ export async function createSpot(req: Request, res: Response) {
     // console.log('object1 :>> ');
     session.startTransaction();
 
-    const checkStatus = await Spots.findOne(
-      {
-        vehicleNumber: vehicleNumber.toUpperCase(),
-        // vehicleStatus: "unavailable",
-      },
-      null,
-      { session: session },
-    );
+    // const checkStatus = await Spots.findOne(
+    //   {
+    //     vehicleNumber: vehicleNumber.toUpperCase(),
+    //     // vehicleStatus: "unavailable",
+    //   },
+    //   null,
+    //   { session: session },
+    // );
 
-    if (checkStatus) {
-      throw new Error('Vehicle might be assigned to someone');
-    }
+    // if (checkStatus) {
+    //   throw new Error('Vehicle might be assigned to someone');
+    // }
 
     const existingSpot = await Spots.findOne({ bounds: [bounds] }, null, {
       session: session,

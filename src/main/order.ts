@@ -21,7 +21,7 @@ import { Timeline } from '../models/timeline.model';
 import { Flows } from '../models';
 import { error } from 'console';
 import { flow } from 'lodash';
-import { Restaurent } from '../models/reataurent.model';
+import { Restaurant } from '../models/reataurant.model';
 import mongoose from 'mongoose';
 
 const petpoojaAcknowledge = async (data: any) => {
@@ -107,7 +107,7 @@ export async function placeOrder(req: Request, res: Response) {
     if (RiderDetails.length > 0) {
       for (const iterator of RiderDetails) {
         if (
-          iterator.restaurentName ===
+          iterator.restaurantName ===
           saveOrder?.pickup_details?.name.toLowerCase().trim()
         ) {
           if (iterator.deviceToken) {
@@ -1115,7 +1115,7 @@ export async function getpendingOrders(req: any, res: Response) {
     session = await mongoose.startSession();
     session.startTransaction();
     const userId = req.decoded.user._id;
-    const restaurentName = req.decoded.user.restaurentName;
+    const restaurantName = req.decoded.user.restaurantName;
     const endDate = new Date(Date.now() - 10 * 60 * 1000);
 
     const driver = await Driver.findOne({
@@ -1131,7 +1131,7 @@ export async function getpendingOrders(req: any, res: Response) {
 
       const pendingOrders = response.filter(
         (order: any) =>
-          order.pickup_details.name.toLowerCase().trim() == restaurentName,
+          order.pickup_details.name.toLowerCase().trim() == restaurantName,
       );
 
       await session.commitTransaction();
@@ -1437,7 +1437,7 @@ export async function testOrder(req: Request, res: Response) {
 
     for (const iterator of RiderDetails) {
       if (
-        iterator.restaurentName ===
+        iterator.restaurantName ===
         saveOrder?.pickup_details?.name.toLowerCase().trim()
       ) {
         if (iterator.deviceToken) {

@@ -10,7 +10,7 @@ import axios from 'axios';
 // const { utilsData } = require('../index.ts');
 interface DriverSocketData {
   socket: Socket;
-  restaurentName: string;
+  restaurantName: string;
 }
 
 const driversSocket: Record<string, DriverSocketData> = {};
@@ -32,9 +32,9 @@ const getAllSocket = (): Record<string, DriverSocketData> => {
 const setDriverSocket = (
   userId: string,
   socket: Socket,
-  restaurentName: string,
+  restaurantName: string,
 ): DriverSocketData => {
-  driversSocket[userId] = { socket, restaurentName };
+  driversSocket[userId] = { socket, restaurantName };
   return driversSocket[userId];
 };
 
@@ -43,14 +43,14 @@ const driverSocketConnected = async (
   socket: Socket,
   userId: string,
   io: Server,
-  restaurentName: string,
+  restaurantName: string,
 ) => {
   let _userId = new Types.ObjectId(userId);
   try {
     // Set the driver's socket in the driversSocket object
     // driversSocket[userId] = socket;
-    setDriverSocket(userId, socket, restaurentName);
-    console.log('Socket connected successfully!', userId, restaurentName);
+    setDriverSocket(userId, socket, restaurantName);
+    console.log('Socket connected successfully!', userId, restaurantName);
   } catch (err: any) {
     socket.emit(
       'error',

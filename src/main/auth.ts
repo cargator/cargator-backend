@@ -121,7 +121,7 @@ export async function verifyOtp(req: Request, res: Response) {
           'mobileNumber',
           'documentsKey',
           'firstName',
-          'restaurentName',
+          'restaurantName',
         ]);
         const token = jwt.sign(
           { user, type: 'driver' },

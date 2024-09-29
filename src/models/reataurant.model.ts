@@ -1,12 +1,12 @@
 import mongoose, { Types } from 'mongoose';
 
-const restaurent = new mongoose.Schema(
+const restaurant = new mongoose.Schema(
   {
-    restaurentName: {
+    restaurantName: {
       type: String,
       unique: true,
     },
-    restaurentNameToLowerCase: {
+    restaurantNameToLowerCase: {
       type: String,
       unique: true,
     },
@@ -14,8 +14,8 @@ const restaurent = new mongoose.Schema(
   },
   {
     timestamps: true,
-    collection: 'restaurents',
+    collection: 'restaurants',
   },
 );
 
-export const Restaurent = mongoose.model('Restaurent', restaurent);
+export const Restaurant = mongoose.model('Restaurant', restaurant);

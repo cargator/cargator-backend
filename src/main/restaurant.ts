@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import { Restaurent } from '../models/reataurent.model';
+import { Restaurant } from '../models/reataurant.model';
 
-export async function createRestaurent(req: Request, res: Response) {
+export async function createRestaurant(req: Request, res: Response) {
   let session: any;
   try {
     session = await mongoose.startSession();
@@ -12,10 +12,10 @@ export async function createRestaurent(req: Request, res: Response) {
 
     session.startTransaction();
 
-    const checkStatus: any = await Restaurent.findOne(
+    const checkStatus: any = await Restaurant.findOne(
       {
-        restaurentName: restaurantName,
-        restaurentNameToLowerCase: restaurantNameToLowerCase,
+        restaurantName: restaurantName,
+        restaurantNameToLowerCase: restaurantNameToLowerCase,
       },
       null,
       { session: session },
@@ -25,11 +25,11 @@ export async function createRestaurent(req: Request, res: Response) {
       throw new Error('Restaurant already exists');
     }
 
-    const restaurant: any = await Restaurent.create(
+    const restaurant: any = await Restaurant.create(
       [
         {
-          restaurentName: restaurantName,
-          restaurentNameToLowerCase: restaurantNameToLowerCase,
+          restaurantName: restaurantName,
+          restaurantNameToLowerCase: restaurantNameToLowerCase,
           bounds,
         },
       ],
@@ -57,15 +57,15 @@ export async function createRestaurent(req: Request, res: Response) {
   }
 }
 
-export async function getRestaurentList(req: Request, res: Response) {
+export async function getRestaurantList(req: Request, res: Response) {
   try {
     const page: any = req?.query?.page;
     const limit: any = req.query.limit;
     // console.log("page",page)
-    // console.log("limit",limit)
+    // console.log("limit",limit)restaurantName
     const dataLimit = parseInt(limit);
     const skip = (page - 1) * limit;
-    const restaurentList = await Restaurent.aggregate([
+    const restaurantList = await Restaurant.aggregate([
       {
         $facet: {
           data: [
@@ -86,7 +86,7 @@ export async function getRestaurentList(req: Request, res: Response) {
     // console.log(spotList)
     return res.status(200).json({
       message: 'Fetched all restaurants',
-      data: restaurentList,
+      data: restaurantList,
     });
   } catch (error: any) {
     console.log('get all restaurants error: ', error);
@@ -94,23 +94,23 @@ export async function getRestaurentList(req: Request, res: Response) {
   }
 }
 
-export async function getAvailableRestaurent(req: Request, res: Response) {
+export async function getAvailableRestaurant(req: Request, res: Response) {
   try {
-    const restaurentList = await Restaurent.find();
+    const restaurantList = await Restaurant.find();
     // console.log('vehicleData  allAvailableVehicles :>> ', vehicleData);
-    if (!restaurentList) {
+    if (!restaurantList) {
       throw new Error('restaurantList not found');
     }
     res.status(200).json({
       message: 'fetched Restaurant data successfully',
-      data: restaurentList,
+      data: restaurantList,
     });
   } catch (error: any) {
     res.status(400).json({ success: false, message: error.message });
   }
 }
 
-export async function deleteRestaurent(req: Request, res: Response) {
+export async function deleteRestaurant(req: Request, res: Response) {
   let session: any;
   try {
     session = await mongoose.startSession();
@@ -119,7 +119,7 @@ export async function deleteRestaurent(req: Request, res: Response) {
     const id = req.params.id;
     // console.log("id", id);
 
-    const deleteType: any = await Restaurent.findOneAndDelete({ _id: id });
+    const deleteType: any = await Restaurant.findOneAndDelete({ _id: id });
 
     if (!deleteType) {
       throw new Error('Error while deleting Restaurant');

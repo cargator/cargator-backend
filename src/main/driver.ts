@@ -150,7 +150,7 @@ export async function createDriver(req: Request, res: Response) {
     const {
       firstName,
       lastName,
-      restaurentName,
+      restaurantName,
       vehicleNumber,
       vehicleType,
       vehicleName,
@@ -189,7 +189,7 @@ export async function createDriver(req: Request, res: Response) {
       driverId,
       firstName,
       lastName,
-      restaurentName,
+      restaurantName,
       vehicleNumber:
         vehicleNumber === 'none' ? '' : vehicleNumber.toUpperCase(),
       vehicleType: vehicleNumber === 'none' ? '' : vehicleType,
@@ -342,7 +342,7 @@ export async function updateDriver(req: Request, res: Response) {
     const {
       firstName,
       lastName,
-      restaurentName,
+      restaurantName,
       vehicleNumber,
       vehicleType,
       vehicleName,
@@ -405,7 +405,7 @@ export async function updateDriver(req: Request, res: Response) {
 
     driver.firstName = firstName;
     driver.lastName = lastName;
-    driver.restaurentName = restaurentName;
+    driver.restaurantName = restaurantName;
     driver.mobileNumber = `91${mobileNumber}`;
     driver.profileImageKey = profileImageKey;
     driver.documentsKey = documentsKey;

@@ -134,7 +134,7 @@ import { exec } from 'child_process';
 import { S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import environmentVars from './constantsVars';
-import { createRestaurent, getAvailableRestaurent, getRestaurentList,deleteRestaurent } from './main/restaurent';
+import { createRestaurant, getAvailableRestaurant, getRestaurantList,deleteRestaurant } from './main/restaurant';
 
 let utilsData: any;
 const jwt = require('jsonwebtoken');
@@ -158,16 +158,16 @@ const sendToAllRiders: any = (data: any) => {
 const sendNewOrderToAllRiders: any = (data: any) => {
   try {
     const parsedData = JSON.parse(data)
-    const orderRestaurentName = parsedData?.order?.pickup_details?.name.toLowerCase().trim();
+    const orderRestaurantName = parsedData?.order?.pickup_details?.name.toLowerCase().trim();
     const driverSocket = getAllSocket();
     // for (let index = 0; index < Object.values(driverSocket).length; index++) {
     //   const element: any = Object.values(driverSocket)[index];
     //     element.socket.emit('new-order', data);
     // }
     Object.values(driverSocket).forEach((element: any) => {
-      if (element.restaurentName === orderRestaurentName) {
+      if (element.restaurantName === orderRestaurantName) {
         element.socket.emit('new-order', data);
-        console.log(`New order sent to driver for restaurant: ${orderRestaurentName}`);
+        console.log(`New order sent to driver for restaurant: ${orderRestaurantName}`);
       }
     });
   } catch (error) {
@@ -646,14 +646,14 @@ app.get('/get-active-spot', getActiveSpot);
 app.get('/get-spot-list-vehicle', getSpotListVehicle);
 
 
-// Restaurent crud
-app.post('/create-restaurent', createRestaurent);
+// restaurant crud
+app.post('/create-restaurant', createRestaurant);
 
-app.get('/get-restaurent-list', getRestaurentList);
+app.get('/get-restaurant-list', getRestaurantList);
 
-app.get('/get-available-restaurent', getAvailableRestaurent);
+app.get('/get-available-restaurant', getAvailableRestaurant);
 
-app.delete('/delete-restaurent/:id', deleteRestaurent);
+app.delete('/delete-restaurant/:id', deleteRestaurant);
 
 // appName and Image
 
@@ -805,7 +805,7 @@ subClient.on('error', () => console.log(`Subscriber Client Error`));
       const userId = data?.type === 'driver' ? data.user?._id : undefined;
       const email = data?.email;
       const type = data?.type;
-      const restaurentName = data?.user?.restaurentName;
+      const restaurantName = data?.user?.restaurantName;
 
       if (
         (type === 'driver' && (!userId || !type)) ||
@@ -821,7 +821,7 @@ subClient.on('error', () => console.log(`Subscriber Client Error`));
       }
       try {
         if (type === 'driver') {
-          await driverSocketConnected(socket, userId, io,restaurentName);
+          await driverSocketConnected(socket, userId, io,restaurantName);
         } else {
           await adminSocketConnected(socket, email, io);
         }

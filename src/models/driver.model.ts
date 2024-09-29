@@ -16,7 +16,7 @@ const driverSchema = new mongoose.Schema(
     driverId: String,
     firstName: String,
     lastName: String,
-    restaurentName: String,
+    restaurantName: String,
     email: String,
     profileImageKey: String,
     documentsKey: Array,
