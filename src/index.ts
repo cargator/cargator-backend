@@ -134,7 +134,12 @@ import { exec } from 'child_process';
 import { S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import environmentVars from './constantsVars';
-import { createRestaurant, getAvailableRestaurant, getRestaurantList,deleteRestaurant } from './main/restaurant';
+import {
+  createRestaurant,
+  getAvailableRestaurant,
+  getRestaurantList,
+  deleteRestaurant,
+} from './main/restaurant';
 
 let utilsData: any;
 const jwt = require('jsonwebtoken');
@@ -157,8 +162,10 @@ const sendToAllRiders: any = (data: any) => {
 
 const sendNewOrderToAllRiders: any = (data: any) => {
   try {
-    const parsedData = JSON.parse(data)
-    const orderRestaurantName = parsedData?.order?.pickup_details?.name.toLowerCase().trim();
+    const parsedData = JSON.parse(data);
+    const orderRestaurantName = parsedData?.order?.pickup_details?.name
+      .toLowerCase()
+      .trim();
     const driverSocket = getAllSocket();
     // for (let index = 0; index < Object.values(driverSocket).length; index++) {
     //   const element: any = Object.values(driverSocket)[index];
@@ -167,7 +174,9 @@ const sendNewOrderToAllRiders: any = (data: any) => {
     Object.values(driverSocket).forEach((element: any) => {
       if (element.restaurantName === orderRestaurantName) {
         element.socket.emit('new-order', data);
-        console.log(`New order sent to driver for restaurant: ${orderRestaurantName}`);
+        console.log(
+          `New order sent to driver for restaurant: ${orderRestaurantName}`,
+        );
       }
     });
   } catch (error) {
@@ -273,7 +282,7 @@ async function backupMongoDB() {
   try {
     const backupFileName = `mongodb-backup-${Date.now()}.gz`;
     const backupFilePath = path.join(__dirname, backupFileName);
-    const mongoUri = environmentVars.MONGO_URL
+    const mongoUri = environmentVars.MONGO_URL;
     exec(
       `mongodump --uri "${mongoUri}" --archive=${backupFilePath} --gzip`,
       async (error, stdout, stderr) => {
@@ -549,7 +558,6 @@ app.post('/update-order-status', orderUpdateStatus);
 app.post('/update-food-imageKey', updateFoodImageKey);
 app.post('/update-device-info', updateDeviceInfo);
 
-
 app.get('/get-pending-orders', getpendingOrders);
 app.get('/get-my-pending-order', getDriversPendingOrders);
 app.post('/update-payment-status-of-order', updatePaymentStatusOfOrder);
@@ -645,7 +653,6 @@ app.delete('/delete-spot/:id', deleteSpot);
 app.get('/get-active-spot', getActiveSpot);
 app.get('/get-spot-list-vehicle', getSpotListVehicle);
 
-
 // restaurant crud
 app.post('/create-restaurant', createRestaurant);
 
@@ -719,7 +726,6 @@ app.get('/allAllVehicles', allAllVehicles);
 app.post('/chat-gpt-api', chatGptApi);
 
 app.post('/update-vehicle-imageKey', updateVehicleImageKey);
-
 
 // Country Code Crud
 
@@ -801,7 +807,7 @@ subClient.on('error', () => console.log(`Subscriber Client Error`));
     io.on('connection', async (socket: Socket) => {
       const Token: string = String(socket?.handshake.query?.['token']);
       const data = decodeToken(Token);
-      
+
       const userId = data?.type === 'driver' ? data.user?._id : undefined;
       const email = data?.email;
       const type = data?.type;
@@ -821,7 +827,7 @@ subClient.on('error', () => console.log(`Subscriber Client Error`));
       }
       try {
         if (type === 'driver') {
-          await driverSocketConnected(socket, userId, io,restaurantName);
+          await driverSocketConnected(socket, userId, io, restaurantName);
         } else {
           await adminSocketConnected(socket, email, io);
         }
