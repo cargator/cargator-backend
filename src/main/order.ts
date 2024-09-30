@@ -10,6 +10,7 @@ import {
   formatMillisecondsToHMS,
   formatSocketResponse,
   getDirections,
+  getDirectionsUsingOlaMap,
 } from '../helpers/common';
 import { sendEmail } from '../helpers/sendEmail';
 import { Driver } from '../models/driver.model';
@@ -92,9 +93,25 @@ export async function placeOrder(req: Request, res: Response) {
       throw new Error('error while placing order');
     }
 
+  
+
     const RiderDetails: any = await Driver.find({
       rideStatus: 'online',
     }).lean();
+
+    const pickupLocation = {
+      latitude: saveOrder.pickup_details.latitude,
+      longitude: saveOrder.pickup_details.longitude,
+    };
+    const dropLocation = {
+      latitude: saveOrder.drop_details.latitude,
+      longitude: saveOrder.drop_details.longitude,
+    };
+
+    const pickUpToDropDistance = await getDirectionsUsingOlaMap(
+      pickupLocation,
+      dropLocation,
+    );
 
     // await sendEmail(req.body);
 
@@ -1210,8 +1227,8 @@ export async function orderUpdateStatus(req: any, res: Response) {
   let session: any;
   try {
     const userId = req.decoded.user._id;
-    // const { id, status, location } = req.body;
-    const { id, status } = req.body;
+    const { id, status, location } = req.body;
+    // const { id, status } = req.body;
 
     console.log('updtae status data>>>>>', status);
 
@@ -1247,15 +1264,10 @@ export async function orderUpdateStatus(req: any, res: Response) {
       });
     }
 
-    const newStatusUpdate = {
-      status,
-      // location: [location.latitude, location.longitude],
-      time: new Date(),
-    };
 
     let updateFields: any = {
       status,
-      $push: { statusUpdates: { status, time: new Date() } },
+      $push: { statusUpdates: { status, location: [location?.latitude, location?.longitude], time: new Date() } },
     };
 
     if (
@@ -1311,6 +1323,10 @@ export async function orderUpdateStatus(req: any, res: Response) {
         dropLocation,
       );
 
+      const distance = driverDataFromPickupToDrop?.distance?.value/1000;
+
+      console.log(">>>>>>>>>>>>>>",distance);
+
       updateOrder = await PlaceOrder.findByIdAndUpdate(
         new Types.ObjectId(id),
         { pickupToDrop: driverDataFromPickupToDrop?.coords },
@@ -1318,7 +1334,6 @@ export async function orderUpdateStatus(req: any, res: Response) {
       ).lean();
     }
 
-    console.log('hereerererereerr');
     const obj = {
       status: true,
       data: {

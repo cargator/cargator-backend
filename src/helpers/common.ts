@@ -278,6 +278,44 @@ const convertMetersToKilometers = (meters: number) => {
   const kilometers = meters / 1000;
   return parseFloat(kilometers.toFixed(2));
 };
+
+
+
+
+const getDirectionsUsingOlaMap = async (location1: any, location2: any) => {
+  try {
+    // return { coords: dummy_Path, distance:dummy_distance, duration:dummy_duration };
+    const resp: any = await axios.post(
+      // `https://maps.googleapis.com/maps/api/directions/json?origin=${location1.latitude},${location1.longitude}&destination=${location2.latitude},${location2.longitude}&key=${constants.GOOGLE_API_KEY}`,
+      `https://api.olamaps.io/routing/v1/directions?origin=${location1.latitude},${location1.longitude}&destination=${location2.latitude},${location2.longitude}&api_key=${constants.OLA_MAPS_API_KEY}`,
+    );
+
+    const distance = resp.data?.routes[0]?.legs[0]?.distance
+    console.log("distance:>>>>>>>>>",distance);
+    // const distance = {
+    //   text: resp?.data.routes[0]['legs'][0]['distance']['text'],
+    //   value: resp?.data.routes[0]['legs'][0]['distance']['value'],
+    // };
+    // const duration = {
+    //   text: resp?.data.routes[0]['legs'][0]['duration']['text'],
+    //   value: resp?.data.routes[0]['legs'][0]['duration']['value'],
+    // };
+    // const points = decode(resp?.data.routes[0].overview_polyline.points);
+    // const pathCoords = points.map((point: any[], index: any) => {
+    //   return {
+    //     latitude: point[0],
+    //     longitude: point[1],
+    //   };
+    // });
+    return { distance: distance };
+  } catch (error) {
+    console.log('getDirections error:', error);
+  }
+};
+
+
+
+
 export {
   getAddressFromAutoComplete,
   getAddressFromAutoCompleteOlaMaps,
@@ -291,4 +329,5 @@ export {
   formatMillisecondsToHMS,
   calculateTotalDistance,
   convertMetersToKilometers,
+  getDirectionsUsingOlaMap,
 };
