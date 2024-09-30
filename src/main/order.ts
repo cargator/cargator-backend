@@ -79,6 +79,24 @@ export async function placeOrder(req: Request, res: Response) {
       location: [],
       time: new Date(),
     };
+
+    const pickupLocation = {
+      latitude: req.body.pickup_details.latitude,
+      longitude: req.body.pickup_details.longitude,
+    };
+    const dropLocation = {
+      latitude: req.body.drop_details.latitude,
+      longitude: req.body.drop_details.longitude,
+    };
+
+    const pickUpToDropDistance = await getDirectionsUsingOlaMap(
+      pickupLocation,
+      dropLocation,
+    );
+
+    const estimatedEarningFromPickupToDrop = ((pickUpToDropDistance?.distance/1000)*10).toFixed(2);
+
+
     const saveOrder: any = await PlaceOrder.create({
       ...req.body,
       status: OrderStatusEnum.ORDER_ACCEPTED,
@@ -87,6 +105,7 @@ export async function placeOrder(req: Request, res: Response) {
         ...req.body.order_details,
         payment_status: req.body.order_details.paid,
       },
+      estimatedEarningFromPickupToDrop: estimatedEarningFromPickupToDrop,
     });
 
     if (!saveOrder) {
@@ -97,21 +116,7 @@ export async function placeOrder(req: Request, res: Response) {
       rideStatus: 'online',
     }).lean();
 
-    const pickupLocation = {
-      latitude: saveOrder.pickup_details.latitude,
-      longitude: saveOrder.pickup_details.longitude,
-    };
-    const dropLocation = {
-      latitude: saveOrder.drop_details.latitude,
-      longitude: saveOrder.drop_details.longitude,
-    };
-
-    const pickUpToDropDistance = await getDirectionsUsingOlaMap(
-      pickupLocation,
-      dropLocation,
-    );
-
-    await sendEmail(req.body);
+    // await sendEmail(req.body);
 
     pubClient.publish(
       'new-order',
@@ -537,6 +542,7 @@ export async function getHistory(req: any, res: Response) {
   try {
     const userId = req.decoded.user._id;
     const { filter } = req.body;
+
     console.log(
       JSON.stringify({
         method: 'getHistory',
@@ -587,10 +593,14 @@ export async function getHistory(req: any, res: Response) {
 
     const resposne = [];
     for (const iterator of orderData) {
-      const updatedAt = new Date(iterator.updatedAt);
-      const createdAt = new Date(iterator.createdAt);
-      const timeDifference = updatedAt.getTime() - createdAt.getTime();
-      const totalminutes = Math.floor(timeDifference / 1000 / 60);
+
+      const acceptedAt = new Date(iterator.statusUpdates[1]?.time);
+      const deliveredAt = new Date(iterator.statusUpdates[iterator.statusUpdates.length-1]?.time);
+      const timeDifference = deliveredAt.getTime() - acceptedAt.getTime();
+      const totalminutes = (timeDifference / 1000 / 60).toFixed(2);
+      const travelledDistance = iterator?.travelled_distance || 0;
+      const earning = iterator?.ride_income || 0;
+
 
       resposne.push({
         orderId: iterator.order_details?.vendor_order_id,
@@ -598,8 +608,8 @@ export async function getHistory(req: any, res: Response) {
         status: iterator.status,
         date: iterator.createdAt,
         time: totalminutes,
-        earning: 0,
-        km: 0,
+        earning: earning,
+        dist: (travelledDistance/1000).toFixed(2),
       });
     }
 
@@ -1320,10 +1330,6 @@ export async function orderUpdateStatus(req: any, res: Response) {
         pickupLocation,
         dropLocation,
       );
-
-      const distance = driverDataFromPickupToDrop?.distance?.value / 1000;
-
-      console.log('>>>>>>>>>>>>>>', distance);
 
       updateOrder = await PlaceOrder.findByIdAndUpdate(
         new Types.ObjectId(id),
