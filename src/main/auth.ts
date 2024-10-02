@@ -33,7 +33,6 @@ export async function handleLogin(req: Request, res: Response) {
           { mobileNumber: `91${mobileNumber}` },
           {
             otp,
-            logout: 1,
           },
         );
 

@@ -434,7 +434,7 @@ const authorize = async (req: any, res: Response, next: any) => {
       if (decoded.type == 'driver') {
         const driverData: any = await Driver.findOne({
           mobileNumber: decoded.user.mobileNumber,
-          logout: 1,
+          restaurantName: decoded.user?.restaurantName,
         }).lean();
 
         if (!driverData) {
