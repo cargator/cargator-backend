@@ -94,8 +94,10 @@ export async function placeOrder(req: Request, res: Response) {
       dropLocation,
     );
 
-    const estimatedEarningFromPickupToDrop = ((pickUpToDropDistance?.distance/1000)*10).toFixed(2);
-
+    const estimatedEarningFromPickupToDrop = (
+      (pickUpToDropDistance?.distance / 1000) *
+      10
+    ).toFixed(2);
 
     const saveOrder: any = await PlaceOrder.create({
       ...req.body,
@@ -593,14 +595,14 @@ export async function getHistory(req: any, res: Response) {
 
     const resposne = [];
     for (const iterator of orderData) {
-
       const acceptedAt = new Date(iterator.statusUpdates[1]?.time);
-      const deliveredAt = new Date(iterator.statusUpdates[iterator.statusUpdates.length-1]?.time);
+      const deliveredAt = new Date(
+        iterator.statusUpdates[iterator.statusUpdates.length - 1]?.time,
+      );
       const timeDifference = deliveredAt.getTime() - acceptedAt.getTime();
       const totalminutes = (timeDifference / 1000 / 60).toFixed(2);
       const travelledDistance = iterator?.travelled_distance || 0;
       const earning = iterator?.ride_income || 0;
-
 
       resposne.push({
         orderId: iterator.order_details?.vendor_order_id,
@@ -609,7 +611,7 @@ export async function getHistory(req: any, res: Response) {
         date: iterator.createdAt,
         time: totalminutes,
         earning: earning,
-        dist: (travelledDistance/1000).toFixed(2),
+        dist: (travelledDistance / 1000).toFixed(2),
       });
     }
 
@@ -639,7 +641,7 @@ export async function getHistory(req: any, res: Response) {
   }
 }
 
-  export async function getProgress(req: any, res: Response) {
+export async function getProgress(req: any, res: Response) {
   const userId = req.decoded.user._id;
   try {
     const getProgressResult = await getProgressDetails(userId);
@@ -708,7 +710,7 @@ async function getProgressDetails(userId: string) {
     todayStart.setHours(0, 0, 0, 0);
 
     const todayEnd = new Date();
-    todayEnd.setHours(23, 59, 59, 999);  
+    todayEnd.setHours(23, 59, 59, 999);
 
     // Get this week's date range (Monday to Sunday)
     const currentDate = new Date();
@@ -717,31 +719,28 @@ async function getProgressDetails(userId: string) {
     const weekEnd = new Date(currentDate);
 
     if (currentDay === 0) {
-      // if today is Sunday     
+      // if today is Sunday
       weekStart.setDate(currentDate.getDate() - 6); // last Monday
       weekEnd.setDate(currentDate.getDate()); // today
-   if(weekStart.getMonth()!==currentDate.getMonth()){
+      if (weekStart.getMonth() !== currentDate.getMonth()) {
         weekStart.setMonth(currentDate.getMonth());
-        weekStart.setDate(1)
+        weekStart.setDate(1);
       }
     } else {
       weekStart.setDate(currentDate.getDate() - currentDay + 1); // this Monday
       weekEnd.setDate(currentDate.getDate() + (7 - currentDay)); // this Sunday
 
-       if(weekStart.getMonth() !== currentDate.getMonth()){
-          weekStart.setMonth(currentDate.getMonth());
-          weekStart.setDate(1);         
-       }
+      if (weekStart.getMonth() !== currentDate.getMonth()) {
+        weekStart.setMonth(currentDate.getMonth());
+        weekStart.setDate(1);
+      }
 
-       if(weekEnd.getMonth() !== currentDate.getMonth()){
-
+      if (weekEnd.getMonth() !== currentDate.getMonth()) {
         weekEnd.setMonth(currentDate.getMonth());
         weekEnd.setMonth(weekEnd.getMonth() + 1);
         weekEnd.setDate(0);
-
-       }
-
-    }   
+      }
+    }
 
     weekStart.setHours(0, 0, 0, 0);
     weekEnd.setHours(23, 59, 59, 999);
@@ -909,13 +908,13 @@ async function getProgressDetails(userId: string) {
               { totalOnrideTime: 0, count: 0 },
             ],
           },
-            week: {
+          week: {
             $ifNull: [
               { $arrayElemAt: ['$week', 0] },
               { totalOnrideTime: 0, count: 0 },
             ],
           },
-    month: {
+          month: {
             $ifNull: [
               { $arrayElemAt: ['$month', 0] },
               { totalOnrideTime: 0, count: 0 },
@@ -1285,6 +1284,14 @@ export async function orderUpdateStatus(req: any, res: Response) {
       });
     }
 
+    // if order already delivered and response didn't get by any reason
+    if (order.status === OrderStatusEnum.DELIVERED) {
+      return res.send({
+        message: 'Order already delivered',
+        data: { driverId: userId, order: order },
+      });
+    }
+    
     let updateFields: any = {
       status,
       $push: {
@@ -1376,15 +1383,6 @@ export async function orderUpdateStatus(req: any, res: Response) {
       'Order update acknoeledgement response',
       acknowledgementResponse.data,
     );
-    // console.log(
-    //   JSON.stringify({
-    //     method: 'acknowledgementResponse',
-    //     message: 'Order update acknoeledgement response',
-    //     data:
-    //       acknowledgementResponse.data
-    //     ,
-    //   }),
-    // );
 
     await session.commitTransaction();
     return res.status(200).send({
