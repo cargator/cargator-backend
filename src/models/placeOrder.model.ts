@@ -69,7 +69,6 @@ const placeOrder = new mongoose.Schema(
         longitude: Number,
       },
     },
-    estimatedEarningFromPickupToDrop: Number,
     travelled_distance: Number,
     ride_income: Number,
   },

@@ -105,7 +105,7 @@ export async function placeOrder(req: Request, res: Response) {
         ...req.body.order_details,
         payment_status: req.body.order_details.paid,
       },
-      estimatedEarningFromPickupToDrop: estimatedEarningFromPickupToDrop,
+      ride_income: estimatedEarningFromPickupToDrop,
     });
 
     if (!saveOrder) {
@@ -1233,7 +1233,7 @@ export async function orderUpdateStatus(req: any, res: Response) {
     const { id, status, location } = req.body;
     // const { id, status } = req.body;
 
-    console.log('updtae status data>>>>>', status);
+    console.log('update status :>>>>>', status);
 
     if (!id) {
       throw new Error('OrderId is not found.');
@@ -1293,10 +1293,9 @@ export async function orderUpdateStatus(req: any, res: Response) {
       updateFields = {
         ...updateFields,
         travelled_distance: totalDistance,
-        ride_income: convertMetersToKilometers(totalDistance) * 10,
       };
 
-      console.log('updateFields ==> ', updateFields);
+      // console.log('updateFields ==> ', updateFields);
 
       const updateDriver = await Driver.findOneAndUpdate(
         { _id: userId, rideStatus: 'on-ride' },
