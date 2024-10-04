@@ -15,7 +15,7 @@ export async function chatGptApi(req: Request, res: Response) {
       throw new Error('Both mode and input are required.');
     }
 
-    const flowType = await getAppFLow();
+    // const flowType = await getAppFLow();
 
     let startDate = new Date();
     let endDate = new Date();
@@ -36,33 +36,37 @@ export async function chatGptApi(req: Request, res: Response) {
     }
 
     let data;
-    switch (flowType?.applicationFLow) {
-      case FlowTypeEnum.PETPOOJA:
+ 
+
+    // switch (flowType?.applicationFLow) {
+      // case FlowTypeEnum.PETPOOJA:
         data = await PlaceOrder.find({
           createdAt: { $gte: startDate, $lt: endDate },
         })
           .sort({ createdAt: -1 })
-          .select('-_id status fare paymentMode cancelBy.reason');
-        break;
+          .select('-_id status ride_income order_details.order_total pickup_details order_items driver_details travelled_distance ');
+    //     break;
 
-      default:
-        throw new Error('Invalid flow type.');
-    }
+    //   default:
+    //     throw new Error('Invalid flow type.');
+    // }
 
     if (data.length === 0) {
       res.status(200).send({
         success: false,
-        message: `No data found for ${flowType} in the specified period.`,
+        message: `No data found for in the specified period.`,
       });
       return;
     }
+
+    // console.log('here is my data from database>>>>>>>>>',data);
 
     const requestData = {
       model: 'gpt-3.5-turbo',
       messages: [
         {
           role: 'user',
-          content: `${flowType} information: ${JSON.stringify(data)}`,
+          content: `information: ${JSON.stringify(data)}`,
         },
         {
           role: 'user',

@@ -11,7 +11,7 @@ export enum OrderStatusEnum {
 }
 
 export enum FlowTypeEnum {
-  PETPOOJA = 'petpuja',
+  PETPOOJA = 'petPuja',
   CARGATOR = 'default',
   ZENZO = 'custom',
 }
