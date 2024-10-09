@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { Restaurant } from '../models/reataurant.model';
+import { Driver } from '../models/driver.model';
 
 export async function createRestaurant(req: Request, res: Response) {
   let session: any;
@@ -94,6 +95,51 @@ export async function getRestaurantList(req: Request, res: Response) {
   }
 }
 
+
+export async function getSearchRestaurantList(req: Request, res: Response) {
+  try {
+    const page: any = req?.query?.page;
+    const limit: any = req.query.limit;
+    const searchText:any = req.query.text;
+    // console.log("page",page)
+    // console.log("limit",limit)restaurantName
+    const dataLimit = parseInt(limit);
+    const skip = (page - 1) * limit;
+    const restaurantList = await Restaurant.aggregate([
+      {
+        $match:{
+          restaurantName: {
+            $regex: new RegExp(`^${searchText}`, 'i'),
+          }
+        }
+      },
+      {
+        $facet: {
+          data: [
+            {
+              $sort: { createdAt: -1 },
+            },
+            {
+              $skip: skip,
+            },
+            {
+              $limit: dataLimit,
+            },
+          ],
+          count: [{ $count: 'totalcount' }],
+        },
+      },
+    ]);
+    // console.log(spotList)
+    return res.status(200).json({
+      message: 'Fetched all restaurants',
+      data: restaurantList,
+    });
+  } catch (error: any) {
+  
+     res.status(400).send({ error: error.message });
+  }
+}
 export async function getAvailableRestaurant(req: Request, res: Response) {
   try {
     const restaurantList = await Restaurant.find();
@@ -113,6 +159,16 @@ export async function getAvailableRestaurant(req: Request, res: Response) {
 export async function deleteRestaurant(req: Request, res: Response) {
   let session: any;
   try {
+
+    const resData = await Restaurant.findById(req.params.id,' restaurantNameToLowerCase');
+    const restaurantName = resData ? resData.restaurantNameToLowerCase : null;
+    const count = await Driver.countDocuments({ restaurantName:restaurantName });
+
+
+   if(count > 0) {
+    return res.status(200).send({riderExists:true, message: 'Cannot Delete Rider Exists.'});
+   }
+
     session = await mongoose.startSession();
     session.startTransaction();
 
@@ -121,12 +177,14 @@ export async function deleteRestaurant(req: Request, res: Response) {
 
     const deleteType: any = await Restaurant.findOneAndDelete({ _id: id });
 
+    
+
     if (!deleteType) {
       throw new Error('Error while deleting Restaurant');
     }
 
     await session.commitTransaction();
-    res.status(200).send({
+    return res.status(200).send({
       message: ' Restaurant deleted Successfully.',
       data: deleteType,
     });

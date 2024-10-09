@@ -139,6 +139,7 @@ import {
   getAvailableRestaurant,
   getRestaurantList,
   deleteRestaurant,
+  getSearchRestaurantList
 } from './main/restaurant';
 
 let utilsData: any;
@@ -658,6 +659,8 @@ app.get('/get-spot-list-vehicle', getSpotListVehicle);
 app.post('/create-restaurant', createRestaurant);
 
 app.get('/get-restaurant-list', getRestaurantList);
+
+app.get('/get-search-restaurant-list', getSearchRestaurantList);
 
 app.get('/get-available-restaurant', getAvailableRestaurant);
 

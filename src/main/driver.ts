@@ -48,9 +48,15 @@ const getSearchDriver = async (req: Request) => {
                     },
                   },
                   {
+                    restaurantName: {
+                      $regex: new RegExp(`^${query}`, 'i'),
+                    },
+                  },
+                  {
                     vehicleType: {
                       $regex: new RegExp(`${query}`, 'i'),
                     },
+                    
                   },
                   {
                     rideStatus: {
@@ -69,6 +75,7 @@ const getSearchDriver = async (req: Request) => {
                 vehicleNumber: 1,
                 vehicleType: 1,
                 rideStatus: 1,
+                restaurantName:1,
               },
             },
             {
@@ -123,6 +130,8 @@ const getSearchDriver = async (req: Request) => {
         },
       },
     ]);
+
+    console.log(currentRides[0].data);
     return currentRides;
   } catch (error) {
     console.log('getSearchRides error:', error);

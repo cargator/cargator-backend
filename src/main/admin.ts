@@ -110,12 +110,12 @@ export async function adminRegister(req: Request, res: Response) {
 //Admin created by another Admin or superAdmin
 export async function createAdmin(req: Request | any, res: Response) {
   try {
-    console.log(`admin-login API >> body :>> `, req.body);
+    
     const body = req.body;
     const { fullName, mobileNumber } = body;
     const email = body.email || `${fullName.split(' ')[0]}@gmail.com`;
 
-    if (!fullName || !mobileNumber) {
+    if (!fullName || !mobileNumber || fullName.trim()=='') {
       throw new Error(`Invalid data provided !`);
     }
     const password = (mobileNumber + '').slice(-4);
@@ -137,12 +137,12 @@ export async function createAdmin(req: Request | any, res: Response) {
     );
 
     return res.status(200).send({
-      message: 'success',
+      message: 'User Created successfully.',
     });
   } catch (error: any) {
     console.log(`admin-register error :>> `, error);
     if (error.code === 11000) {
-      return res.status(400).send({ message: 'Email already registered !' });
+      return res.status(400).send({ message: 'Number already registered !' });
     }
     return res.status(400).send({ message: error.message });
   }
