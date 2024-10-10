@@ -166,7 +166,7 @@ export async function deleteRestaurant(req: Request, res: Response) {
 
 
    if(count > 0) {
-    return res.status(200).send({riderExists:true, message: 'Cannot Delete Rider Exists.'});
+    return res.status(200).send({riderExists:true, message: ' Unassign riders to delete this restaurant.'});
    }
 
     session = await mongoose.startSession();
