@@ -330,16 +330,28 @@ export async function deleteDriver(req: Request, res: Response) {
 export async function getDriverById(req: Request, res: Response) {
   try {
     const driverId = req.params.id;
+
+    // Fetch the driver data by ID
     const driverData = await Driver.findById(driverId);
     if (!driverData) {
-      throw new Error('Error while fetching data, invalid id');
+      return res.status(404).json({ success: false, message: 'Driver not found, invalid id' });
     }
-    res.status(200).json({
-      message: 'fetched driver data successfully',
+
+    // Fetch vehicle data using driver ID (assuming vehicleAssignedToId is a field in the Vehicles model)
+    const vehicleData = await Vehicles.findOne({ vehicleAssignedToId: driverId });
+    
+    // Log the vehicle data to check if it's being fetched correctly
+    console.log("Vehicle data for driver:", vehicleData?.documentsKey);
+
+    // Respond with the driver data and vehicle image URI
+    return res.status(200).json({
+      message: 'Fetched driver data successfully',
       data: driverData,
+      imageUri: vehicleData?.documentsKey || null,
     });
   } catch (error: any) {
-    res.status(400).json({ success: false, message: error.message });
+    console.error('Error fetching driver data:', error.message);
+    return res.status(500).json({ success: false, message: 'Server error' });
   }
 }
 
@@ -695,7 +707,7 @@ export async function updateTimelineCoords(req: any, res: Response) {
       },
     );
 
-    // console.log('pathCoords===>', pathCoords);
+    // console.log('pathCoords===>', pathCoords[pathCoords.length - 1].coords);
     const updateTimeline: any = await Timeline.findOneAndUpdate(
       {
         driverId: new Types.ObjectId(driverId),

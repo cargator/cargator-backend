@@ -1493,7 +1493,7 @@ export async function testOrder(req: Request, res: Response) {
 
 export async function getButtontextFlow(req: Request, res: Response) {
   try {
-    const flows = await Flows.find().lean();
+    const flows = await Flows.find().lean().sort({ sequenceNo: 1 });
 
     if (!flows || flows.length === 0) {
       throw new Error('Flows not found!');
