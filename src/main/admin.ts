@@ -47,7 +47,7 @@ export async function adminLogin(req: Request, res: Response) {
 
     // Generate a JWT token
     const token = jwt.sign({ ...adminDoc }, environmentVars.PUBLIC_KEY, {
-      expiresIn: '7d',
+      expiresIn: '2m',
     });
 
     console.log('admin loged in successfully', adminDoc);
