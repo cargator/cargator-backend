@@ -20,7 +20,7 @@ export async function adminLogin(req: Request, res: Response) {
     const { mobile_Number, password } = body;
 
     if (!mobile_Number || !password) {
-      throw new Error(`Invalid email or password !`);
+      throw new Error(`Invalid Number or OTP !`);
     }
 
     // Find the admin based on the provided credentials
@@ -154,13 +154,34 @@ export async function getAllAdmins(req: Request, res: Response) {
     const page: number = parseInt(req.query.page as string, 10) || 1;
     const limit: number = parseInt(req.query.limit as string, 10) || 10;
     const skip = (page - 1) * limit;
+   
+    const sortedby:string= typeof req.query.sortedby === 'string' ? req.query.sortedby : "createdAt";
+    
+
+    const column_to_monogoattributes: { [key: string]: string } = {
+      name: "name",
+      mobile_Number: "mobile_Number",         
+    };    
+
+    const order: 1 | -1 = (() => {
+      const orderQuery = req.query.order; // Check if orderQuery is a string and parse it
+      if (typeof orderQuery === 'string') {
+        return parseInt(orderQuery) === 1 ? 1 : -1;
+      }
+    
+      // Default to -1 if orderQuery is not a valid string
+      return -1;
+    })();
+    const sortby=column_to_monogoattributes[sortedby]||'createdAt';
+    
+    const sortObject: Record<string, 1 | -1> = { [sortby]: order };
 
     const adminResponse = await Admin.aggregate([
       {
         $facet: {
           admins: [
             {
-              $sort: { updatedAt: -1 },
+              $sort:sortObject,
             },
             {
               $skip: skip,
@@ -214,7 +235,7 @@ export async function changePassword(req: Request, res: Response) {
 
     // Check if the admin is registered
     if (!adminDoc) {
-      throw new Error(`Invalid email or password !`);
+      throw new Error(`Invalid Number or OTP!`);
     }
 
     // Generate a JWT token
@@ -228,7 +249,7 @@ export async function changePassword(req: Request, res: Response) {
     });
   } catch (error: any) {
     console.log(`admin change-password error :>> `, error);
-    return res.status(401).send({ message: 'Invalid email or password !' });
+    return res.status(401).send({ message: 'Invalid Number or OTP !' });
   }
 }
 

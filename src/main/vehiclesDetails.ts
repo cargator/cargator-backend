@@ -17,6 +17,28 @@ export async function searchVehicles(req: Request, res: Response) {
     const dataLimit = parseInt(limit);
     const search = req.query.query;
     const skip = (parseInt(page) - 1) * dataLimit;
+    const sortedby:string= typeof req.query.sortedby === 'string' ? req.query.sortedby : "createdAt";
+    const status=req.query.status;
+
+    const column_to_monogoattributes: { [key: string]: string } = {
+      vehicleName: "vehicleName",
+      vehicleNumber: "vehicleNumber",
+      vehicleType: "vehicleType",
+      vehicleStatus: "vehicleStatus"     
+    };    
+
+    const order: 1 | -1 = (() => {
+      const orderQuery = req.query.order;
+    
+      // Check if orderQuery is a string and parse it
+      if (typeof orderQuery === 'string') {
+        return parseInt(orderQuery) === 1 ? 1 : -1;
+      }    return -1;
+    })();
+    const sortby=column_to_monogoattributes[sortedby]||'createdAt';
+    
+    const sortObject: Record<string, 1 | -1> = { [sortby]: order };
+
     const allVehicles = await Vehicles.aggregate([
       {
         $facet: {
@@ -54,10 +76,11 @@ export async function searchVehicles(req: Request, res: Response) {
                 vehicleNumber: 1,
                 vehicleType: 1,
                 vehicleStatus: 1,
+                createdAt:1
               },
             },
             {
-              $sort: { createdAt: -1 },
+              $sort:sortObject,
             },
             {
               $skip: skip,

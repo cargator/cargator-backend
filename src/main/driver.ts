@@ -19,11 +19,43 @@ const getSearchDriver = async (req: Request) => {
     const page = parseInt(String(req?.query?.page));
     const dataLimit = parseInt(String(req?.query?.limit));
     const query = req.query.query;
-    const skip = (page - 1) * dataLimit;
+    const skip = (page - 1) * dataLimit; 
+    const sortedby:string= typeof req.query.sortedby === 'string' ? req.query.sortedby : "createdAt";
+    const status=req.query.status;
+
+    const column_to_monogoattributes: { [key: string]: string } = {
+      fullName: "firstName",
+      mobileNumber: "mobileNumber",
+      restaurantName: "restaurantName",
+      vehicleNumber: "vehicleNumber",
+      vehicleType: "vehicleType" ,
+      orderDate:"createdDate",
+      orderTime:"createdTime"    
+    };    
+
+    const order: 1 | -1 = (() => {
+      const orderQuery = req.query.order;
+    
+      // Check if orderQuery is a string and parse it
+      if (typeof orderQuery === 'string') {
+        return parseInt(orderQuery) === 1 ? 1 : -1;
+      }
+    
+      // Default to -1 if orderQuery is not a valid string
+      return -1;
+    })();
+    const sortby=column_to_monogoattributes[sortedby]||'createdAt';
+    
+    const sortObject: Record<string, 1 | -1> = { [sortby]: order };
+
     const currentRides = await Driver.aggregate([
       {
         $facet: {
-          data: [
+          data: [{
+            $match:{
+              rideStatus: status === 'all' ? { $in: ['offline', 'online'] } : status
+            }
+          },
             {
               $match: {
                 $or: [
@@ -76,10 +108,13 @@ const getSearchDriver = async (req: Request) => {
                 vehicleType: 1,
                 rideStatus: 1,
                 restaurantName:1,
+                createdAt:1,
+                createdDate: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+               createdTime: { $dateToString: { format: "%H:%M:%S", date: "$createdAt" } }
               },
             },
             {
-              $sort: { createdAt: -1 },
+              $sort:sortObject ,
             },
             {
               $skip: skip,

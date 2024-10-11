@@ -105,6 +105,29 @@ export async function getSearchRestaurantList(req: Request, res: Response) {
     // console.log("limit",limit)restaurantName
     const dataLimit = parseInt(limit);
     const skip = (page - 1) * limit;
+    const sortedby:string= typeof req.query.sortedby === 'string' ? req.query.sortedby : "createdAt";
+    const status=req.query.status;
+
+    const column_to_monogoattributes: { [key: string]: string } = {
+      restaurantName:'restaurantName'   
+    };    
+
+
+    const order: 1 | -1 = (() => {
+      const orderQuery = req.query.order;
+    
+      // Check if orderQuery is a string and parse it
+      if (typeof orderQuery === 'string') {
+        return parseInt(orderQuery) === 1 ? 1 : -1;
+      }
+    
+      // Default to -1 if orderQuery is not a valid string
+      return -1;
+    })();
+    const sortby=column_to_monogoattributes[sortedby]||'createdAt';
+    
+    const sortObject: Record<string, 1 | -1> = { [sortby]: order };
+
     const restaurantList = await Restaurant.aggregate([
       {
         $match:{
@@ -117,7 +140,7 @@ export async function getSearchRestaurantList(req: Request, res: Response) {
         $facet: {
           data: [
             {
-              $sort: { createdAt: -1 },
+              $sort:sortObject,
             },
             {
               $skip: skip,
@@ -166,7 +189,7 @@ export async function deleteRestaurant(req: Request, res: Response) {
 
 
    if(count > 0) {
-    return res.status(200).send({riderExists:true, message: ' Unassign riders to delete this restaurant.'});
+    return res.status(200).send({riderExists:true, message: ' Restaurant cannot be deleted while riders are assigned.'});
    }
 
     session = await mongoose.startSession();

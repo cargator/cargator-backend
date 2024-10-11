@@ -948,6 +948,32 @@ export async function getOrderHistory(
       | string
       | undefined;
 
+      const sortedby:string= typeof req.query.sortedby === 'string' ? req.query.sortedby : "createdAt";
+      const column_to_monogoattributes: { [key: string]: string } = {
+        orderId: 'order_details.vendor_order_id',        
+        customerMobileNum:'drop_details.contact_number',
+        DriverMobileNum:'driver_details.contact',
+        amount: 'order_details.order_total',
+        pickUpLocation: 'pickup_details.address',
+        dropLocation: 'drop_details.address',          
+      }
+      
+      const order: 1 | -1 = (() => {
+        const orderQuery = req.query.order;
+      
+        // Check if orderQuery is a string and parse it
+        if (typeof orderQuery === 'string') {
+          return parseInt(orderQuery) === 1 ? 1 : -1;
+        }
+      
+        // Default to -1 if orderQuery is not a valid string
+        return -1;
+      })();
+      const sortby=column_to_monogoattributes[sortedby]||'createdAt';
+      
+      const sortObject: Record<string, 1 | -1> = { [sortby]: order };
+  
+
     console.log(
       JSON.stringify({
         method: 'getOrderHistory',
@@ -1062,7 +1088,7 @@ export async function getOrderHistory(
       $facet: {
         data: [
           {
-            $sort: { createdAt: -1 },
+            $sort: sortObject,
           },
           {
             $skip: skip,
