@@ -8,11 +8,13 @@ import { sendOtpViaSms } from '../config/smsOtpService';
 
 export async function handleLogin(req: Request, res: Response) {
   try {
+    console.log("<<<<<<<<<<<object>>>>>>>>>>>")
     const { type, mobileNumber } = req.body;
     if (type == 'driver') {
       if (!mobileNumber) {
         throw new Error(`Invalid Mobile Number!`);
       }
+
 
       let driverDoc = await Driver.findOne({
         mobileNumber: `91${mobileNumber}`,

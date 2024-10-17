@@ -282,7 +282,6 @@ export async function deleteDriver(req: Request, res: Response) {
   let session: any;
 
   try {
-    console.log('---------------------');
     const s3 = new AWS.S3();
     session = await mongoose.startSession();
     // const id = req.params.uid;
@@ -366,23 +365,54 @@ export async function getDriverById(req: Request, res: Response) {
   try {
     const driverId = req.params.id;
 
-    // Fetch the driver data by ID
-    const driverData = await Driver.findById(driverId);
-    if (!driverData) {
+    const result = await Driver.aggregate([
+      {
+        $match: { _id: new mongoose.Types.ObjectId(driverId) }
+      },
+      {
+        $addFields: {
+          driverIdAsString: { $toString: '$_id' }
+        }
+      },
+      {
+        $lookup: {
+          from: 'vehicles',
+          localField: 'driverIdAsString',
+          foreignField: 'vehicleAssignedToId', 
+          as: 'vehicleData'
+        }
+      },
+      {
+        // Unwind the vehicleData array (since $lookup returns an array)
+        $unwind: {
+          path: '$vehicleData',
+          preserveNullAndEmptyArrays: true // Allow drivers without vehicles to still be fetched
+        }
+      },
+      {
+        $project: {
+          firstName: 1,
+          lastName: 1,
+          mobileNumber: 1,
+          vehicleName: 1,
+          vehicleNumber: 1,
+          vehicleType: 1,
+          profileImageKey: 1,
+          'vehicleData.profileImageKey': 1,
+        }
+      }
+    ]);
+
+    if (!result.length) {
       return res.status(404).json({ success: false, message: 'Driver not found, invalid id' });
     }
+  
 
-    // Fetch vehicle data using driver ID (assuming vehicleAssignedToId is a field in the Vehicles model)
-    const vehicleData = await Vehicles.findOne({ vehicleAssignedToId: driverId });
-    
-    // Log the vehicle data to check if it's being fetched correctly
-    console.log("Vehicle data for driver:", vehicleData?.documentsKey);
-
-    // Respond with the driver data and vehicle image URI
+    // console.log("Vehicle data for driver:", result[0]);
+  
     return res.status(200).json({
       message: 'Fetched driver data successfully',
-      data: driverData,
-      imageUri: vehicleData?.documentsKey || null,
+      data: result[0],
     });
   } catch (error: any) {
     console.error('Error fetching driver data:', error.message);

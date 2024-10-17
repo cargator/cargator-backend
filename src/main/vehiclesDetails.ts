@@ -459,16 +459,11 @@ export function getVehicalDetails(req: any) {
 
 export async function updateVehicleImageKey(req: Request, res: Response) {
   try {
-    const { userId, imageKey, photoUri } = req.body;
-
-    const keyDocs = {imageKey: imageKey, imageUri: photoUri}
+    const { userId, imageKey } = req.body;
 
     const response: any = await Vehicles.findOneAndUpdate(
       { vehicleAssignedToId: userId },
-      { 
-        documentsKey: keyDocs,
-        profileImageKey: imageKey,
-       },
+      { profileImageKey: imageKey },
       { new: true },
     ).lean();
 
