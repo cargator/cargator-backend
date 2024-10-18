@@ -7,6 +7,7 @@ import { Vehicles } from '../models';
 import { pathCoords, Timeline } from '../models/timeline.model';
 import { Types } from 'mongoose';
 import { PlaceOrder } from '../models/placeOrder.model';
+import driverSocketConnected from '../helpers/driverEvents';
 const AWS = require('aws-sdk');
 AWS.config.update({
   region: environmentVars.AWS_REGION,
@@ -108,6 +109,7 @@ const getSearchDriver = async (req: Request) => {
                 vehicleType: 1,
                 rideStatus: 1,
                 restaurantName:1,
+                status:1,
                 createdAt:1,
                 createdDate: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
                createdTime: { $dateToString: { format: "%H:%M:%S", date: "$createdAt" } }
@@ -398,6 +400,7 @@ export async function getDriverById(req: Request, res: Response) {
           vehicleNumber: 1,
           vehicleType: 1,
           profileImageKey: 1,
+          restaurantName:1,
           'vehicleData.profileImageKey': 1,
         }
       }
@@ -525,6 +528,29 @@ export async function updateDriverStatus(req: Request, res: Response) {
   try {
     session = await mongoose.startSession();
     const id = req.params.uid;
+    const delete_last:number=Number(req.query.delete_last);
+
+  if(delete_last==0){ 
+
+     const restaurant = await Driver.findOne({ _id: id }).select({ restaurantName: 1, _id: 0,status:1 });
+
+     if(restaurant?.status=='active'){
+     
+      const count = await Driver.countDocuments({ restaurantName:restaurant.restaurantName,status:'active' });
+
+      if(count==1){
+        res.status(200).send({ last_driver:true,
+          message: 'Only One Driver is active',
+        });
+        return ;
+  
+       }          
+
+     }     
+
+     
+  }
+
     session.startTransaction();
     const result = await Driver.findOneAndUpdate(
       {
@@ -532,23 +558,25 @@ export async function updateDriverStatus(req: Request, res: Response) {
         status: 'active',
       },
       {
-        status: 'inactive',
-        vehicleName: null,
-        vehicleNumber: null,
-        vehicleType: null,
+        status: 'inactive'
       },
       { session: session },
     );
 
+  // delete_last ->    0   -> check for the number of driver (if count is 1 send a response and as k for conformation 
+    //                            elseif count is > 1 delete the driver)
+    //                   1   -> force delete the last driver
+  
+
     // console.log('result :>> ', result);
 
-    if (result) {
-      await Vehicles.findOneAndUpdate(
-        { vehicleNumber: result?.vehicleNumber },
-        { vehicleStatus: 'available' },
-        { session: session },
-      );
-    }
+    // if (result) {
+    //   await Vehicles.findOneAndUpdate(
+    //     { vehicleNumber: result?.vehicleNumber },
+    //     { vehicleStatus: 'available' },
+    //     { session: session },
+    //   );
+    // }
 
     if (!result) {
       const resultTwo = await Driver.findOneAndUpdate(
