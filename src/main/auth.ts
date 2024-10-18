@@ -8,16 +8,38 @@ import { sendOtpViaSms } from '../config/smsOtpService';
 
 export async function handleLogin(req: Request, res: Response) {
   try {
-    console.log("<<<<<<<<<<<object>>>>>>>>>>>")
     const { type, mobileNumber } = req.body;
     if (type == 'driver') {
       if (!mobileNumber) {
         throw new Error(`Invalid Mobile Number!`);
       }
 
+      let normalizedMobileNumber = mobileNumber;
+      let localMobileNumber = mobileNumber;
+
+      if (mobileNumber.startsWith('+')) {
+        if (mobileNumber.startsWith('+91')) {
+          normalizedMobileNumber = mobileNumber.slice(1);
+          localMobileNumber = mobileNumber.slice(3);
+        } else if (mobileNumber.startsWith('+971')) {
+          normalizedMobileNumber = mobileNumber.slice(1);
+          localMobileNumber = mobileNumber.slice(4);
+        } else if (mobileNumber.startsWith('+1')) {
+          normalizedMobileNumber = mobileNumber.slice(1);
+          localMobileNumber = mobileNumber.slice(2);
+        }
+      } else if (mobileNumber.length === 10) {
+        normalizedMobileNumber = `91${mobileNumber}`;
+        localMobileNumber = mobileNumber;
+      } else {
+        throw new Error(`Invalid mobile number format!`);
+      }
+
+      console.log('Normalized Mobile Number >>>>', normalizedMobileNumber);
+      console.log('Local Mobile Number (for OTP) >>>>', localMobileNumber);
 
       let driverDoc = await Driver.findOne({
-        mobileNumber: `91${mobileNumber}`,
+        mobileNumber: normalizedMobileNumber,
         status: 'active',
       }).lean();
 
@@ -25,14 +47,14 @@ export async function handleLogin(req: Request, res: Response) {
         throw new Error('Please enter a registered mobile number.');
       }
 
-      let otp: any = Math.floor(1000 + Math.random() * 9000); // Generate a 4-digit OTP
+      let otp: any = Math.floor(1000 + Math.random() * 9000);
       if (
-        mobileNumber.toString().startsWith('7440214173') ||
-        mobileNumber.toString().startsWith('9322310197')
+        normalizedMobileNumber.toString().startsWith('917440214173') ||
+        normalizedMobileNumber.toString().startsWith('919322310197')
       ) {
         otp = '0000';
         await Driver.findOneAndUpdate(
-          { mobileNumber: `91${mobileNumber}` },
+          { mobileNumber: normalizedMobileNumber },
           {
             otp,
           },
@@ -50,7 +72,7 @@ export async function handleLogin(req: Request, res: Response) {
         const otpExpire: any = environmentVars.OTP_EXPIRE || 0.5; // OTP Expiration Time is "30 Seconds".
 
         await Driver.findOneAndUpdate(
-          { mobileNumber: `91${mobileNumber}` },
+          { mobileNumber: normalizedMobileNumber },
           {
             otp,
             otpExpirationTime: new Date(
@@ -61,14 +83,14 @@ export async function handleLogin(req: Request, res: Response) {
         );
 
         if (
-          mobileNumber.toString().startsWith('7440214173') ||
-          mobileNumber.toString().startsWith('9322310197')
+          normalizedMobileNumber.toString().startsWith('917440214173') ||
+          normalizedMobileNumber.toString().startsWith('919322310197')
         ) {
           return res
             .status(200)
             .send({ message: `OTP sent to mobile number 91${mobileNumber}.` });
         } else {
-          const sendSmsRes = await sendOtpViaSms(mobileNumber, otp);
+          const sendSmsRes = await sendOtpViaSms(localMobileNumber, otp);
           console.log(`sendSmsRes :>> `, sendSmsRes?.data);
           return res
             .status(200)
