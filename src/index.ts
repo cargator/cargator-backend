@@ -425,7 +425,7 @@ const authorize = async (req: any, res: Response, next: any) => {
       const decoded: any = await new Promise((resolve, reject) => {
         jwt.verify(token, constants.PUBLIC_KEY, (err: any, decoded: any) => {
           if (err) {
-            reject(new Error('Invalid token'));
+            reject(new Error('Session Expired'));
           } else {
             resolve(decoded);
           }

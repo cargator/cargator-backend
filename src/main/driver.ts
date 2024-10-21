@@ -222,7 +222,7 @@ export async function createDriver(req: Request, res: Response) {
 
     // Check if the mobile number already exists
     const existingDriver = await Driver.findOne(
-      { mobileNumber: `91${mobileNumber}` },
+      { mobileNumber: `${mobileNumber}` },
       null,
       { session },
     );
@@ -235,12 +235,13 @@ export async function createDriver(req: Request, res: Response) {
       driverId,
       firstName,
       lastName,
-      restaurantName: restaurantName.toLowerCase().trim(),
+      restaurantName: restaurantName,
+      restaurantNameToLowerCase: restaurantName.toLowerCase().trim(),
       vehicleNumber:
         vehicleNumber === 'none' ? '' : vehicleNumber.toUpperCase(),
       vehicleType: vehicleNumber === 'none' ? '' : vehicleType,
       vehicleName: vehicleNumber === 'none' ? '' : vehicleName,
-      mobileNumber: `91${mobileNumber}`,
+      mobileNumber: `${mobileNumber}`,
       profileImageKey,
       documentsKey,
     };
@@ -401,6 +402,7 @@ export async function getDriverById(req: Request, res: Response) {
           vehicleType: 1,
           profileImageKey: 1,
           restaurantName:1,
+          status:1,
           'vehicleData.profileImageKey': 1,
         }
       }
@@ -528,26 +530,33 @@ export async function updateDriverStatus(req: Request, res: Response) {
   try {
     session = await mongoose.startSession();
     const id = req.params.uid;
-    const delete_last:number=Number(req.query.delete_last);
+    const getCount=req.query.getCount=='true';
 
-  if(delete_last==0){ 
+  if(getCount){ 
 
      const restaurant = await Driver.findOne({ _id: id }).select({ restaurantName: 1, _id: 0,status:1 });
 
      if(restaurant?.status=='active'){
      
-      const count = await Driver.countDocuments({ restaurantName:restaurant.restaurantName,status:'active' });
-
+      const count = await Driver.countDocuments({ restaurantName:restaurant.restaurantName?.toLocaleLowerCase(),status:'active' });
+    console.log('here')
       if(count==1){
         res.status(200).send({ last_driver:true,
           message: 'Only One Driver is active',
-        });
-        return ;
+        });    
   
-       }          
+       } else{
+        res.status(200).send({ last_driver:false,
+          message: `${count} Driver is active`,
+        });
 
-     }     
+       } 
 
+        }else  res.status(200).send({ last_driver:false,
+          message: ' Driver is already  Inactive',
+        });       
+       
+        return ;
      
   }
 
@@ -652,6 +661,7 @@ export async function paginatedDriverData(req: Request, res: Response) {
     if (!allDrivers || allDrivers.length === 0) {
       throw new Error('Drivers not found');
     }
+
 
     return res.status(200).json({
       message: 'This vehicle is already assigned to you',
