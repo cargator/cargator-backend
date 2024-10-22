@@ -445,7 +445,6 @@ export async function updateDriver(req: Request, res: Response) {
 
     let driver = await Driver.findOne({
       _id: id,
-      status: 'active',
       rideStatus: { $ne: 'on-ride' },
     }).session(session);
 
@@ -496,8 +495,8 @@ export async function updateDriver(req: Request, res: Response) {
 
     driver.firstName = firstName;
     driver.lastName = lastName;
-    driver.restaurantName = restaurantName.toLowerCase().trim();
-    driver.mobileNumber = `91${mobileNumber}`;
+    driver.restaurantName = restaurantName;
+    driver.mobileNumber = `${mobileNumber}`;
     driver.profileImageKey = profileImageKey;
     driver.documentsKey = documentsKey;
 
@@ -512,6 +511,7 @@ export async function updateDriver(req: Request, res: Response) {
       // Handle duplicate key error
       res.status(400).json({
         success: false,
+        duplicate:true,
         message: 'Mobile number already exists.',
       });
     } else {
