@@ -538,8 +538,8 @@ export async function updateDriverStatus(req: Request, res: Response) {
 
      if(restaurant?.status=='active'){
      
-      const count = await Driver.countDocuments({ restaurantName:restaurant.restaurantName?.toLocaleLowerCase(),status:'active' });
-    console.log('here')
+      const count = await Driver.countDocuments({ restaurantNameToLowerCase:restaurant.restaurantName?.toLocaleLowerCase(),status:'active' });
+     console.log('here')
       if(count==1){
         res.status(200).send({ last_driver:true,
           message: 'Only One Driver is active',
