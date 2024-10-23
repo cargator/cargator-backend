@@ -72,7 +72,7 @@ const getSearchDriver = async (req: Request) => {
                   },
                   {
                     mobileNumber: {
-                      $regex: new RegExp(`^91${query}`, 'i'),
+                      $regex: new RegExp(`^(\\+91|\\+271|\\+1)?${query}`, 'i'),
                     },
                   },
                   {
@@ -112,7 +112,8 @@ const getSearchDriver = async (req: Request) => {
                 status:1,
                 createdAt:1,
                 createdDate: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-               createdTime: { $dateToString: { format: "%H:%M:%S", date: "$createdAt" } }
+               createdTime: { $dateToString: { format: "%H:%M:%S", date: "$createdAt" } },
+               profileImageKey:1
               },
             },
             {

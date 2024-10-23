@@ -76,7 +76,8 @@ export async function searchVehicles(req: Request, res: Response) {
                 vehicleNumber: 1,
                 vehicleType: 1,
                 vehicleStatus: 1,
-                createdAt:1
+                createdAt:1,
+                profileImageKey:1
               },
             },
             {

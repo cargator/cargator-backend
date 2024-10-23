@@ -1028,6 +1028,12 @@ export async function getOrderHistory(
                 },
               },
               {
+                'order_details.order_total': {
+                  $regex: `${searchText}`, // Prefix search for searchText
+                  $options: 'i',
+                },
+              },
+              {
                 'pickup_details.address': {
                   $regex: `${searchText}`,
                   $options: 'i',
@@ -1057,6 +1063,12 @@ export async function getOrderHistory(
               {
                 'drop_details.contact_number': {
                   $regex: `^${searchText}`,
+                  $options: 'i',
+                },
+              },
+              {
+                'order_details.order_total': {
+                  $regex: `${searchText}`, // Prefix search for searchText
                   $options: 'i',
                 },
               },
