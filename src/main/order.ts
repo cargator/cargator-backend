@@ -1016,6 +1016,12 @@ export async function getOrderHistory(
                 },
               },
               {
+                'order_details.vendor_order_id': {
+                  $regex: `.*${searchText}$`, // Matches vendor_order_id that ends with the searchText
+                  $options: 'i', // Case-insensitive
+                },
+              },
+              {
                 'drop_details.contact_number': {
                   $regex: `^${searchText}`,
                   $options: 'i',
@@ -1029,8 +1035,7 @@ export async function getOrderHistory(
               },
               {
                 'order_details.order_total': {
-                  $regex: `${searchText}`, // Prefix search for searchText
-                  $options: 'i',
+                  $eq: Number(searchText), // Exact match
                 },
               },
               {
@@ -1061,6 +1066,12 @@ export async function getOrderHistory(
                 },
               },
               {
+                'order_details.vendor_order_id': {
+                  $regex: `.*${searchText}$`, // Matches vendor_order_id that ends with the searchText
+                  $options: 'i', // Case-insensitive
+                },
+              },
+              {
                 'drop_details.contact_number': {
                   $regex: `^${searchText}`,
                   $options: 'i',
@@ -1068,8 +1079,7 @@ export async function getOrderHistory(
               },
               {
                 'order_details.order_total': {
-                  $regex: `${searchText}`, // Prefix search for searchText
-                  $options: 'i',
+                  $eq: Number(searchText), // Exact match
                 },
               },
               {

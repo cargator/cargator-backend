@@ -42,7 +42,7 @@ export async function adminLogin(req: Request, res: Response) {
 
     // Check if the admin is registered
     if (!adminDoc) {
-      throw new Error(`Invalid mobile number or password !`);
+      throw new Error(`Invalid mobile number or OTP !`);
     }
 
     // Generate a JWT token
