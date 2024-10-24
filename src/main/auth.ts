@@ -19,17 +19,17 @@ export async function handleLogin(req: Request, res: Response) {
 
       if (mobileNumber.startsWith('+')) {
         if (mobileNumber.startsWith('+91')) {
-          normalizedMobileNumber = mobileNumber.slice(1);
+          normalizedMobileNumber = mobileNumber;
           localMobileNumber = mobileNumber.slice(3);
         } else if (mobileNumber.startsWith('+971')) {
-          normalizedMobileNumber = mobileNumber.slice(1);
+          normalizedMobileNumber = mobileNumber;
           localMobileNumber = mobileNumber.slice(4);
         } else if (mobileNumber.startsWith('+1')) {
-          normalizedMobileNumber = mobileNumber.slice(1);
+          normalizedMobileNumber = mobileNumber;
           localMobileNumber = mobileNumber.slice(2);
         }
       } else if (mobileNumber.length === 10) {
-        normalizedMobileNumber = `91${mobileNumber}`;
+        normalizedMobileNumber = `+91${mobileNumber}`;
         localMobileNumber = mobileNumber;
       } else {
         throw new Error(`Invalid mobile number format!`);
@@ -127,9 +127,9 @@ export async function verifyOtp(req: Request, res: Response) {
 
       // Find the driver based on the provided mobile number
       let user: any = await Driver.findOne({
-        mobileNumber: `91${mobileNumber}`,
+        mobileNumber: `+91${mobileNumber}`,
       }).lean();
-      let profileImageKey = user.profileImageKey;
+      let profileImageKey = user?.profileImageKey;
 
       // Check if the driver is registered
       if (!user) {
